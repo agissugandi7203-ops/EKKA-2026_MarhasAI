@@ -39,6 +39,8 @@ Dokumentasi teknis untuk setiap fitur disimpan secara terpisah di folder `docs/f
   ├── profiles/           # Modul profil & onboarding
   ├── badges/             # Modul katalog lencana (badges)
   ├── leaderboard/        # Modul papan peringkat global & kota
+  ├── reports/            # Modul pelaporan masalah lingkungan spasial (Fitur 3)
+  ├── storage/            # Modul Google Cloud Storage & Vision PII sensor (Fitur 3)
   └── common/             # Interceptor, guard, decorator global
   ```
 - **Frontend (Next.js)**: Memisahkan folder `features` untuk logika bisnis dan UI dashboard interaktif.
@@ -61,7 +63,8 @@ Dokumentasi teknis untuk setiap fitur disimpan secara terpisah di folder `docs/f
       │   ├── domain/     # Entity & usecase bisnis
       │   └── presentation/# Widget UI & State Management (BLoC/Notifier)
       ├── profile/        # Profil user, streak, & badges
-      └── leaderboard/    # Papan peringkat global & wilayah kota
+      ├── leaderboard/    # Papan peringkat global & wilayah kota
+      └── reports/        # Pelaporan spasial & upload data layer (Fitur 3)
   ```
 
 ---

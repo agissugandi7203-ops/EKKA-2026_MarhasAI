@@ -36,13 +36,22 @@ mobile/lib/
         │   └── repositories/# Implementasi repositori leaderboard
         └── domain/
             └── repositories/# Interface abstraksi repositori leaderboard
+    └── reports/
+        ├── data/
+        │   ├── datasources/ # Pemanggilan API NestJS untuk unggahan/daftar laporan
+        │   ├── models/      # Serialisasi JSON (ReportModel & UploadReportResponse)
+        │   └── repositories/# Implementasi repositori laporan
+        ├── domain/
+        │   └── repositories/# Interface abstraksi repositori laporan
+        └── presentation/
+            └── bloc/        # Logika state BLoC (ReportsBloc)
 ```
 
 ---
 
 ## 2. Lapisan Jaringan Terintegrasi (Dio Client & Supabase JWT)
 
-Semua pemanggilan API kustom ke NestJS dialirkan melalui **DioClient** ([dio_client.dart](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/mobile/lib/core/network/dio_client.dart)).
+All pemanggilan API kustom ke NestJS dialirkan melalui **DioClient** ([dio_client.dart](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/mobile/lib/core/network/dio_client.dart)).
 
 *   **Otomatisasi Kredensial (Bearer Interceptor)**:
     DioClient menyuntikkan interceptor kustom yang memantau status sesi Supabase secara real-time. Jika pengguna memiliki sesi aktif, token JWT Supabase (`accessToken`) akan disisipkan secara otomatis sebagai `Authorization: Bearer <token>` pada setiap header HTTP request ke NestJS.
@@ -68,7 +77,15 @@ Setiap fitur memiliki lapisan data source yang terisolasi dengan baik:
 
 ### C. Papan Peringkat (Leaderboard)
 *   **LeaderboardRemoteDataSource** ([leaderboard_remote_data_source.dart](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/mobile/lib/features/leaderboard/data/datasources/leaderboard_remote_data_source.dart)):
-    Memanggil NestJS endpoint `/leaderboard/global` dan `/leaderboard/city` dengan opsi parameter `limit` terkonfigurasi.
+    Memanggil NestJS endpoint `/leaderboard/global` and `/leaderboard/city` dengan opsi parameter `limit` terkonfigurasi.
+
+### D. Pelaporan Spasial (Reports)
+*   **ReportModel** ([report_model.dart](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/mobile/lib/features/reports/data/models/report_model.dart)) & **UploadReportResponse** ([upload_report_response.dart](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/mobile/lib/features/reports/data/models/upload_report_response.dart)):
+    Deserialisasi data laporan (PostGIS POINT GeoJSON/WKT) dan status unggahan/duplikat dari NestJS.
+*   **ReportRemoteDataSource** ([report_remote_data_source.dart](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/mobile/lib/features/reports/data/datasources/report_remote_data_source.dart)):
+    Mengirimkan multipart request berisi file gambar, latitude, longitude, dan deskripsi ke NestJS.
+*   **ReportRepositoryImpl** ([report_repository_impl.dart](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/mobile/lib/features/reports/data/repositories/report_repository_impl.dart)):
+    Menjembatani akses data laporan ke presentation layer.
 
 ---
 

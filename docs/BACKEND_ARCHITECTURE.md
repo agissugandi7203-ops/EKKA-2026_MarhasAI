@@ -51,6 +51,23 @@ Mengatur pendaftaran wilayah pengguna (onboarding), detail gamifikasi, dan hak k
     *   `getGlobalLeaderboard(limit)`: Membaca database view `global_leaderboard` secara real-time berdasarkan total XP pengguna.
     *   `getCityLeaderboard(limit)`: Membaca database view `city_leaderboard` untuk mendapatkan kontribusi XP per wilayah kota/kabupaten.
 
+### E. Modul Pelaporan Spasial (Reports) & Sensor Gambar PII (Storage)
+Mengatur pelaporan masalah lingkungan berbasis lokasi geografis dengan sensor privasi otomatis.
+*   **ReportsService**:
+    *   `createReport(userId, fileBuffer, mimeType, lat, lng, description)`:
+        1. Menjalankan verifikasi duplikasi spasial menggunakan PostGIS RPC `check_duplicate_report(lat, lng)`.
+        2. Jika duplikat terdeteksi, mengembalikan respon duplikat tanpa menyimpan baris baru atau mengunggah berkas.
+        3. Jika tidak duplikat, meneruskan berkas gambar ke `PiiRedactionService` untuk pemrosesan sensor wajah & plat nomor.
+        4. Mengunggah gambar hasil sensor ke Google Cloud Storage melalui `GcsService`.
+        5. Menyimpan entri baru ke tabel `reports` dengan data koordinat spasial (format WKT: `SRID=4326;POINT(lng lat)`).
+    *   `getReports()`: Mengambil daftar laporan lingkungan terdaftar yang di-JOIN dengan data profil pelapor.
+*   **PiiRedactionService**:
+    *   Mengakses Google Cloud Vision API untuk melakukan deteksi wajah (`faceDetection`) dan deteksi teks (`textDetection`) pada buffer gambar.
+    *   Menggunakan pustaka `sharp` untuk melakukan Gaussian blur pada koordinat area terdeteksi secara in-memory.
+*   **GcsService**:
+    *   Menginisialisasi klien Google Cloud Storage SDK menggunakan berkas kunci GCS dari file `.env`.
+    *   Mengunggah file buffer dengan nama berkas unik ke bucket tujuan dan mengembalikan URL publik.
+
 ---
 
 ## 3. Spesifikasi Katalog API (API Contract)
@@ -190,3 +207,70 @@ Semua endpoint dilindungi oleh `AuthGuard` (membutuhkan header `Authorization: B
 *   **GET `/leaderboard/city?limit=100`**
     *   **Deskripsi**: Mengambil papan peringkat Kabupaten/Kota terbersih berdasarkan kontribusi total XP warganya.
     *   **Response (200 OK)**: Array of City Leaderboard.
+
+### D. Modul Pelaporan Spasial (Reports)
+*   **POST `/reports`**
+    *   **Deskripsi**: Membuat laporan masalah lingkungan baru dengan menyertakan file foto dan lokasi GPS.
+    *   **Content-Type**: `multipart/form-data`
+    *   **Request Body**:
+        - `file`: Berkas gambar/foto.
+        - `latitude`: Koordinat lintang (desimal/string).
+        - `longitude`: Koordinat bujur (desimal/string).
+        - `description`: Deskripsi masalah (string, opsional).
+    *   **Response (201 Created - Laporan Baru)**:
+        ```json
+        {
+          "isDuplicate": false,
+          "message": "Laporan berhasil diunggah dan disimpan",
+          "report": {
+            "id": "uuid-string",
+            "reporter_id": "uuid-string-user",
+            "image_url": "https://storage.googleapis.com/...",
+            "description": "...",
+            "location": "SRID=4326;POINT(lng lat)",
+            "status": "pending_ai",
+            "confidence_score": 0.0,
+            "waste_type": null,
+            "danger_level": null,
+            "created_at": "timestamp",
+            "updated_at": "timestamp"
+          }
+        }
+        ```
+    *   **Response (200 OK - Laporan Duplikat)**:
+        ```json
+        {
+          "isDuplicate": true,
+          "message": "Laporan serupa terdeteksi dalam radius 50 meter. Menggabungkan laporan...",
+          "duplicateReportId": "uuid-string-duplicate"
+        }
+        ```
+
+*   **GET `/reports`**
+    *   **Deskripsi**: Mengambil seluruh daftar laporan masalah lingkungan yang aktif.
+    *   **Response (200 OK)**:
+        ```json
+        [
+          {
+            "id": "uuid-string",
+            "reporter_id": "uuid-string-user",
+            "image_url": "https://storage.googleapis.com/...",
+            "description": "...",
+            "location": {
+              "type": "Point",
+              "coordinates": [lng, lat]
+            },
+            "status": "pending_ai",
+            "confidence_score": 0.0,
+            "waste_type": null,
+            "danger_level": null,
+            "created_at": "timestamp",
+            "updated_at": "timestamp",
+            "profiles": {
+              "username": "...",
+              "full_name": "...",
+              "avatar_url": "..."
+            }
+          }
+        ]
+        ```
