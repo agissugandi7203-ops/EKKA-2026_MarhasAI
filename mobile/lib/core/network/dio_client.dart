@@ -4,9 +4,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class DioClient {
   final Dio _dio;
   
-  // Base URL NestJS backend. 10.0.2.2 adalah IP localhost khusus untuk Emulator Android.
-  // Jika menggunakan device fisik atau iOS Simulator, silakan sesuaikan IP.
-  static const String _defaultBaseUrl = 'http://10.0.2.2:3000';
+  // Base URL NestJS backend.
+  // URL Produksi: https://genesisHub.my.id
+  // URL Lokal (Emulator Android): http://10.0.2.2:3000
+  static const String _defaultBaseUrl = 'https://genesisHub.my.id';
 
   DioClient({String? baseUrl}) : _dio = Dio(
     BaseOptions(
