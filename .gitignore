@@ -1,0 +1,38 @@
+# Dependency directories
+**/node_modules/
+.pnp
+.pnp.js
+
+# Testing
+**/coverage/
+
+# Next.js build output
+**/frontend/.next/
+**/frontend/out/
+
+# NestJS build output
+**/backend/dist/
+
+# Mobile build output
+**/mobile/.dart_tool/
+**/mobile/.pub-cache/
+**/mobile/.pub/
+**/mobile/build/
+
+# Local env files
+.env
+.env.local
+.env.*.local
+**/.env
+**/.env.local
+**/.env.*.local
+
+# IDEs and OS files
+.idea/
+.vscode/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
