@@ -87,3 +87,11 @@ Proyek ini mengintegrasikan Backend, Frontend, dan Mobile dengan spesifikasi **O
 3. **Flutter** menghasilkan class model Dart dan API client menggunakan package `swagger_parser` / `openapi_generator_cli`.
 
 Hal ini memastikan bahwa setiap perubahan skema data di Backend akan langsung mendeteksi error di sisi Frontend dan Mobile saat proses build.
+
+---
+
+## 5. Strategi Deployment Produksi (Google Cloud Run + Docker)
+Proyek ini dikonfigurasi untuk siap dideploy secara mandiri ke Google Cloud Run dengan kontainerisasi Docker:
+1. **Backend (NestJS)**: Berkas Dockerfile multi-stage memisahkan devDependencies untuk menjaga ukuran kontainer agar cold-start cepat. Mengikat port dinamis `PORT` Cloud Run (default: 8080) pada IP `0.0.0.0`.
+2. **Frontend (Next.js)**: Memanfaatkan mode `output: "standalone"` di konfigurasi Next.js untuk menyalin hasil optimal file tracing tanpa direktori `node_modules` besar. Citra yang dihasilkan sangat ringan (~100 MB) dan dijalankan dengan user non-root `nextjs` demi keamanan.
+
