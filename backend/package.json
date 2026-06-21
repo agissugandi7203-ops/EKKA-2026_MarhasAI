@@ -23,6 +23,7 @@
     "@fastify/multipart": "^10.0.0",
     "@google-cloud/storage": "^7.21.0",
     "@google-cloud/vision": "^5.3.7",
+    "@google/genai": "^2.9.0",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.0.1",

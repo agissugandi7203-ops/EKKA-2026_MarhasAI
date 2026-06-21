@@ -3,54 +3,143 @@
 [![Flutter Version](https://img.shields.io/badge/Flutter-v3.19%20%7C%20Dart%20v3.x-blue.svg)](#)
 [![Architecture](https://img.shields.io/badge/Architecture-Clean%20%7C%20Feature--First-brightgreen.svg)](#)
 [![State Management](https://img.shields.io/badge/State%20Management-BLoC-blue.svg)](#)
-[![Location Spasial](https://img.shields.io/badge/spasial-Geolocator%20%7C%20PostGIS-orange.svg)](#)
+[![Navigation](https://img.shields.io/badge/Navigation-GoRouter-purple.svg)](#)
+[![Design System](https://img.shields.io/badge/Design-Material%203-teal.svg)](#)
 
-Aplikasi gawai **Genesis.id** dibangun sepenuhnya menggunakan **Flutter** (Dart) untuk sisi warga/komunitas. Aplikasi ini menangani interaksi perangkat keras native seperti kamera untuk memotret anomali lingkungan, koordinat GPS spasial presisi tinggi, interogasi gambar ("AI Per-Seksi"), chatbot edukasi berbasis RAG, serta gamifikasi kepedulian sosial.
+Aplikasi gawai **Genesis.id** dibangun menggunakan **Flutter** (Dart) untuk sisi warga/komunitas. Menangani kamera untuk memotret anomali lingkungan, koordinat GPS spasial presisi tinggi, gamifikasi kepedulian sosial, serta chatbot edukasi berbasis RAG.
 
 ---
 
-## 1. Fitur Utama Mobile (Logic & Network)
-1.  **Otomatisasi Dio Client**: Client HTTP Dio kustom yang memiliki interceptor otomatis untuk menyisipkan token JWT Supabase aktif di setiap header request ke backend NestJS.
-2.  **Auth BLoC (State Management)**: Mengelola status masuk (Google OAuth & Email/Password) serta mendeteksi secara otomatis kebutuhan pengisian lokasi onboarding (Kabupaten/Kota) pada login pertama kali.
-3.  **Onboarding Geolokasi**: Meminta izin GPS satu kali menggunakan package `geolocator` untuk mendeteksi secara otomatis kota domisili warga untuk dikunci di leaderboard (mencegah penyelewengan GPS).
-4.  **Profile & Gamifikasi**: Menampilkan data profil, bar XP, level keaktifan, total kontribusi laporan, status *streak harian*, dan grid katalog lencana (*badges*).
+## 1. Fitur Utama
+
+| # | Fitur | Keterangan |
+|---|-------|------------|
+| 1 | **Splash + Introduction** | 3 slides intro (Lapor, Gamifikasi, Kompetisi Kota) + auto-navigate |
+| 2 | **Auth Flow (5 halaman)** | Login, Sign Up, Forgot Password, OTP Verification, Reset Password |
+| 3 | **Google Sign-In** | OAuth via Supabase `signInWithIdToken` |
+| 4 | **Post-Login Setup Wizard** | 4 langkah: Welcome → Lokasi GPS → Notifikasi → Profil |
+| 5 | **Profile & Gamifikasi** | XP bar, level, streak harian, katalog lencana |
+| 6 | **Onboarding Geolokasi** | Auto-detect kota via reverse geocoding (Geolocator) |
+| 7 | **Dio Client + JWT** | Interceptor otomatis Bearer token ke backend NestJS |
 
 ---
 
 ## 2. Struktur Clean Architecture
+
 ```
 mobile/lib/
 ├── core/
-│   ├── config/           # Konfigurasi Supabase URL & Anon Key
-│   └── network/          # Kustom DioClient dengan JWT interceptor
+│   ├── config/              # Supabase URL & Publishable Key
+│   ├── constants/           # Spacing, radius, durasi, form rules
+│   ├── network/             # Kustom DioClient dengan JWT interceptor
+│   ├── router/              # GoRouter + Routes constants
+│   ├── theme/               # Design System terpusat
+│   │   ├── app_colors.dart       # Palet warna (Navy, Burgundy, Gold, Emerald)
+│   │   ├── app_text_styles.dart  # Typography (Nunito + Plus Jakarta Sans)
+│   │   ├── app_theme.dart        # ThemeData Material 3
+│   │   └── app_decorations.dart  # Shadow, gradient, decoration presets
+│   ├── utils/               # Validators, extensions
+│   └── widgets/             # Reusable branded widgets
+│       ├── genesis_button.dart       # Tombol (primary, secondary, text)
+│       ├── genesis_text_field.dart   # Input field + password toggle
+│       ├── genesis_loading.dart      # Loading indicator
+│       └── genesis_scaffold.dart     # Scaffold wrapper + SafeArea
 └── features/
-    ├── auth/             # Modul login email/password & Google OAuth
-    ├── profile/          # Profil pengguna, streak harian, dan lencana
-    └── leaderboard/      # Papan peringkat global & kota teraktif
+    ├── splash/              # Splash screen animasi (3 detik)
+    ├── introduction/        # 3 slides pengenalan fitur
+    ├── auth/                # Login, Sign Up, Forgot PW, OTP, Reset PW
+    ├── setup/               # Post-login wizard (Welcome, Lokasi, Notif, Profil)
+    ├── home/                # Beranda utama
+    ├── profile/             # Profil user, streak, & badges
+    ├── leaderboard/         # Papan peringkat global & kota
+    └── reports/             # Pelaporan spasial & upload
 ```
 
 ---
 
-## 3. Cara Menjalankan Aplikasi
-1.  Masuk ke direktori `mobile/`.
-2.  Pasang dependensi Flutter:
-    ```bash
-    flutter pub get
-    ```
-3.  Buka berkas `lib/core/config/supabase_config.dart` dan lengkapi URL Supabase serta Anon Key proyek Anda.
-4.  Jalankan aplikasi di emulator atau perangkat fisik:
-    ```bash
-    flutter run
-    ```
+## 3. Alur Navigasi
+
+```
+Splash (3s) → [Pertama?] Introduction → Login
+                                          ├─→ Sign Up
+                                          ├─→ Forgot Password → OTP → Reset Password
+                                          └─→ [Auth OK]
+                                                ├─→ [Perlu Onboarding] Setup Wizard (4 step)
+                                                └─→ Home
+```
 
 ---
 
-## 4. Panduan Penulisan Kode (Clean Code)
-Aplikasi mobile ini diwajibkan mengikuti panduan arsitektur ketat agar kode tidak berantakan:
-*   **Dilarang Keras** menuliskan atau menyisipkan kunci `SUPABASE_SERVICE_ROLE_KEY` di aplikasi Flutter ini.
-*   **Dilarang Keras** menggunakan tipe data `dynamic` secara bebas. Parsing JSON wajib dikonversi langsung menggunakan class model (`ProfileModel`, `BadgeModel`, dll.).
-*   Semua logika bisnis, state management, dan pemanggilan API dilarang ditulis di dalam file UI/Widget. Wajib menggunakan **Auth BLoC**.
+## 4. Design System
 
-Selengkapnya mengenai aturan penulisan kode di Flutter silakan baca berkas:
-👉 **[FLUTTER_CLEAN_CODE.md (Panduan Clean Code)](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/docs/FLUTTER_CLEAN_CODE.md)**
-👉 **[MOBILE_ARCHITECTURE.md (Arsitektur Mobile)](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/docs/MOBILE_ARCHITECTURE.md)**
+### Palet Warna
+| Peran | Warna | Hex | Psikologi |
+|-------|-------|-----|-----------|
+| Primary | Navy | `#152D5C` | Kepercayaan, profesionalisme |
+| Mascot | Burgundy | `#800020` | Keberanian, passion |
+| Achievement | Gold | `#C8922A` | Prestasi, premium |
+| Environment | Emerald | `#1B7A4E` | Alam, keberhasilan |
+
+### Typography
+| Level | Font | Karakter |
+|-------|------|----------|
+| Heading | **Nunito** | Soft, rounded, friendly |
+| Body | **Plus Jakarta Sans** | Modern, readable, Indonesia-origin |
+
+---
+
+## 5. Cara Menjalankan Aplikasi
+
+```bash
+# 1. Masuk ke direktori mobile
+cd mobile
+
+# 2. Install dependencies
+flutter pub get
+
+# 3. Konfigurasi Supabase (edit file)
+#    lib/core/config/supabase_config.dart
+#    Isi URL dan Publishable Key proyek Supabase Anda
+
+# 4. Jalankan di Android emulator/device
+flutter run
+
+# 5. Pastikan kode bersih
+flutter analyze
+```
+
+> **⚠️ Catatan**: Fokus saat ini adalah **Android**. Pastikan emulator Android atau device fisik terhubung saat menjalankan `flutter run`.
+
+---
+
+## 6. Aset & Placeholder
+
+```
+mobile/assets/
+├── images/              # Ilustrasi statis (intro, auth, setup)
+├── icons/               # Ikon kustom (SVG/PNG)
+└── animations/          # Lottie JSON (maskot, achievement, transisi)
+    ├── mascot/          # Placeholder → akan diganti animasi JSON
+    ├── achievements/    # Streak fire, level up, badge unlock
+    └── transitions/     # Loading globe, page transition
+```
+
+> Maskot saat ini menggunakan ikon placeholder. Akan digantikan dengan animasi Lottie JSON.
+
+---
+
+## 7. Panduan Clean Code
+
+| Aturan | Deskripsi |
+|--------|-----------|
+| **No Magic Numbers** | Semua konstanta di `AppConstants` |
+| **No Ad-hoc Colors** | Semua dari `AppColors` / `Theme.of(context)` |
+| **No Dynamic Types** | Parsing JSON via class model (strict type safety) |
+| **No Logic in Widgets** | UI hanya render dari BLoC State |
+| **Immutable Models** | Semua properti `final`, perubahan via `copyWith` |
+| **Centralized Validators** | Selaras dengan backend DTO (NestJS class-validator) |
+
+📖 Selengkapnya:
+- **[FLUTTER_CLEAN_CODE.md](../docs/FLUTTER_CLEAN_CODE.md)** — Standar kode Dart
+- **[MOBILE_ARCHITECTURE.md](../docs/MOBILE_ARCHITECTURE.md)** — Arsitektur lengkap
+- **[CLEAN_CODE_GUIDELINES.md](../docs/CLEAN_CODE_GUIDELINES.md)** — Standar global

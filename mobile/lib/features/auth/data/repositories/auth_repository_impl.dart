@@ -1,7 +1,12 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_remote_data_source.dart';
 
+/// Implementasi konkret [AuthRepository].
+///
+/// Membungkus [AuthRemoteDataSource] dan meneruskan operasi.
+/// Di masa depan, bisa ditambahkan caching atau error handling.
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource _remoteDataSource;
 
@@ -42,5 +47,23 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   User? getCurrentUser() {
     return _remoteDataSource.getCurrentUser();
+  }
+
+  @override
+  Future<void> resetPasswordForEmail(String email) async {
+    await _remoteDataSource.resetPasswordForEmail(email);
+  }
+
+  @override
+  Future<AuthResponse> verifyOtp({
+    required String email,
+    required String token,
+  }) async {
+    return await _remoteDataSource.verifyOtp(email: email, token: token);
+  }
+
+  @override
+  Future<UserResponse> updatePassword(String newPassword) async {
+    return await _remoteDataSource.updatePassword(newPassword);
   }
 }

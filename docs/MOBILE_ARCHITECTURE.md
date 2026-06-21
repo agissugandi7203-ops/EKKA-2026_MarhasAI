@@ -1,6 +1,6 @@
 # Dokumentasi Arsitektur Mobile App Genesis.id (Flutter)
 
-Dokumen ini memuat detail arsitektur tingkat tinggi (*high-level architecture*), struktur folder, modul data/repositori, konfigurasi jaringan, serta manajemen state untuk aplikasi mobile **Genesis.id** (Flutter).
+Dokumen ini memuat detail arsitektur tingkat tinggi (*high-level architecture*), struktur folder, modul data/repositori, konfigurasi jaringan, design system, navigasi, serta manajemen state untuk aplikasi mobile **Genesis.id** (Flutter).
 
 ---
 
@@ -11,45 +11,187 @@ Aplikasi mobile Genesis.id menerapkan pola **Clean Architecture** yang dikombina
 ```
 mobile/lib/
 ├── core/
-│   ├── config/           # Konfigurasi proyek (Supabase credentials)
-│   └── network/          # Koneksi HTTP kustom (Dio Client)
+│   ├── config/              # Konfigurasi proyek (Supabase credentials)
+│   │   └── supabase_config.dart
+│   ├── constants/           # Konstanta global (spacing, radius, durasi)
+│   │   └── app_constants.dart
+│   ├── network/             # Koneksi HTTP kustom (Dio Client)
+│   │   └── dio_client.dart
+│   ├── router/              # Navigasi terpusat (GoRouter + redirect guard)
+│   │   └── app_router.dart
+│   ├── theme/               # Design System terpusat
+│   │   ├── app_colors.dart       # Palet warna (Navy, Burgundy, Gold, Emerald)
+│   │   ├── app_text_styles.dart  # Typography (Nunito + Plus Jakarta Sans)
+│   │   ├── app_theme.dart        # ThemeData Material 3
+│   │   └── app_decorations.dart  # BoxDecoration, shadow, gradient presets
+│   ├── utils/               # Utilitas global
+│   │   ├── validators.dart       # Form validators (email, password, username)
+│   │   └── extensions.dart       # Dart extensions (context, string)
+│   └── widgets/             # Widget reusable bermerek
+│       ├── genesis_button.dart       # Tombol utama (primary, secondary, text)
+│       ├── genesis_text_field.dart   # Input field (password toggle, validasi)
+│       ├── genesis_loading.dart      # Loading indicator
+│       └── genesis_scaffold.dart     # Scaffold wrapper (SafeArea, gradient)
 └── features/
-    ├── auth/
-    │   ├── data/
-    │   │   ├── datasources/ # Pemanggilan Supabase Auth SDK langsung
-    │   │   └── repositories/# Implementasi repositori auth
-    │   ├── domain/
-    │   │   └── repositories/# Interface abstraksi repositori auth
+    ├── splash/              # Splash screen animasi
     │   └── presentation/
-    │       └── bloc/        # Logika state BLoC (AuthBloc)
-    ├── profile/
+    │       ├── pages/splash_page.dart
+    │       └── widgets/splash_logo.dart
+    ├── introduction/        # 3-screen pengenalan fitur
+    │   └── presentation/
+    │       ├── pages/introduction_page.dart
+    │       └── widgets/
+    │           ├── intro_slide.dart
+    │           └── intro_page_indicator.dart
+    ├── auth/                # Autentikasi lengkap (5 halaman)
     │   ├── data/
-    │   │   ├── datasources/ # Pemanggilan API NestJS untuk data profil
-    │   │   ├── models/      # Serialisasi JSON (ProfileModel & BadgeModel)
-    │   │   └── repositories/# Implementasi repositori profil
-    │   └── domain/
-    │       └── repositories/# Interface abstraksi repositori profil
-    └── leaderboard/
+    │   │   ├── datasources/auth_remote_data_source.dart
+    │   │   └── repositories/auth_repository_impl.dart
+    │   ├── domain/
+    │   │   └── repositories/auth_repository.dart
+    │   └── presentation/
+    │       ├── bloc/              # AuthBloc (events, states)
+    │       ├── pages/
+    │       │   ├── login_page.dart
+    │       │   ├── sign_up_page.dart
+    │       │   ├── forgot_password_page.dart
+    │       │   ├── otp_verification_page.dart
+    │       │   └── reset_password_page.dart
+    │       └── widgets/
+    │           ├── auth_header.dart
+    │           ├── social_sign_in_button.dart
+    │           └── auth_footer_link.dart
+    ├── setup/               # Post-login onboarding wizard (4 step)
+    │   └── presentation/
+    │       ├── bloc/
+    │       │   ├── setup_cubit.dart
+    │       │   └── setup_state.dart
+    │       ├── pages/
+    │       │   ├── setup_welcome_page.dart
+    │       │   ├── setup_location_page.dart
+    │       │   ├── setup_notification_page.dart
+    │       │   └── setup_profile_page.dart
+    │       └── widgets/
+    │           ├── setup_progress_bar.dart
+    │           └── setup_illustration.dart
+    ├── home/                # Beranda utama
+    │   └── presentation/pages/home_page.dart
+    ├── profile/             # Profil user, streak, & badges
+    │   ├── data/
+    │   │   ├── datasources/profile_remote_data_source.dart
+    │   │   ├── models/profile_model.dart & badge_model.dart
+    │   │   └── repositories/profile_repository_impl.dart
+    │   └── domain/repositories/profile_repository.dart
+    ├── leaderboard/         # Papan peringkat global & wilayah kota
+    │   ├── data/
+    │   │   ├── datasources/leaderboard_remote_data_source.dart
+    │   │   ├── models/
+    │   │   └── repositories/
+    │   └── domain/repositories/
+    └── reports/             # Pelaporan spasial & upload data layer
         ├── data/
-        │   ├── datasources/ # Pemanggilan API NestJS untuk peringkat
-        │   ├── models/      # Serialisasi JSON (UserLeaderboard & CityLeaderboard)
-        │   └── repositories/# Implementasi repositori leaderboard
-        └── domain/
-            └── repositories/# Interface abstraksi repositori leaderboard
-    └── reports/
-        ├── data/
-        │   ├── datasources/ # Pemanggilan API NestJS untuk unggahan/daftar laporan
-        │   ├── models/      # Serialisasi JSON (ReportModel & UploadReportResponse)
-        │   └── repositories/# Implementasi repositori laporan
-        ├── domain/
-        │   └── repositories/# Interface abstraksi repositori laporan
-        └── presentation/
-            └── bloc/        # Logika state BLoC (ReportsBloc)
+        │   ├── datasources/report_remote_data_source.dart
+        │   ├── models/report_model.dart & upload_report_response.dart
+        │   └── repositories/report_repository_impl.dart
+        ├── domain/repositories/
+        └── presentation/bloc/
+```
+
+### Struktur Aset
+
+```
+mobile/assets/
+├── images/              # Ilustrasi statis
+│   ├── intro/           # Gambar intro slides
+│   ├── auth/            # Gambar halaman auth
+│   └── setup/           # Gambar halaman setup wizard
+├── icons/               # Ikon kustom (SVG/PNG)
+└── animations/          # Animasi Lottie JSON
+    ├── mascot/          # Maskot utama (wave, happy, sad)
+    ├── achievements/    # Streak fire, level up, badge unlock, confetti
+    └── transitions/     # Transisi halaman, loading globe
 ```
 
 ---
 
-## 2. Lapisan Jaringan Terintegrasi (Dio Client & Supabase JWT)
+## 2. Design System
+
+### A. Palet Warna
+
+Warna dipilih secara deliberate berdasarkan tujuan psikologis:
+
+| Kategori | Nama | Hex | Penggunaan |
+|----------|------|-----|------------|
+| **Primary (Navy)** | navy900 | `#0A1628` | Status bar, gradient gelap |
+| | navy800 | `#0F2042` | AppBar, primary container |
+| | navy700 | `#152D5C` | Tombol utama, CTA |
+| | navy600 | `#1B3A76` | Link, secondary action |
+| | navy100 | `#E8EDF5` | Subtle background |
+| **Mascot (Burgundy)** | burgundy700 | `#800020` | Maskot primer |
+| | burgundy500 | `#A3324B` | Aksen maskot |
+| | burgundy100 | `#F5E0E5` | Background maskot area |
+| **Accent** | gold | `#C8922A` | Badge, achievement, XP |
+| | emerald | `#1B7A4E` | Sukses, streak, lingkungan |
+| **Semantic** | error | `#C62828` | Validasi gagal |
+| | warning | `#D4930A` | Status perhatian |
+| **Surface** | surface | `#FAFAF8` | Background utama (warm) |
+| | card | `#FFFFFF` | Card background |
+| **Text** | textPrimary | `#1A1A2E` | Heading, body |
+| | textSecondary | `#64748B` | Subtitle, hint |
+
+### B. Typography
+
+| Level | Font | Weight | Size | Penggunaan |
+|-------|------|--------|------|------------|
+| Display Large | Nunito | Bold | 32 | Splash title |
+| Headline Large | Nunito | SemiBold | 24 | Page titles |
+| Headline Medium | Nunito | SemiBold | 20 | Section headers |
+| Body Large | Plus Jakarta Sans | Regular | 16 | Body text |
+| Body Medium | Plus Jakarta Sans | Regular | 14 | Secondary text |
+| Label Large | Plus Jakarta Sans | SemiBold | 16 | Button text |
+
+**Nunito** dipilih untuk heading karena letterform bulat (soft, friendly). **Plus Jakarta Sans** dipilih untuk body karena readability tinggi dan berasal dari Indonesia.
+
+---
+
+## 3. Navigasi & Routing
+
+Aplikasi menggunakan **GoRouter** terpusat di `core/router/app_router.dart`.
+
+### Alur Navigasi
+
+```mermaid
+graph TD
+    Splash[Splash Screen 3s] --> CheckIntro{Sudah lihat intro?}
+    CheckIntro -->|Belum| Introduction[Introduction 3 slides]
+    CheckIntro -->|Sudah| Login[Login Page]
+    Introduction --> Login
+    Login --> SignUp[Sign Up Page]
+    Login --> ForgotPW[Forgot Password]
+    ForgotPW --> OTP[OTP Verification]
+    OTP --> ResetPW[Reset Password]
+    ResetPW --> Login
+    Login --> CheckOnboard{Needs Onboarding?}
+    SignUp --> CheckOnboard
+    CheckOnboard -->|Ya| SetupWelcome[Step 1: Welcome]
+    SetupWelcome --> SetupLocation[Step 2: Lokasi GPS]
+    SetupLocation --> SetupNotif[Step 3: Notifikasi]
+    SetupNotif --> SetupProfile[Step 4: Profil]
+    SetupProfile --> Home[Home Page]
+    CheckOnboard -->|Tidak| Home
+```
+
+### Route Constants
+
+Semua path route didefinisikan di `Routes` class untuk menghindari typo string:
+- `/splash`, `/introduction`
+- `/login`, `/sign-up`, `/forgot-password`, `/otp-verification`, `/reset-password`
+- `/setup/welcome`, `/setup/location`, `/setup/notification`, `/setup/profile`
+- `/home`
+
+---
+
+## 4. Lapisan Jaringan Terintegrasi (Dio Client & Supabase JWT)
 
 All pemanggilan API kustom ke NestJS dialirkan melalui **DioClient** ([dio_client.dart](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/mobile/lib/core/network/dio_client.dart)).
 
@@ -59,13 +201,19 @@ All pemanggilan API kustom ke NestJS dialirkan melalui **DioClient** ([dio_clien
 
 ---
 
-## 3. Implementasi Pemrosesan Data & Repositori
+## 5. Implementasi Pemrosesan Data & Repositori
 
 Setiap fitur memiliki lapisan data source yang terisolasi dengan baik:
 
 ### A. Autentikasi (Auth)
 *   **AuthRemoteDataSource** ([auth_remote_data_source.dart](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/mobile/lib/features/auth/data/datasources/auth_remote_data_source.dart)):
-    Menggunakan library `@supabase/supabase-js` Dart SDK. Menangani pendaftaran, login email/password, dan penukaran Google OAuth ID Token ke Supabase secara langsung di sisi klien.
+    Menggunakan Supabase Dart SDK. Menangani:
+    - Pendaftaran (`signUpWithEmailAndPassword`)
+    - Login email/password (`signInWithEmailAndPassword`)
+    - Google OAuth ID Token (`signInWithGoogle`)
+    - Reset password (`resetPasswordForEmail`)
+    - Verifikasi OTP (`verifyOtp`)
+    - Update password (`updatePassword`)
 *   **AuthRepositoryImpl** ([auth_repository_impl.dart](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/mobile/lib/features/auth/data/repositories/auth_repository_impl.dart)):
     Membungkus data source untuk menyediakannya ke lapisan presentasi.
 
@@ -89,22 +237,50 @@ Setiap fitur memiliki lapisan data source yang terisolasi dengan baik:
 
 ---
 
-## 4. Manajemen State & Alur Onboarding (Auth BLoC)
+## 6. Manajemen State & Alur Onboarding (Auth BLoC)
 
 State management autentikasi diatur secara ketat menggunakan **`flutter_bloc`**:
-*   **Events** ([auth_event.dart](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/mobile/lib/features/auth/presentation/bloc/auth_event.dart)):
-    `AuthCheckRequested`, `SignInRequested`, `SignUpRequested`, `GoogleSignInRequested`, `SignOutRequested`.
-*   **States** ([auth_state.dart](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/mobile/lib/features/auth/presentation/bloc/auth_state.dart)):
-    `AuthInitial`, `AuthLoading`, `Authenticated`, `Unauthenticated`, `AuthFailure`.
 
-### Logika Onboarding di AuthBloc ([auth_bloc.dart](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/mobile/lib/features/auth/presentation/bloc/auth_bloc.dart)):
-Saat status berubah menjadi `Authenticated`, BLoC akan memanggil `ProfileRepository.getMyProfile()` untuk mendeteksi apakah data `cityOrDistrict` masih kosong.
-*   Jika **kosong (NULL)**: `Authenticated` dipancarkan dengan flag `needsOnboarding: true`. UI Flutter akan secara otomatis mengarahkan user ke halaman konfigurasi lokasi GPS.
-*   Jika **berisi**: `Authenticated` dipancarkan dengan flag `needsOnboarding: false`. UI Flutter akan langsung mengarahkan user ke beranda utama.
+### Events
+*   `AuthCheckRequested` — Cek status autentikasi saat app dimulai
+*   `SignInRequested` — Login email/password
+*   `SignUpRequested` — Registrasi akun baru
+*   `GoogleSignInRequested` — Login via Google OAuth
+*   `SignOutRequested` — Logout
+*   `ForgotPasswordRequested` — Kirim email reset password
+*   `VerifyOtpRequested` — Verifikasi kode OTP
+*   `ResetPasswordRequested` — Set password baru
+
+### States
+*   `AuthInitial` — State awal
+*   `AuthLoading` — Sedang memproses
+*   `Authenticated(user, needsOnboarding)` — Terautentikasi
+*   `Unauthenticated` — Belum terautentikasi
+*   `AuthFailure(errorMessage)` — Gagal
+*   `PasswordResetEmailSent(email)` — Email reset terkirim
+*   `OtpVerified` — OTP terverifikasi
+*   `PasswordResetSuccess` — Password berhasil diubah
+
+### Logika Onboarding
+Saat status berubah menjadi `Authenticated`, BLoC memanggil `ProfileRepository.getMyProfile()` untuk mendeteksi apakah data `cityOrDistrict` masih kosong.
+*   Jika **kosong (NULL)**: `Authenticated` dipancarkan dengan flag `needsOnboarding: true`. UI Flutter mengarahkan user ke Setup Wizard (4 langkah).
+*   Jika **berisi**: `Authenticated` dipancarkan dengan flag `needsOnboarding: false`. UI Flutter langsung mengarahkan user ke beranda utama.
+
+### Setup Wizard Cubit
+Post-login setup menggunakan **`SetupCubit`** (lebih sederhana dari Bloc) untuk mengelola 4 langkah:
+1. **Welcome** — Pengenalan proses setup
+2. **Location** — GPS permission + reverse geocoding
+3. **Notification** — Push notification permission
+4. **Profile** — Username + nama lengkap → submit ke `POST /profiles/onboard`
 
 ---
 
-## 5. Standar Clean Code Dart di Genesis.id
+## 7. Standar Clean Code Dart di Genesis.id
+
 1.  **Strict Type Safety**: Menghindari tipe data `dynamic` pada parsing JSON atau properti data. Menggunakan class model terdefinisi (`ProfileModel`, `BadgeModel`).
-2.  **Immutability**: Semua model data dideklarasikan menggunakan properti `final` untuk mencegah perubahan data yang tidak sengaja.
+2.  **Immutability**: Semua model data dan state dideklarasikan menggunakan properti `final` untuk mencegah perubahan data yang tidak sengaja. State menggunakan `Equatable` + `copyWith`.
 3.  **Dependency Injection**: Repositori disuntikkan (*injected*) ke konstruktor BLoC secara eksplisit untuk mempermudah pembuatan mock unit test.
+4.  **No Magic Numbers**: Semua spacing, durasi, dan ukuran didefinisikan di `AppConstants`.
+5.  **Design System Terpusat**: Semua warna di `AppColors`, typography di `AppTextStyles`, dekorasi di `AppDecorations` — tidak ada styling ad-hoc.
+6.  **Form Validation Konsisten**: Validator di `core/utils/validators.dart` selaras dengan aturan DTO backend NestJS.
+7.  **Widget Reusable**: Tombol (`GenesisButton`), input (`GenesisTextField`), loading (`GenesisLoading`) — tidak ada duplikasi styling.

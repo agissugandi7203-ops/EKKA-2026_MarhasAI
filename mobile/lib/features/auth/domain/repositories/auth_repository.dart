@@ -1,5 +1,9 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+/// Abstraksi repositori autentikasi.
+///
+/// Interface ini memisahkan domain layer dari data layer (DIP).
+/// BLoC bergantung pada abstraksi ini, bukan implementasi konkret.
 abstract class AuthRepository {
   Future<AuthResponse> signUp({
     required String email,
@@ -16,4 +20,16 @@ abstract class AuthRepository {
   Future<void> signOut();
 
   User? getCurrentUser();
+
+  /// Mengirim email reset password.
+  Future<void> resetPasswordForEmail(String email);
+
+  /// Memverifikasi kode OTP dari email.
+  Future<AuthResponse> verifyOtp({
+    required String email,
+    required String token,
+  });
+
+  /// Memperbarui password user yang sedang aktif.
+  Future<UserResponse> updatePassword(String newPassword);
 }

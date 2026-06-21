@@ -1,7 +1,9 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { SupabaseService } from '../supabase/supabase.service';
 import { GcsService } from '../storage/gcs.service';
 import { PiiRedactionService } from '../storage/pii-redaction.service';
+import { AiClassificationService } from './ai-classification.service';
+import { ProfilesService } from '../profiles/profiles.service';
 
 @Injectable()
 export class ReportsService {
@@ -9,6 +11,8 @@ export class ReportsService {
     private supabaseService: SupabaseService,
     private gcsService: GcsService,
     private piiRedactionService: PiiRedactionService,
+    private aiClassificationService: AiClassificationService,
+    private profilesService: ProfilesService,
   ) {}
 
   async createReport(
@@ -71,6 +75,14 @@ export class ReportsService {
       throw new BadRequestException('Gagal menyimpan laporan ke database: ' + insertError?.message);
     }
 
+    // Memicu klasifikasi AI di latar belakang (fire-and-forget)
+    this.aiClassificationService.classifyReportInBackground(
+      report.id,
+      sanitizedBuffer,
+      userId,
+      fileMimeType,
+    );
+
     return {
       isDuplicate: false,
       message: 'Laporan berhasil diunggah dan disimpan',
@@ -101,6 +113,14 @@ export class ReportsService {
     },
   ) {
     const supabase = this.supabaseService.getClient();
+
+    // 1. Ambil status lama dan reporter_id sebelum diperbarui
+    const { data: oldReport } = await supabase
+      .from('reports')
+      .select('status, reporter_id')
+      .eq('id', reportId)
+      .single();
+
     const { data, error } = await supabase
       .from('reports')
       .update(updateData)
@@ -111,6 +131,17 @@ export class ReportsService {
     if (error) {
       throw new BadRequestException('Gagal memperbarui laporan: ' + error.message);
     }
+
+    // 2. Jika status berubah menjadi approved, berikan reward gamifikasi ke warga pelapor
+    if (updateData.status === 'approved' && oldReport && oldReport.status !== 'approved') {
+      try {
+        await this.profilesService.awardReportRewards(oldReport.reporter_id);
+      } catch (rewardErr) {
+        // Log error tapi jangan gagalkan respons utama admin
+        Logger.error(`Failed to award gamification rewards to user ${oldReport.reporter_id}: ${rewardErr.message}`, 'ReportsService');
+      }
+    }
+
     return data;
   }
 

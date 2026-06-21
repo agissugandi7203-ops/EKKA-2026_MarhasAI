@@ -47,16 +47,43 @@ Kode harus diletakkan berdasarkan modul fitur di bawah folder `lib/features/`, d
 ## 4. Aturan Pembuatan UI (Widget & Styling)
 
 > [!WARNING]
-> Jangan menulis warna acak (*ad-hoc colors*) di dalam Widget. Selalu gunakan Token Desain dari tema global aplikasi.
+> Jangan menulis warna acak (*ad-hoc colors*) di dalam Widget. Selalu gunakan Token Desain dari design system.
 
-*   **Pemisahan Warna**: Semua warna harus diambil dari `Theme.of(context).colorScheme` atau file konfigurasi palet warna global yang disepakati.
-*   **Pemisahan Logika UI**: 
-    *   Widget harus bersifat *stateless* jika memungkinkan. Jika butuh state, gunakan `BlocBuilder` atau `BlocConsumer` untuk mendengarkan perubahan state dari BLoC.
-    *   Fungsi tombol (`onPressed`) hanya boleh mengirim Event ke BLoC (misal: `context.read<AuthBloc>().add(SignInRequested(...))`), tidak boleh memanggil API atau merubah database secara langsung.
+### A. Design System Terpusat
+*   **Warna**: Semua warna harus diambil dari `AppColors` (`core/theme/app_colors.dart`). Tidak boleh ada `Color(0xFF...)` di file widget.
+*   **Typography**: Gunakan `AppTextStyles` (`core/theme/app_text_styles.dart`). Tidak boleh ada `TextStyle(fontSize: ...)` ad-hoc.
+*   **Dekorasi**: Gunakan `AppDecorations` (`core/theme/app_decorations.dart`) untuk shadow, border radius, dan gradient.
+*   **Konstanta**: Gunakan `AppConstants` (`core/constants/app_constants.dart`) untuk spacing, radius, dan durasi animasi. Tidak boleh ada magic number.
+
+### B. Widget Reusable
+*   Gunakan `GenesisButton` untuk semua tombol (3 varian: primary, secondary, text).
+*   Gunakan `GenesisTextField` untuk semua input form (sudah include password toggle).
+*   Gunakan `GenesisLoading` untuk loading indicator.
+*   Gunakan `GenesisScaffold` untuk scaffold dengan SafeArea dan gradient otomatis.
+*   Jangan membuat widget ad-hoc yang duplikasi fungsi widget di atas.
+
+### C. Pemisahan Logika UI
+*   Widget harus bersifat *stateless* jika memungkinkan. Jika butuh state, gunakan `BlocBuilder` atau `BlocConsumer`.
+*   Fungsi tombol (`onPressed`) hanya boleh mengirim Event ke BLoC, tidak boleh memanggil API langsung.
 
 ---
 
-## 5. Ceklis Sebelum Melakukan Commit / Push
-Sebelum mengunggah kode ke GitHub, jalankan perintah berikut di direktori `mobile/` untuk memastikan kualitas kode:
-1.  `flutter format .` $\rightarrow$ Merapikan format kode Dart.
-2.  `flutter analyze` $\rightarrow$ Memastikan tidak ada warning, lints, atau error kode statis.
+## 5. Aturan Navigasi
+*   Seluruh navigasi menggunakan **GoRouter** terpusat di `core/router/app_router.dart`.
+*   Path route didefinisikan di `Routes` class — tidak boleh ada string path hardcoded di widget.
+*   Gunakan `context.goNamed(Routes.loginName)` atau `context.pushNamed(...)`, bukan `Navigator.push()`.
+
+---
+
+## 6. Aturan Validasi Form
+*   Semua validator disimpan di `core/utils/validators.dart`.
+*   Validator harus selaras dengan DTO validation di backend NestJS (class-validator).
+*   Contoh: password minimal 8 karakter, 1 huruf besar, 1 angka — sama seperti di backend.
+
+---
+
+## 7. Ceklis Sebelum Melakukan Commit / Push
+Sebelum mengunggah kode ke GitHub, jalankan perintah berikut di direktori `mobile/`:
+1.  `dart format .` → Merapikan format kode Dart.
+2.  `flutter analyze` → Memastikan tidak ada warning, lints, atau error kode statis.
+3.  `flutter test` → Memastikan semua test case berjalan.

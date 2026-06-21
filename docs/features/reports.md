@@ -139,8 +139,15 @@ sequenceDiagram
 - **Controller**: [ReportsController](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/backend/src/reports/reports.controller.ts)
   - Mengamankan endpoint dengan `AuthGuard`.
   - Mengekstrak file buffer via `req.file()` dari `@fastify/multipart`.
+  - Menyediakan endpoint admin terlindungi `PATCH /reports/:id` dan `DELETE /reports/:id`.
 - **Service**: [ReportsService](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/backend/src/reports/reports.service.ts)
   - Mengoordinasikan panggilan ke DB RPC, pemrosesan sensor PII, unggahan ke GCS, dan penulisan baris baru.
+  - Memicu task klasifikasi AI di latar belakang secara asinkronus setelah laporan berhasil disimpan.
+  - Memverifikasi status saat admin melakukan pembaruan laporan. Jika diubah menjadi `approved`, memicu pemberian reward gamifikasi.
+- **AI Classification**: [AiClassificationService](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/backend/src/reports/ai-classification.service.ts)
+  - Berintegrasi dengan Google Gen AI SDK (`@google/genai`) untuk menganalisis gambar laporan menggunakan model `gemini-1.5-flash` / `gemini-2.5-flash` dengan luaran schema JSON.
+  - Menerapkan aturan persetujuan otomatis (Confidence Score > 85% & isValid = true) dan otomatis memberikan +100 XP, kenaikan level, streak, serta mendeteksi lencana baru.
+  - Mengarahkan laporan dengan tingkat keyakinan rendah atau tidak valid ke status `pending_human` atau `rejected`.
 - **Privacy Redactor**: [PiiRedactionService](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/backend/src/storage/pii-redaction.service.ts)
   - Berintegrasi dengan `@google-cloud/vision` untuk mendeteksi wajah (`faceDetection`) dan teks/plat kendaraan (`textDetection`).
   - Menggunakan pustaka `sharp` untuk melakukan Gaussian blur di koordinat terdeteksi secara in-memory.

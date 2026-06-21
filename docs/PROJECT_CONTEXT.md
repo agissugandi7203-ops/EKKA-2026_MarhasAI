@@ -53,18 +53,29 @@ Dokumentasi teknis untuk setiap fitur disimpan secara terpisah di folder `docs/f
   │   └── api-portal/     # Dokumentasi API untuk instansi B2G
   └── components/         # Komponen UI global (Button, Card, dll)
   ```
-- **Mobile (Flutter)**: Menerapkan Clean Architecture berbasis fitur.
+- **Mobile (Flutter)**: Menerapkan Clean Architecture berbasis fitur dengan Design System terpusat.
   ```
   mobile/lib/
-  ├── core/               # Fungsi utilitas global dan modul network
+  ├── core/
+  │   ├── config/         # Supabase credentials
+  │   ├── constants/      # Spacing, radius, durasi, form rules
+  │   ├── network/        # DioClient + JWT interceptor
+  │   ├── router/         # GoRouter + Routes constants
+  │   ├── theme/          # AppColors, AppTextStyles, AppTheme, AppDecorations
+  │   ├── utils/          # Validators, extensions
+  │   └── widgets/        # GenesisButton, GenesisTextField, GenesisLoading
   └── features/
-      ├── auth/
-      │   ├── data/       # Model & repositori API
-      │   ├── domain/     # Entity & usecase bisnis
-      │   └── presentation/# Widget UI & State Management (BLoC/Notifier)
+      ├── splash/         # Splash screen animasi (3 detik)
+      ├── introduction/   # 3-screen intro (Lapor, Gamifikasi, Kota)
+      ├── auth/           # Login, Sign Up, Forgot PW, OTP, Reset PW
+      │   ├── data/       # DataSource (Supabase Auth SDK) & Repository
+      │   ├── domain/     # Repository interface (DIP)
+      │   └── presentation/# AuthBloc, 5 pages, 3 shared widgets
+      ├── setup/          # Post-login wizard (Welcome, Lokasi, Notif, Profil)
+      ├── home/           # Beranda utama
       ├── profile/        # Profil user, streak, & badges
       ├── leaderboard/    # Papan peringkat global & wilayah kota
-      └── reports/        # Pelaporan spasial & upload data layer (Fitur 3)
+      └── reports/        # Pelaporan spasial & upload data layer
   ```
 
 ---

@@ -44,6 +44,8 @@ Mengatur pendaftaran wilayah pengguna (onboarding), detail gamifikasi, dan hak k
     *   `onboard(userId, dto)`: Mengubah data lokasi dan username pengguna. Mencegah duplikasi username dengan pengecekan keunikan terlebih dahulu.
     *   `getAllProfiles()` *(Khusus Admin)*: Mengambil daftar seluruh profil terdaftar untuk monitoring lalu lintas admin.
     *   `deleteProfile(userId)` *(Khusus Admin)*: Menghapus akun pengguna dari database Supabase secara menyeluruh melalui API admin (`supabase.auth.admin.deleteUser()`). Tindakan ini akan memicu penghapusan cascade pada profil pengguna.
+    *   `adjustGamification(userId, dto)` *(Khusus Admin)*: Mengoreksi atau menyesuaikan data gamifikasi pengguna secara manual.
+    *   `awardReportRewards(userId)`: Memberikan penghargaan (+100 XP), memperbarui jumlah laporan, menghitung streak harian, mengecek kenaikan level (kelipatan 1000 XP), dan menganugerahkan lencana baru jika syarat terpenuhi.
 
 ### D. Modul Leaderboard & Badges
 *   **BadgesService**: `getAllBadges()` mengembalikan katalog lencana statis yang tersedia di database.
@@ -60,7 +62,12 @@ Mengatur pelaporan masalah lingkungan berbasis lokasi geografis dengan sensor pr
         3. Jika tidak duplikat, meneruskan berkas gambar ke `PiiRedactionService` untuk pemrosesan sensor wajah & plat nomor.
         4. Mengunggah gambar hasil sensor ke Google Cloud Storage melalui `GcsService`.
         5. Menyimpan entri baru ke tabel `reports` dengan data koordinat spasial (format WKT: `SRID=4326;POINT(lng lat)`).
+        6. Memicu task klasifikasi AI di latar belakang secara asinkronus via `AiClassificationService`.
     *   `getReports()`: Mengambil daftar laporan lingkungan terdaftar yang di-JOIN dengan data profil pelapor.
+    *   `updateReport(reportId, updateData)`: Memperbarui data laporan. Jika status diubah oleh admin menjadi `'approved'`, secara otomatis memicu pemberian reward gamifikasi ke pengguna.
+*   **AiClassificationService**:
+    *   Mengakses Google Gen AI SDK (`@google/genai`) menggunakan model `gemini-1.5-flash` / `gemini-2.5-flash` untuk mengklasifikasikan tipe sampah dan bahaya.
+    *   Mengevaluasi validitas laporan dan confidence score. Jika validitas benar dan skor $> 85\%$, laporan disetujui secara otomatis dan memicu `profilesService.awardReportRewards`. Jika tidak, status diubah menjadi `pending_human` atau `rejected`.
 *   **PiiRedactionService**:
     *   Mengakses Google Cloud Vision API untuk melakukan deteksi wajah (`faceDetection`) dan deteksi teks (`textDetection`) pada buffer gambar.
     *   Menggunakan pustaka `sharp` untuk melakukan Gaussian blur pada koordinat area terdeteksi secara in-memory.
