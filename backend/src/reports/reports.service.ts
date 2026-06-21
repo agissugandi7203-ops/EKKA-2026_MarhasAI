@@ -90,4 +90,40 @@ export class ReportsService {
     }
     return data || [];
   }
+
+  async updateReport(
+    reportId: string,
+    updateData: {
+      status?: string;
+      waste_type?: string;
+      danger_level?: string;
+      confidence_score?: number;
+    },
+  ) {
+    const supabase = this.supabaseService.getClient();
+    const { data, error } = await supabase
+      .from('reports')
+      .update(updateData)
+      .eq('id', reportId)
+      .select()
+      .single();
+
+    if (error) {
+      throw new BadRequestException('Gagal memperbarui laporan: ' + error.message);
+    }
+    return data;
+  }
+
+  async deleteReport(reportId: string) {
+    const supabase = this.supabaseService.getClient();
+    const { error } = await supabase
+      .from('reports')
+      .delete()
+      .eq('id', reportId);
+
+    if (error) {
+      throw new BadRequestException('Gagal menghapus laporan: ' + error.message);
+    }
+    return { success: true, message: `Laporan dengan ID ${reportId} berhasil dihapus` };
+  }
 }

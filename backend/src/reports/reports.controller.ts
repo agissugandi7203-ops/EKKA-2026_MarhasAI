@@ -1,8 +1,11 @@
-import { Controller, Post, Req, Get, UseGuards, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Req, Get, Patch, Delete, Param, Body, UseGuards, UsePipes, ValidationPipe, BadRequestException } from '@nestjs/common';
 import { AuthGuard } from '../auth/auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
 import { GetUser } from '../auth/get-user.decorator';
 import { ReportsService } from './reports.service';
 import { FastifyRequest } from 'fastify';
+import { UpdateReportDto } from './dto/update-report.dto';
 
 @Controller('reports')
 @UseGuards(AuthGuard)
@@ -58,5 +61,25 @@ export class ReportsController {
   @Get()
   getReports() {
     return this.reportsService.getReports();
+  }
+
+  // --- Endpoint Khusus Admin ---
+
+  @Patch(':id')
+  @UseGuards(RolesGuard)
+  @Roles('admin')
+  @UsePipes(new ValidationPipe({ whitelist: true }))
+  updateReport(
+    @Param('id') reportId: string,
+    @Body() updateDto: UpdateReportDto,
+  ) {
+    return this.reportsService.updateReport(reportId, updateDto);
+  }
+
+  @Delete(':id')
+  @UseGuards(RolesGuard)
+  @Roles('admin')
+  deleteReport(@Param('id') reportId: string) {
+    return this.reportsService.deleteReport(reportId);
   }
 }
