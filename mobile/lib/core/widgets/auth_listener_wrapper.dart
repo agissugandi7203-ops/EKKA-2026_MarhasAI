@@ -81,7 +81,13 @@ class _AuthListenerWrapperState extends State<AuthListenerWrapper> {
       if (handled) return;
     }
 
-    final currentPath = GoRouterState.of(context).matchedLocation;
+    String? currentPath;
+    try {
+      currentPath = GoRouterState.of(context).matchedLocation;
+    } catch (_) {
+      // Di luar GoRouterState context (seperti pada fallback errorBuilder)
+    }
+
     if (state.needsOnboarding) {
       if (currentPath != Routes.setupWelcome) {
         context.goNamed(Routes.setupWelcomeName);
@@ -94,9 +100,15 @@ class _AuthListenerWrapperState extends State<AuthListenerWrapper> {
   }
 
   void _handleUnauthenticated(Unauthenticated state) {
-    final currentPath = GoRouterState.of(context).matchedLocation;
-    final bool isProtectedRoute = currentPath.startsWith('/setup') ||
-        currentPath.startsWith('/home');
+    String? currentPath;
+    try {
+      currentPath = GoRouterState.of(context).matchedLocation;
+    } catch (_) {
+      // Di luar GoRouterState context
+    }
+
+    final bool isProtectedRoute = currentPath != null &&
+        (currentPath.startsWith('/setup') || currentPath.startsWith('/home'));
     if (isProtectedRoute) {
       if (currentPath != Routes.login) {
         context.goNamed(Routes.loginName);

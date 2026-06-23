@@ -20,7 +20,6 @@ import '../../features/setup/presentation/pages/setup_notification_page.dart';
 import '../../features/setup/presentation/pages/setup_profile_page.dart';
 import '../../features/setup/presentation/pages/setup_welcome_page.dart';
 import '../../features/splash/presentation/pages/splash_page.dart';
-import '../theme/app_theme.dart';
 import '../widgets/auth_listener_wrapper.dart';
 import '../widgets/genesis_loading.dart';
 
@@ -49,25 +48,25 @@ class AppRouter {
         final location = state.uri.toString();
         debugPrint('GoRouter Error Location: $location');
         if (location.startsWith('genesis://')) {
-          return MaterialApp(
-            title: 'Genesis.id',
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.lightTheme,
-            home: const AuthListenerWrapper(
-              child: Scaffold(
-                body: Center(
-                  child: GenesisLoading(message: 'Menghubungkan akun...'),
+          return const Material(
+            child: Directionality(
+              textDirection: TextDirection.ltr,
+              child: AuthListenerWrapper(
+                child: Scaffold(
+                  body: Center(
+                    child: GenesisLoading(message: 'Menghubungkan akun...'),
+                  ),
                 ),
               ),
             ),
           );
         }
-        return MaterialApp(
-          title: 'Genesis.id',
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.lightTheme,
-          home: Scaffold(
-            body: Center(child: Text('Error: ${state.error}')),
+        return Material(
+          child: Directionality(
+            textDirection: TextDirection.ltr,
+            child: Scaffold(
+              body: Center(child: Text('Error: ${state.error}')),
+            ),
           ),
         );
       },
