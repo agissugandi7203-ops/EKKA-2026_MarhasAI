@@ -17,6 +17,12 @@ abstract class AuthRepository {
 
   Future<AuthResponse> signInWithGoogle();
 
+  Future<AuthResponse> signInWithFacebook();
+
+  Future<AuthResponse> signInWithGithub();
+
+  Future<void> signInWithMagicLink(String email);
+
   Future<void> signOut();
 
   User? getCurrentUser();
@@ -32,4 +38,7 @@ abstract class AuthRepository {
 
   /// Memperbarui password user yang sedang aktif.
   Future<UserResponse> updatePassword(String newPassword);
+
+  /// Mendengarkan perubahan status autentikasi secara real-time.
+  Stream<User?> get onAuthStateChanged;
 }

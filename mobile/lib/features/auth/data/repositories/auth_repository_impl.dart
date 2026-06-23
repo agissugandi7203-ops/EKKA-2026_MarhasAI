@@ -52,6 +52,33 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<AuthResponse> signInWithFacebook() async {
+    try {
+      return await _remoteDataSource.signInWithFacebook();
+    } catch (e, stack) {
+      throw ErrorHandler.handle(e, stack);
+    }
+  }
+
+  @override
+  Future<AuthResponse> signInWithGithub() async {
+    try {
+      return await _remoteDataSource.signInWithGithub();
+    } catch (e, stack) {
+      throw ErrorHandler.handle(e, stack);
+    }
+  }
+
+  @override
+  Future<void> signInWithMagicLink(String email) async {
+    try {
+      await _remoteDataSource.signInWithMagicLink(email);
+    } catch (e, stack) {
+      throw ErrorHandler.handle(e, stack);
+    }
+  }
+
+  @override
   Future<void> signOut() async {
     try {
       await _remoteDataSource.signOut();
@@ -95,4 +122,7 @@ class AuthRepositoryImpl implements AuthRepository {
       throw ErrorHandler.handle(e, stack);
     }
   }
+
+  @override
+  Stream<User?> get onAuthStateChanged => _remoteDataSource.onAuthStateChanged;
 }

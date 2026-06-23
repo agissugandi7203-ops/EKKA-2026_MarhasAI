@@ -194,6 +194,12 @@ class AuthException extends AppException {
         technicalMessage: detail,
       );
 
+  /// OAuth login dibatalkan oleh pengguna.
+  factory AuthException.cancelled() => const AuthException(
+        message: 'Autentikasi dibatalkan oleh pengguna.',
+        code: 'AUTH_CANCELLED',
+      );
+
   /// OTP salah atau expired.
   factory AuthException.invalidOtp() => const AuthException(
         message: 'Kode verifikasi salah atau sudah kadaluarsa.',

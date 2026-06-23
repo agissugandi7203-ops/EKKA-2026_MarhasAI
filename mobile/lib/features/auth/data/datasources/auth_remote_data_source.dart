@@ -1,6 +1,8 @@
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
+import '../../../../core/errors/app_exception.dart';
+
 /// Abstraksi data source autentikasi Supabase.
 ///
 /// Memisahkan pemanggilan SDK langsung dari logika bisnis (DIP).
@@ -18,6 +20,12 @@ abstract class AuthRemoteDataSource {
 
   Future<supabase.AuthResponse> signInWithGoogle();
 
+  Future<supabase.AuthResponse> signInWithFacebook();
+
+  Future<supabase.AuthResponse> signInWithGithub();
+
+  Future<void> signInWithMagicLink(String email);
+
   Future<void> signOut();
 
   supabase.User? getCurrentUser();
@@ -33,6 +41,9 @@ abstract class AuthRemoteDataSource {
 
   /// Memperbarui password user yang sedang aktif.
   Future<supabase.UserResponse> updatePassword(String newPassword);
+
+  /// Mendengarkan perubahan status autentikasi secara real-time.
+  Stream<supabase.User?> get onAuthStateChanged;
 }
 
 /// Implementasi [AuthRemoteDataSource] menggunakan Supabase SDK.
@@ -67,11 +78,12 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   Future<supabase.AuthResponse> signInWithGoogle() async {
     try {
       final GoogleSignIn googleSignIn = GoogleSignIn(
+        serverClientId: '12178843429-lktd01tj39831ok404qssp246n3vblpf.apps.googleusercontent.com',
         scopes: ['email'],
       );
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
       if (googleUser == null) {
-        throw Exception('Google Sign-In dibatalkan oleh pengguna.');
+        throw AuthException.cancelled();
       }
 
       final GoogleSignInAuthentication googleAuth =
@@ -89,8 +101,43 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         accessToken: accessToken,
       );
     } catch (e) {
+      if (e is AppException) rethrow;
       throw Exception('Proses Google Sign-In Gagal: ${e.toString()}');
     }
+  }
+
+  @override
+  Future<supabase.AuthResponse> signInWithFacebook() async {
+    final success = await _supabaseClient.auth.signInWithOAuth(
+      supabase.OAuthProvider.facebook,
+      redirectTo: 'genesis://login-callback',
+    );
+    if (!success) {
+      throw Exception('Gagal menginisialisasi Facebook Sign-In.');
+    }
+    // OAuth web redirect flow tidak mengembalikan AuthResponse instan.
+    // Session akan diperoleh setelah deep link callback ditangani.
+    return supabase.AuthResponse();
+  }
+
+  @override
+  Future<supabase.AuthResponse> signInWithGithub() async {
+    final success = await _supabaseClient.auth.signInWithOAuth(
+      supabase.OAuthProvider.github,
+      redirectTo: 'genesis://login-callback',
+    );
+    if (!success) {
+      throw Exception('Gagal menginisialisasi GitHub Sign-In.');
+    }
+    return supabase.AuthResponse();
+  }
+
+  @override
+  Future<void> signInWithMagicLink(String email) async {
+    await _supabaseClient.auth.signInWithOtp(
+      email: email,
+      emailRedirectTo: 'genesis://login-callback',
+    );
   }
 
   @override
@@ -126,4 +173,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       supabase.UserAttributes(password: newPassword),
     );
   }
+
+  @override
+  Stream<supabase.User?> get onAuthStateChanged =>
+      _supabaseClient.auth.onAuthStateChange.map((data) => data.session?.user);
 }

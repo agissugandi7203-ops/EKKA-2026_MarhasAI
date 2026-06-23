@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show User;
 
@@ -11,8 +13,8 @@ import 'auth_state.dart';
 /// BLoC autentikasi Genesis.id.
 ///
 /// Mengelola seluruh state autentikasi:
-/// - Sign In / Sign Up / Google Sign-In
-/// - Forgot Password → OTP → Reset Password
+/// - Sign In / Sign Up / Google Sign-In / Facebook & GitHub Sign-In
+/// - Forgot Password → OTP → Reset Password / Magic Link
 /// - Sign Out
 /// - Pengecekan status onboarding via [ProfileRepository]
 ///
@@ -23,6 +25,7 @@ import 'auth_state.dart';
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository _authRepository;
   final ProfileRepository _profileRepository;
+  StreamSubscription<User?>? _authStateSubscription;
 
   AuthBloc({
     required AuthRepository authRepository,
@@ -34,10 +37,20 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<SignInRequested>(_onSignInRequested);
     on<SignUpRequested>(_onSignUpRequested);
     on<GoogleSignInRequested>(_onGoogleSignInRequested);
+    on<FacebookSignInRequested>(_onFacebookSignInRequested);
+    on<GithubSignInRequested>(_onGithubSignInRequested);
+    on<MagicLinkSignInRequested>(_onMagicLinkSignInRequested);
+    on<AuthSessionChanged>(_onAuthSessionChanged);
     on<SignOutRequested>(_onSignOutRequested);
     on<ForgotPasswordRequested>(_onForgotPasswordRequested);
     on<VerifyOtpRequested>(_onVerifyOtpRequested);
     on<ResetPasswordRequested>(_onResetPasswordRequested);
+
+    // Langsung mendengarkan perubahan status autentikasi di tingkat data layer/SDK.
+    // Membantu menangani redirect OAuth (Google, Facebook, GitHub) dan Magic Link.
+    _authStateSubscription = _authRepository.onAuthStateChanged.listen((user) {
+      add(AuthSessionChanged(user));
+    });
   }
 
   // ══════════════════════════════════════════════════════════════════════
@@ -122,7 +135,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(const AuthFailure('Gagal sign in dengan Google.'));
       }
     } catch (e) {
-      emit(AuthFailure(_parseError(e)));
+      if (e is AppException && e.code == 'AUTH_CANCELLED') {
+        emit(Unauthenticated());
+      } else {
+        emit(AuthFailure(_parseError(e)));
+      }
     }
   }
 
@@ -195,6 +212,83 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     } catch (e) {
       emit(AuthFailure(_parseError(e)));
     }
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  // FACEBOOK SIGN-IN
+  // ══════════════════════════════════════════════════════════════════════
+
+  Future<void> _onFacebookSignInRequested(
+    FacebookSignInRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    try {
+      await _authRepository.signInWithFacebook();
+    } catch (e) {
+      emit(AuthFailure(_parseError(e)));
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  // GITHUB SIGN-IN
+  // ══════════════════════════════════════════════════════════════════════
+
+  Future<void> _onGithubSignInRequested(
+    GithubSignInRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    try {
+      await _authRepository.signInWithGithub();
+    } catch (e) {
+      emit(AuthFailure(_parseError(e)));
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  // MAGIC LINK SIGN-IN
+  // ══════════════════════════════════════════════════════════════════════
+
+  Future<void> _onMagicLinkSignInRequested(
+    MagicLinkSignInRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    try {
+      await _authRepository.signInWithMagicLink(event.email);
+      emit(MagicLinkSent(event.email));
+    } catch (e) {
+      emit(AuthFailure(_parseError(e)));
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  // AUTH SESSION CHANGED (STREAM LISTENER EFFECT)
+  // ══════════════════════════════════════════════════════════════════════
+
+  Future<void> _onAuthSessionChanged(
+    AuthSessionChanged event,
+    Emitter<AuthState> emit,
+  ) async {
+    final user = event.user;
+    if (user != null) {
+      final currentState = state;
+      if (currentState is! Authenticated || currentState.user.id != user.id) {
+        emit(AuthLoading());
+        emit(await _checkOnboardingStatus(user));
+      }
+    } else {
+      if (state is! Unauthenticated) {
+        emit(Unauthenticated());
+      }
+    }
+  }
+
+  @override
+  Future<void> close() {
+    _authStateSubscription?.cancel();
+    return super.close();
   }
 
   // ══════════════════════════════════════════════════════════════════════

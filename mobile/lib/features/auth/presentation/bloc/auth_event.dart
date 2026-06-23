@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show User;
 
 /// Events untuk [AuthBloc].
 ///
@@ -72,3 +73,30 @@ class ResetPasswordRequested extends AuthEvent {
   @override
   List<Object?> get props => [newPassword];
 }
+
+/// User meminta sign-in dengan Facebook OAuth.
+class FacebookSignInRequested extends AuthEvent {}
+
+/// User meminta sign-in dengan GitHub OAuth.
+class GithubSignInRequested extends AuthEvent {}
+
+/// User meminta sign-in dengan Magic Link (Email OTP link).
+class MagicLinkSignInRequested extends AuthEvent {
+  final String email;
+
+  const MagicLinkSignInRequested(this.email);
+
+  @override
+  List<Object?> get props => [email];
+}
+
+/// Event internal saat session auth Supabase berubah (misal redirect deep link sukses).
+class AuthSessionChanged extends AuthEvent {
+  final User? user;
+
+  const AuthSessionChanged(this.user);
+
+  @override
+  List<Object?> get props => [user];
+}
+

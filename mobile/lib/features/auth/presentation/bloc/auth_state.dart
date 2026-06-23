@@ -57,3 +57,14 @@ class OtpVerified extends AuthState {}
 
 /// Password baru berhasil disimpan.
 class PasswordResetSuccess extends AuthState {}
+
+/// Magic Link (OTP Email) berhasil dikirim.
+class MagicLinkSent extends AuthState {
+  final String email;
+
+  const MagicLinkSent(this.email);
+
+  @override
+  List<Object?> get props => [email];
+}
+
