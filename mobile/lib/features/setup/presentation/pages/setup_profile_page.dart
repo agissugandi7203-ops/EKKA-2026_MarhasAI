@@ -71,6 +71,7 @@ class _SetupProfilePageState extends State<SetupProfilePage> {
     return BlocBuilder<SetupCubit, SetupState>(
       builder: (context, setupState) {
         return Scaffold(
+          resizeToAvoidBottomInset: false,
           backgroundColor: AppColors.surface,
           body: SafeArea(
             child: SingleChildScrollView(

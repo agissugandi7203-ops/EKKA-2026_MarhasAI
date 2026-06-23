@@ -37,23 +37,30 @@ Modul autentikasi menangani seluruh alur masuk, pendaftaran, dan pemulihan passw
 - Input: Email + Password + Konfirmasi Password
 - Tombol: Daftar, Masuk dengan Google, Sudah punya akun
 - Validasi: password min 8 karakter, 1 huruf besar, 1 angka
+- Setelah pendaftaran sukses:
+  - Memancarkan `SignUpSuccess`.
+  - Menampilkan SnackBar informasi (durasi 15 detik) untuk meminta pengecekan **Folder SPAM** email (`emailRedirectTo` diatur ke `genesis://login-callback`).
+  - Mengarahkan kembali ke halaman Login (tidak boleh masuk instan tanpa konfirmasi email).
 
 ### C. Forgot Password Page (`/forgot-password`)
 - Input: Email
 - Tombol: Kirim Kode Verifikasi
-- Mengirim email reset via `supabase.auth.resetPasswordForEmail()`
+- Mengirim email reset via `supabase.auth.resetPasswordForEmail()` (dengan `redirectTo: 'genesis://login-callback'`).
+- Setelah sukses: Menampilkan SnackBar informasi cek **Folder SPAM** (durasi 15 detik) lalu navigasi ke halaman OTP.
 
 ### D. OTP Verification Page (`/otp-verification`)
-- Input: 6-digit PIN code
-- Auto-submit saat 6 digit terisi
-- Countdown timer 60 detik untuk kirim ulang
-- Verifikasi via `supabase.auth.verifyOTP(type: recovery)`
+- Input: 6-digit PIN code (OTP dari email).
+- Auto-submit saat 6 digit terisi, memverifikasi via `supabase.auth.verifyOTP(type: recovery)`.
+- Menyediakan Countdown timer 60 detik untuk kirim ulang kode.
+- **Spotlight Peringatan Spam**: Memuat banner info khusus di halaman OTP yang secara menonjol menyuruh user mengecek **Folder SPAM** karena domain aplikasi baru.
+- Dapat juga dipicu secara otomatis jika user mengklik tautan reset password di email (deep-link `passwordRecovery` event akan dideteksi oleh `AuthBloc` untuk memancarkan `OtpVerified` dan melompati input OTP langsung ke form ubah password).
 
 ### E. Reset Password Page (`/reset-password`)
-- Input: Password Baru + Konfirmasi
-- Tombol: Simpan Password Baru
-- Update via `supabase.auth.updateUser(password: ...)`
-- Setelah sukses → navigate ke Login
+- Input: Password Baru + Konfirmasi.
+- Tombol: Simpan Password Baru.
+- Update password via `supabase.auth.updateUser(password: ...)`.
+- Setelah sukses: `AuthBloc` akan langsung mengambil status onboarding pengguna dari `/profiles/me`. Jika pengguna membutuhkan onboarding, ia akan langsung diarahkan ke halaman Setup Wizard (`Routes.setupWelcomeName`), dan jika tidak membutuhkan onboarding, ia akan langsung diarahkan ke halaman Beranda (`Routes.homeName`). Hal ini menghindari proses sign out dan login ulang yang merepotkan.
+- **Pencegahan Keterpentalan Screen (Redirect Guard)**: Untuk mencegah user terpental kembali ke halaman login/welcome saat transisi perpindahan halaman ini, `AppRouter` secara khusus memperlakukan state `PasswordResetSuccess` sebagai state terautentikasi (`isAuthenticated`) di dalam redirect guard. Hal ini membuat transisi berjalan instan langsung menuju halaman target tanpa ada kedipan layar login atau welcome.
 
 ---
 
@@ -175,11 +182,11 @@ Secara default, Supabase membatasi pengiriman email maksimal **3 email per jam**
    *   **Password**: *App Password* khusus yang dibuat dari Google Account Settings (bukan password email biasa).
 
 ### C. Konfigurasi Redirect URL (Deep Linking)
-Saat pengguna melakukan klik pada link verifikasi email atau Magic Link di handphone, Supabase harus tahu ke mana ia harus mengarahkan kembali pengguna agar masuk ke dalam aplikasi Flutter:
+Saat pengguna melakukan klik pada link verifikasi email, Magic Link, atau tautan reset password di handphone, Supabase harus tahu ke mana ia harus mengarahkan kembali pengguna agar masuk ke dalam aplikasi Flutter:
 1. Navigasi ke **Authentication** -> **URL Configuration**.
 2. **Site URL**: `https://genesisHub.web.id` (Domain utama frontend Next.js).
 3. **Redirect URLs**: Tambahkan redirect URL untuk schema deep link Flutter Anda:
-   *   `genesis://reset-password` (Skema deep link untuk diarahkan kembali ke aplikasi Flutter setelah klik tautan email reset).
+   *   `genesis://login-callback` (Skema deep link terpusat untuk seluruh callback autentikasi aplikasi mobile).
    *   `https://genesisHub.web.id/reset-password` (Bila membuka web admin).
 
 ### D. Konfigurasi Keamanan & Durasi OTP
@@ -187,4 +194,22 @@ Saat pengguna melakukan klik pada link verifikasi email atau Magic Link di handp
 2. **Email OTP Expiry**: Set ke `600` detik (10 menit) agar masa aktif OTP tidak terlalu singkat.
 3. **Minimum Token Length**: Set ke `6` digit (Sesuai dengan `otp_verification_page.dart` yang menangani kode 6-angka).
 4. Klik **Save**.
+5. **Konfigurasi Reset Password Email Template**: Pada menu **Authentication** -> **Email Templates** -> **Reset Password**, pastikan isi email mengirimkan kode 6-angka (menggunakan variable `{{ .Token }}`) jika Anda menginginkan user menginput OTP secara manual, atau menggunakan `{{ .ConfirmationURL }}` yang mengarah to `genesis://login-callback` untuk deep-linking otomatis ke aplikasi.
+
+---
+
+## 9. Visual & UX Enhancements
+
+Untuk memberikan pengalaman pengguna yang sangat premium dan bebas kendala visual (anti-annoyance), kami menerapkan optimasi berikut:
+
+### A. Penanganan Keyboard & Posisi Tombol Aksi (Accept Button)
+*   **Masalah**: Tombol aksi utama (seperti "Confirm", "Create Account", "Selesai & Mulai!") terangkat naik mengikuti tinggi keyboard ketika user sedang memfokuskan kursor pada kolom input teks. Hal ini merusak estetika antarmuka iOS/premium.
+*   **Solusi**: Scaffolds pada seluruh halaman autentikasi (`LoginPage`, `SimpleSignInPage`, `SignUpPage`, `ForgotPasswordPage`, `OtpVerificationPage`, `ResetPasswordPage`) serta halaman wizard onboarding (`SetupProfilePage`) diatur dengan `resizeToAvoidBottomInset: false`. Hal ini menjaga posisi tombol tetap melekat rapi di bagian bawah layar tanpa ikut bergeser ke atas keyboard.
+
+### B. Pencegahan Pemotongan Pesan Validasi (Input Error Text Wrapping)
+*   **Masalah**: Pesan kesalahan validasi (seperti pemberitahuan aturan password harus mengandung huruf besar/angka) terpotong di ujung layar (cropped/truncated) karena pembatasan baris bawaan Flutter (`errorMaxLines` default bernilai 1).
+*   **Solusi**:
+    *   Mengatur properti `errorMaxLines: 5` secara terpusat pada `InputDecorationTheme` di dalam berkas [app_theme.dart](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/mobile/lib/core/theme/app_theme.dart).
+    *   Menerapkan batas toleransi pembungkusan `errorMaxLines: 5` di seluruh dekorasi input kustom (`_buildRoundedField` pada seluruh halaman auth dan `GenesisTextField` untuk profil). Ini menjamin pesan kesalahan yang panjang akan otomatis terbungkus (wrap) menjadi beberapa baris secara elegan dan memiliki pembatas margin yang konsisten dari tepi layar.
+
 

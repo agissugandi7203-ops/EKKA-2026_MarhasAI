@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' show User;
+import 'package:supabase_flutter/supabase_flutter.dart' show User, AuthChangeEvent;
 
 /// Events untuk [AuthBloc].
 ///
@@ -93,10 +93,11 @@ class MagicLinkSignInRequested extends AuthEvent {
 /// Event internal saat session auth Supabase berubah (misal redirect deep link sukses).
 class AuthSessionChanged extends AuthEvent {
   final User? user;
+  final AuthChangeEvent? event;
 
-  const AuthSessionChanged(this.user);
+  const AuthSessionChanged(this.user, [this.event]);
 
   @override
-  List<Object?> get props => [user];
+  List<Object?> get props => [user, event];
 }
 

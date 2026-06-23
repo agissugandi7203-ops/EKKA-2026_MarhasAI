@@ -54,6 +54,7 @@ class _SimpleSignInPageState extends State<SimpleSignInPage> {
   Widget build(BuildContext context) {
     return AuthListenerWrapper(
       child: Scaffold(
+        resizeToAvoidBottomInset: false,
         backgroundColor: AppColors.surface,
         body: SafeArea(
           child: Column(
@@ -213,6 +214,7 @@ class _SimpleSignInPageState extends State<SimpleSignInPage> {
                   )
                 : null,
             contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+            errorMaxLines: 5,
             filled: true,
             fillColor: Colors.white,
             border: OutlineInputBorder(

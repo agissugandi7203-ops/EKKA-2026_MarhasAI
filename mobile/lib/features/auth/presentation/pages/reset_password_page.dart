@@ -53,13 +53,18 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is PasswordResetSuccess) {
-          context.showSuccessSnackBar('Password berhasil diubah! Silakan masuk.');
-          context.goNamed(Routes.loginName);
+          context.showSuccessSnackBar('Password berhasil diubah!');
+          if (state.needsOnboarding) {
+            context.goNamed(Routes.setupWelcomeName);
+          } else {
+            context.goNamed(Routes.homeName);
+          }
         } else if (state is AuthFailure) {
           context.showErrorSnackBar(state.errorMessage);
         }
       },
       child: Scaffold(
+        resizeToAvoidBottomInset: false,
         backgroundColor: AppColors.surface,
         body: SafeArea(
           child: Column(
@@ -189,6 +194,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                   )
                 : null,
             contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+            errorMaxLines: 5,
             filled: true,
             fillColor: Colors.white,
             border: OutlineInputBorder(

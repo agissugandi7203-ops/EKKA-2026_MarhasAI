@@ -81,6 +81,19 @@ class _AuthListenerWrapperState extends State<AuthListenerWrapper> {
       if (handled) return;
     }
 
+    String? currentGlobalPath;
+    try {
+      currentGlobalPath = GoRouter.of(context).routerDelegate.currentConfiguration.uri.path;
+    } catch (_) {}
+
+    final bool isResetFlow = currentGlobalPath == Routes.otpVerification ||
+        currentGlobalPath == Routes.resetPassword;
+
+    if (isResetFlow) {
+      // Lewati pengalihan otomatis jika berada di alur reset password
+      return;
+    }
+
     String? currentPath;
     try {
       currentPath = GoRouterState.of(context).matchedLocation;
@@ -122,6 +135,14 @@ class _AuthListenerWrapperState extends State<AuthListenerWrapper> {
       listener: (context, state) {
         if (state is Authenticated) {
           _handleAuthenticated(state);
+        } else if (state is SignUpSuccess) {
+          context.showSuccessSnackBar(
+            'Registrasi berhasil! Silakan cek KOTAK MASUK atau FOLDER SPAM email Anda (${state.email}) untuk memverifikasi akun sebelum masuk.',
+            duration: const Duration(seconds: 15),
+          );
+          context.goNamed(Routes.loginName);
+        } else if (state is OtpVerified) {
+          context.goNamed(Routes.resetPasswordName);
         } else if (state is AuthFailure) {
           // Tampilkan error SnackBar dengan visual premium
           context.showErrorSnackBar(state.errorMessage);
@@ -129,7 +150,10 @@ class _AuthListenerWrapperState extends State<AuthListenerWrapper> {
           // Callback tambahan jika ada
           widget.onAuthFailure?.call(state.errorMessage);
         } else if (state is MagicLinkSent) {
-          context.showSuccessSnackBar('Link masuk telah dikirim ke ${state.email}!');
+          context.showSuccessSnackBar(
+            'Link masuk telah dikirim ke ${state.email}! Silakan periksa KOTAK MASUK atau FOLDER SPAM email Anda.',
+            duration: const Duration(seconds: 15),
+          );
         } else if (state is Unauthenticated) {
           _handleUnauthenticated(state);
         }

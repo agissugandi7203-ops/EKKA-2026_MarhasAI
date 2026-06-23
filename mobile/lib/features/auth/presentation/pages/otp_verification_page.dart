@@ -97,6 +97,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
         }
       },
       child: Scaffold(
+        resizeToAvoidBottomInset: false,
         backgroundColor: AppColors.surface,
         body: SafeArea(
           child: Column(
@@ -113,7 +114,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
                       // Header
                       AuthHeader(
                         title: 'Verification Code',
-                        subtitle: 'We have sent the OTP code to your email for the verification process.',
+                        subtitle: 'Kami telah mengirimkan kode OTP ke email Anda untuk proses verifikasi. Pastikan untuk memeriksa kotak masuk dan FOLDER SPAM email Anda.',
                         icon: Icons.mark_email_read_outlined,
                       ),
                       const SizedBox(height: AppConstants.spacing8),
@@ -126,7 +127,33 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      const SizedBox(height: AppConstants.spacing40),
+                      const SizedBox(height: AppConstants.spacing16),
+
+                      // Spotlight Warning Box
+                      Container(
+                        padding: const EdgeInsets.all(AppConstants.spacing16),
+                        decoration: BoxDecoration(
+                          color: AppColors.error.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppColors.error.withValues(alpha: 0.2)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 24),
+                            const SizedBox(width: AppConstants.spacing12),
+                            Expanded(
+                              child: Text(
+                                'PENTING: Karena domain kami masih baru, email verifikasi/OTP mungkin masuk ke folder SPAM. Silakan periksa folder spam Anda.',
+                                style: AppTextStyles.bodySmall.copyWith(
+                                  color: AppColors.error,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: AppConstants.spacing24),
 
                       // PIN Input (Spacious & Rounded boxes)
                       BlocBuilder<AuthBloc, AuthState>(

@@ -48,6 +48,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is PasswordResetEmailSent) {
+          context.showSuccessSnackBar(
+            'Kode verifikasi telah dikirim ke ${state.email}. Pastikan untuk mengecek KOTAK MASUK atau FOLDER SPAM email Anda!',
+            duration: const Duration(seconds: 15),
+          );
           context.pushNamed(
             Routes.otpVerificationName,
             extra: state.email,
@@ -57,6 +61,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         }
       },
       child: Scaffold(
+        resizeToAvoidBottomInset: false,
         backgroundColor: AppColors.surface,
         body: SafeArea(
           child: Column(
@@ -150,6 +155,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
             hintText: hint,
             prefixIcon: prefixIcon != null ? Icon(prefixIcon, color: AppColors.textSecondary) : null,
             contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+            errorMaxLines: 5,
             filled: true,
             fillColor: Colors.white,
             border: OutlineInputBorder(

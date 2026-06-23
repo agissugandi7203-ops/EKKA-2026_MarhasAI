@@ -41,4 +41,7 @@ abstract class AuthRepository {
 
   /// Mendengarkan perubahan status autentikasi secara real-time.
   Stream<User?> get onAuthStateChanged;
+
+  /// Mendengarkan status autentikasi dengan event tipe detail dari Supabase.
+  Stream<AuthState> get onSupabaseAuthStateChanged;
 }

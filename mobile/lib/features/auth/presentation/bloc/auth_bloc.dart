@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' show User;
+import 'package:supabase_flutter/supabase_flutter.dart' show User, AuthChangeEvent;
 
 import '../../../../core/errors/app_exception.dart';
 import '../../../../core/errors/error_handler.dart';
@@ -25,7 +25,7 @@ import 'auth_state.dart';
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository _authRepository;
   final ProfileRepository _profileRepository;
-  StreamSubscription<User?>? _authStateSubscription;
+  StreamSubscription? _authStateSubscription;
 
   AuthBloc({
     required AuthRepository authRepository,
@@ -48,8 +48,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     // Langsung mendengarkan perubahan status autentikasi di tingkat data layer/SDK.
     // Membantu menangani redirect OAuth (Google, Facebook, GitHub) dan Magic Link.
-    _authStateSubscription = _authRepository.onAuthStateChanged.listen((user) {
-      add(AuthSessionChanged(user));
+    _authStateSubscription = _authRepository.onSupabaseAuthStateChanged.listen((data) {
+      add(AuthSessionChanged(data.session?.user, data.event));
     });
   }
 
@@ -109,7 +109,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         password: event.password,
       );
       if (response.user != null) {
-        emit(await _checkOnboardingStatus(response.user!));
+        if (response.session != null) {
+          emit(await _checkOnboardingStatus(response.user!));
+        } else {
+          // Pendaftaran berhasil, tetapi membutuhkan konfirmasi email (session is null)
+          emit(SignUpSuccess(event.email));
+        }
       } else {
         emit(const AuthFailure('Gagal melakukan registrasi.'));
       }
@@ -208,7 +213,19 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
     try {
       await _authRepository.updatePassword(event.newPassword);
-      emit(PasswordResetSuccess());
+      final currentUser = _authRepository.getCurrentUser();
+      if (currentUser != null) {
+        try {
+          final profile = await _profileRepository.getMyProfile();
+          final bool needsOnboarding =
+              profile.cityOrDistrict == null || profile.cityOrDistrict!.isEmpty;
+          emit(PasswordResetSuccess(needsOnboarding: needsOnboarding));
+        } catch (_) {
+          emit(const PasswordResetSuccess(needsOnboarding: true));
+        }
+      } else {
+        emit(const PasswordResetSuccess(needsOnboarding: true));
+      }
     } catch (e) {
       emit(AuthFailure(_parseError(e)));
     }
@@ -272,6 +289,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     final user = event.user;
+    final changeEvent = event.event;
+
+    if (changeEvent == AuthChangeEvent.passwordRecovery) {
+      emit(OtpVerified());
+      return;
+    }
+
     if (user != null) {
       final currentState = state;
       if (currentState is! Authenticated || currentState.user.id != user.id) {

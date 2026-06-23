@@ -220,7 +220,7 @@ class AppRouter {
     // Biarkan splash screen berjalan tanpa guard — ia punya logika navigasi sendiri.
     if (currentPath == Routes.splash) return null;
 
-    final bool isAuthenticated = authState is Authenticated;
+    final bool isAuthenticated = authState is Authenticated || authState is PasswordResetSuccess;
     final bool isOnPublicRoute = _publicRoutes.contains(currentPath);
     final bool isOnProtectedRoute = _protectedRoutes.contains(currentPath);
 
@@ -230,14 +230,17 @@ class AppRouter {
     }
 
     // Jika user sudah login dan masih di halaman login/signup → redirect berdasarkan onboarding.
-    if (authState is Authenticated && isOnPublicRoute) {
+    if (isAuthenticated && isOnPublicRoute) {
       // Kecuali halaman yang memang perlu diakses saat flow reset password
       final bool isResetFlow = currentPath == Routes.forgotPassword ||
           currentPath == Routes.otpVerification ||
           currentPath == Routes.resetPassword;
 
       if (!isResetFlow) {
-        return authState.needsOnboarding ? Routes.setupWelcome : Routes.home;
+        final bool needsOnboarding = authState is Authenticated
+            ? authState.needsOnboarding
+            : (authState as PasswordResetSuccess).needsOnboarding;
+        return needsOnboarding ? Routes.setupWelcome : Routes.home;
       }
     }
 

@@ -44,6 +44,9 @@ abstract class AuthRemoteDataSource {
 
   /// Mendengarkan perubahan status autentikasi secara real-time.
   Stream<supabase.User?> get onAuthStateChanged;
+
+  /// Mendengarkan status autentikasi dengan event tipe detail dari Supabase.
+  Stream<supabase.AuthState> get onSupabaseAuthStateChanged;
 }
 
 /// Implementasi [AuthRemoteDataSource] menggunakan Supabase SDK.
@@ -60,6 +63,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     return await _supabaseClient.auth.signUp(
       email: email,
       password: password,
+      emailRedirectTo: 'genesis://login-callback',
     );
   }
 
@@ -152,7 +156,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<void> resetPasswordForEmail(String email) async {
-    await _supabaseClient.auth.resetPasswordForEmail(email);
+    await _supabaseClient.auth.resetPasswordForEmail(
+      email,
+      redirectTo: 'genesis://login-callback',
+    );
   }
 
   @override
@@ -177,4 +184,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Stream<supabase.User?> get onAuthStateChanged =>
       _supabaseClient.auth.onAuthStateChange.map((data) => data.session?.user);
+
+  @override
+  Stream<supabase.AuthState> get onSupabaseAuthStateChanged =>
+      _supabaseClient.auth.onAuthStateChange;
 }

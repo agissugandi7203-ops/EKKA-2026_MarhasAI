@@ -122,6 +122,7 @@ abstract final class AppTheme {
           horizontal: 16,
           vertical: 16,
         ),
+        errorMaxLines: 5,
         hintStyle: AppTextStyles.bodyMedium.copyWith(
           color: AppColors.textDisabled,
         ),

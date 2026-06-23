@@ -56,7 +56,14 @@ class PasswordResetEmailSent extends AuthState {
 class OtpVerified extends AuthState {}
 
 /// Password baru berhasil disimpan.
-class PasswordResetSuccess extends AuthState {}
+class PasswordResetSuccess extends AuthState {
+  final bool needsOnboarding;
+
+  const PasswordResetSuccess({required this.needsOnboarding});
+
+  @override
+  List<Object?> get props => [needsOnboarding];
+}
 
 /// Magic Link (OTP Email) berhasil dikirim.
 class MagicLinkSent extends AuthState {
@@ -67,4 +74,15 @@ class MagicLinkSent extends AuthState {
   @override
   List<Object?> get props => [email];
 }
+
+/// Pendaftaran akun berhasil, membutuhkan konfirmasi email.
+class SignUpSuccess extends AuthState {
+  final String email;
+
+  const SignUpSuccess(this.email);
+
+  @override
+  List<Object?> get props => [email];
+}
+
 

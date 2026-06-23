@@ -125,4 +125,8 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Stream<User?> get onAuthStateChanged => _remoteDataSource.onAuthStateChanged;
+
+  @override
+  Stream<AuthState> get onSupabaseAuthStateChanged =>
+      _remoteDataSource.onSupabaseAuthStateChanged;
 }

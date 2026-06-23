@@ -109,6 +109,7 @@ class _LoginPageState extends State<LoginPage> {
                         hintText: 'contoh@email.com',
                         prefixIcon: const Icon(Icons.email_outlined, size: 22, color: AppColors.textSecondary),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+                        errorMaxLines: 5,
                         filled: true,
                         fillColor: Colors.white.withValues(alpha: 0.8),
                         border: OutlineInputBorder(
@@ -183,6 +184,7 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return AuthListenerWrapper(
       child: Scaffold(
+        resizeToAvoidBottomInset: false,
         backgroundColor: AppColors.surface,
         body: SafeArea(
           child: Column(
