@@ -99,3 +99,26 @@ Proyek ini dikonfigurasi untuk siap dideploy secara mandiri ke Google Cloud Run 
 1. **Backend (NestJS)**: Berkas Dockerfile multi-stage memisahkan devDependencies untuk menjaga ukuran kontainer agar cold-start cepat. Mengikat port dinamis `PORT` Cloud Run (default: 8080) pada IP `0.0.0.0`.
 2. **Frontend (Next.js)**: Memanfaatkan mode `output: "standalone"` di konfigurasi Next.js untuk menyalin hasil optimal file tracing tanpa direktori `node_modules` besar. Citra yang dihasilkan sangat ringan (~100 MB) dan dijalankan dengan user non-root `nextjs` demi keamanan.
 
+---
+
+## 6. Roadmap & Rencana Fitur Masa Depan
+
+Berdasarkan kesiapan sistem saat ini (Fondasi Backend, Mobile Network/BLoC, dan SEO telah siap), berikut adalah usulan rencana pengerjaan fitur selanjutnya untuk mencapai level produksi:
+
+### A. Fitur 6: Sistem Notifikasi Real-time (FCM & Realtime DB)
+*   **Alasan**: Warga perlu tahu kapan status laporan mereka berubah (Disetujui oleh AI, Ditolak, atau Selesai Ditangani Dinas) dan kapan mereka mendapatkan lencana baru tanpa harus me-refresh aplikasi.
+*   **Teknis**: Integrasi Firebase Admin SDK di NestJS untuk pengiriman Push Notifications (FCM) dan Supabase Realtime Channel untuk pembaruan instan in-app.
+
+### B. Fitur 7: Integrasi UI Dashboard Admin (Next.js Frontend)
+*   **Alasan**: Kita sudah membangun seluruh endpoint administrasi di NestJS (`/reports`, `/badges/award`, `/knowledge-base`), kini saatnya mengintegrasikan antarmuka visual admin di Next.js.
+*   **Teknis**: Pembuatan halaman visualisasi analitik laporan (berbasis Tremor/Recharts), panel peninjauan manual laporan (`pending_human`), manajemen catalog lencana, serta modul pengeditan regulasi RAG (`knowledge_base`).
+
+### C. Fitur 8: Sistem Penugasan Dinas & GIS Map Interaktif (Spatial GIS)
+*   **Alasan**: Laporan spasial dari warga perlu ditindaklanjuti secara taktis. Dibutuhkan peta interaktif yang memetakan tumpukan sampah dan kerusakan lingkungan secara kewilayahan untuk dinas kebersihan kota.
+*   **Teknis**: Integrasi Leaflet/Google Maps di Next.js dan Flutter Map menggunakan koordinat GeoJSON `Point(lng, lat)` dari data spasial PostGIS Supabase.
+
+### D. Fitur 9: Toko Rewards & Penukaran Poin Gamifikasi (E-Voucher)
+*   **Alasan**: Untuk meningkatkan retensi warga dalam melapor, Level dan XP yang didapatkan harus bisa ditukarkan dengan hadiah nyata (seperti tiket bus kota, e-voucher, dsb.).
+*   **Teknis**: Tabel catalog `rewards` dan pencatatan transaksi penukaran `user_redemptions` dengan validasi kuota voucher di backend.
+
+
