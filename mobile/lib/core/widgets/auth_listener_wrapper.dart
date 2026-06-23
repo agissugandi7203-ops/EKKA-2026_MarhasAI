@@ -70,6 +70,8 @@ class AuthListenerWrapper extends StatelessWidget {
 
           // Callback tambahan jika ada
           onAuthFailure?.call(state.errorMessage);
+        } else if (state is MagicLinkSent) {
+          context.showSuccessSnackBar('Link masuk telah dikirim ke ${state.email}!');
         } else if (state is Unauthenticated) {
           // Jika user logout, arahkan ke login
           // Hanya redirect jika bukan di halaman publik

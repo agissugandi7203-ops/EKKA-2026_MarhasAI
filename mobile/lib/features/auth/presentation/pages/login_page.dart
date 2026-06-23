@@ -164,7 +164,7 @@ class _LoginPageState extends State<LoginPage> {
                             final email = emailController.text.trim();
                             Navigator.pop(context);
                             if (email.isNotEmpty) {
-                              this.context.showSuccessSnackBar('Link masuk telah dikirim ke $email!');
+                              this.context.read<AuthBloc>().add(MagicLinkSignInRequested(email));
                             }
                           },
                         ),
@@ -231,7 +231,7 @@ class _LoginPageState extends State<LoginPage> {
                           width: 24,
                           height: 24,
                         ),
-                        onPressed: () => _showFeatureMock('Facebook'),
+                        onPressed: () => context.read<AuthBloc>().add(FacebookSignInRequested()),
                       ),
                       const SizedBox(height: AppConstants.spacing12),
 
@@ -245,7 +245,7 @@ class _LoginPageState extends State<LoginPage> {
                           width: 24,
                           height: 24,
                         ),
-                        onPressed: () => _showFeatureMock('GitHub'),
+                        onPressed: () => context.read<AuthBloc>().add(GithubSignInRequested()),
                       ),
                       const SizedBox(height: AppConstants.spacing12),
 
