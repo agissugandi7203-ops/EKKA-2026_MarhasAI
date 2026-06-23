@@ -12,7 +12,6 @@ import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/auth_listener_wrapper.dart';
-import '../../../../core/widgets/genesis_error_widget.dart';
 import '../../../../core/widgets/ios_button.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
@@ -37,9 +36,6 @@ class _LoginPageState extends State<LoginPage> {
     context.read<AuthBloc>().add(GoogleSignInRequested());
   }
 
-  void _showFeatureMock(String provider) {
-    context.showInfoSnackBar('Login dengan $provider segera hadir!');
-  }
 
   void _showMagicLinkDialog() {
     final emailController = TextEditingController();

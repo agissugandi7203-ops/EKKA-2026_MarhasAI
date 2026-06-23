@@ -20,6 +20,7 @@ import '../../features/setup/presentation/pages/setup_notification_page.dart';
 import '../../features/setup/presentation/pages/setup_profile_page.dart';
 import '../../features/setup/presentation/pages/setup_welcome_page.dart';
 import '../../features/splash/presentation/pages/splash_page.dart';
+import '../widgets/genesis_loading.dart';
 
 /// Router terpusat Genesis.id menggunakan GoRouter.
 ///
@@ -105,6 +106,24 @@ class AppRouter {
         name: Routes.resetPasswordName,
         builder: (context, state) => const ResetPasswordPage(),
       ),
+      GoRoute(
+        path: Routes.loginCallback,
+        name: Routes.loginCallbackName,
+        builder: (context, state) => const Scaffold(
+          body: Center(
+            child: GenesisLoading(message: 'Menghubungkan akun...'),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: Routes.loginCallbackSlash,
+        name: Routes.loginCallbackSlashName,
+        builder: (context, state) => const Scaffold(
+          body: Center(
+            child: GenesisLoading(message: 'Menghubungkan akun...'),
+          ),
+        ),
+      ),
 
       // ── Post-Login Setup ──
       // ShellRoute menyediakan SetupCubit lokal hanya selama 4 halaman setup.
@@ -164,6 +183,8 @@ class AppRouter {
     Routes.forgotPassword,
     Routes.otpVerification,
     Routes.resetPassword,
+    Routes.loginCallback,
+    Routes.loginCallbackSlash,
   };
 
   /// Route yang hanya boleh diakses setelah autentikasi.
@@ -243,6 +264,12 @@ abstract final class Routes {
 
   static const String resetPassword = '/reset-password';
   static const String resetPasswordName = 'resetPassword';
+
+  static const String loginCallback = '/login-callback';
+  static const String loginCallbackName = 'loginCallback';
+
+  static const String loginCallbackSlash = '/login-callback/';
+  static const String loginCallbackSlashName = 'loginCallbackSlash';
 
   // ── Post-Login Setup ──
   static const String setupWelcome = '/setup/welcome';
