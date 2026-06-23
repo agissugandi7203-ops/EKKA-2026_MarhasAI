@@ -12,6 +12,7 @@ import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/auth_listener_wrapper.dart';
+import '../../../../core/widgets/genesis_error_widget.dart';
 import '../../../../core/widgets/ios_button.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
@@ -37,13 +38,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _showFeatureMock(String provider) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Login dengan $provider segera hadir!'),
-        backgroundColor: AppColors.navy700,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    context.showInfoSnackBar('Login dengan $provider segera hadir!');
   }
 
   void _showMagicLinkDialog() {
@@ -169,13 +164,7 @@ class _LoginPageState extends State<LoginPage> {
                             final email = emailController.text.trim();
                             Navigator.pop(context);
                             if (email.isNotEmpty) {
-                              ScaffoldMessenger.of(this.context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Link masuk telah dikirim ke $email!'),
-                                  backgroundColor: AppColors.emerald,
-                                  behavior: SnackBarBehavior.floating,
-                                ),
-                              );
+                              this.context.showSuccessSnackBar('Link masuk telah dikirim ke $email!');
                             }
                           },
                         ),
