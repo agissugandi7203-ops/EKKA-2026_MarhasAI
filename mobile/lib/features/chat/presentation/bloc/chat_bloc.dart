@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
-import '../../../../core/errors/app_exception.dart';
 import '../../../../core/errors/error_handler.dart';
 import '../../data/datasources/chat_remote_data_source.dart';
 import '../../data/models/chat_message_model.dart';

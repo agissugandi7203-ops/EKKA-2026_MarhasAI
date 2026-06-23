@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 import 'app_exception.dart';
 
@@ -36,6 +37,7 @@ abstract final class ErrorHandler {
   /// - [DioException] → [NetworkException] atau [ServerException]
   /// - [SocketException] → [NetworkException.noInternet]
   /// - [AppException] → diteruskan apa adanya (sudah terformat)
+  /// - [supabase.AuthException] → [AuthException] terpetakan
   /// - [Exception] umum → [UnexpectedException]
   static AppException handle(Object error, [StackTrace? stack]) {
     // Log error untuk debugging (hanya di debug mode)
@@ -43,6 +45,9 @@ abstract final class ErrorHandler {
 
     // Jika sudah AppException, kembalikan langsung
     if (error is AppException) return error;
+
+    // Supabase AuthException
+    if (error is supabase.AuthException) return _handleSupabaseAuthException(error);
 
     // Dio network/server errors
     if (error is DioException) return _handleDioException(error);
@@ -208,5 +213,34 @@ abstract final class ErrorHandler {
       }
       debugPrint('╚══════════════════════════════════════════');
     }
+  }
+
+  /// Mengkonversi [supabase.AuthException] ke [AppException] ramah pengguna.
+  static AppException _handleSupabaseAuthException(supabase.AuthException error) {
+    final message = error.message.toLowerCase();
+    
+    // Pemetaan pesan error umum dari Supabase Auth
+    if (message.contains('invalid login credentials') || message.contains('invalid credentials')) {
+      return AuthException.invalidCredentials();
+    }
+    if (message.contains('email already registered') || message.contains('user already exists') || message.contains('email_exists')) {
+      return AuthException.emailAlreadyExists();
+    }
+    if (message.contains('email not confirmed') || message.contains('email_not_confirmed')) {
+      return AuthException.emailNotVerified();
+    }
+    if (message.contains('otp expired') || message.contains('invalid token') || message.contains('token expired') || message.contains('sms otp')) {
+      return AuthException.invalidOtp();
+    }
+    if (message.contains('too many requests') || message.contains('rate limit')) {
+      return ServerException.tooManyRequests();
+    }
+
+    // Default fallback untuk error Supabase Auth lainnya
+    return AuthException(
+      message: error.message,
+      code: 'AUTH_SUPABASE_${error.statusCode ?? error.code ?? 'ERROR'}',
+      technicalMessage: error.toString(),
+    );
   }
 }

@@ -10,8 +10,8 @@ Kode harus diletakkan berdasarkan modul fitur di bawah folder `lib/features/`, d
 
 1.  **Data Layer (`data/`)**:
     *   **`datasources/`**: Hanya menangani request jaringan (pemanggilan API NestJS via Dio atau Supabase SDK).
-    *   **`models/`**: Representasi data JSON. Semua properti harus dideklarasikan sebagai `final` (immutable) dan menyertakan constructor `fromJson()` / `toJson()`.
-    *   **`repositories/`**: Implementasi konkret dari kontrak interface repositori di domain layer.
+    *   **`models/`**: Representasi data JSON. Semua properti harus dideklarasikan sebagai `final` (immutable) dan menyertakan constructor `fromJson()` / `toJson()`. Field nullable harus memiliki fallback value (contoh: `createdAt ?? ''`).
+    *   **`repositories/`**: Implementasi konkret dari kontrak interface repositori di domain layer. **WAJIB** membungkus semua operasi dengan `try-catch` + `ErrorHandler.handle()` untuk mengkonversi error mentah ke `AppException`.
 2.  **Domain Layer (`domain/`)**:
     *   **`repositories/`**: Interface kontrak data murni. Lapisan ini tidak boleh bergantung pada library HTTP (Dio), database (Supabase), atau framework UI.
     *   **`entities/`**: Objek bisnis inti (jika diperlukan untuk abstraksi model).
@@ -57,9 +57,12 @@ Kode harus diletakkan berdasarkan modul fitur di bawah folder `lib/features/`, d
 
 ### B. Widget Reusable
 *   Gunakan `GenesisButton` untuk semua tombol (3 varian: primary, secondary, text).
+*   Gunakan `IosButton` untuk tombol iOS-style edge-to-edge (login page, bottom actions).
 *   Gunakan `GenesisTextField` untuk semua input form (sudah include password toggle).
 *   Gunakan `GenesisLoading` untuk loading indicator.
 *   Gunakan `GenesisScaffold` untuk scaffold dengan SafeArea dan gradient otomatis.
+*   Gunakan `GenesisErrorWidget` untuk fullscreen error (offline, server down, empty state). Factory constructors: `.fromException()`, `.offline()`, `.serverDown()`, `.empty()`.
+*   Gunakan `AuthListenerWrapper` untuk membungkus halaman auth — menggantikan pola `BlocListener<AuthBloc, AuthState>` duplikat. Mendukung callback opsional `onAuthenticated` dan `onAuthFailure`.
 *   Jangan membuat widget ad-hoc yang duplikasi fungsi widget di atas.
 
 ### C. Pemisahan Logika UI
@@ -82,7 +85,45 @@ Kode harus diletakkan berdasarkan modul fitur di bawah folder `lib/features/`, d
 
 ---
 
-## 7. Ceklis Sebelum Melakukan Commit / Push
+## 7. Aturan Error Handling & Notifikasi UI
+
+### A. Penanganan Error Berlapis
+*   **Repository**: Semua operasi async di `try-catch` + `ErrorHandler.handle()` → throw `AppException`.
+*   **BLoC**: Tangkap `AppException` dan emit state dengan pesan user-friendly dari `exception.message`.
+*   **Jangan** catch kosong (`catch (e) {}`) — ini dilarang keras.
+
+### B. Notifikasi Error/Sukses ke User (GenesisSnackBar)
+*   **JANGAN** menggunakan `ScaffoldMessenger.of(context).showSnackBar(SnackBar(...))` secara manual.
+*   Gunakan **GenesisSnackBar extension** dari `genesis_error_widget.dart`:
+    *   `context.showErrorSnackBar(msg)` — Merah, ikon error ❌
+    *   `context.showSuccessSnackBar(msg)` — Hijau emerald, ikon check ✅
+    *   `context.showWarningSnackBar(msg)` — Kuning warning, ikon warning ⚠️
+    *   `context.showInfoSnackBar(msg)` — Navy blue, ikon info ℹ️
+*   Semua SnackBar: floating, rounded, auto-dismiss 3 detik, swipe horizontal to dismiss.
+
+### C. Auth State Listener
+*   Gunakan `AuthListenerWrapper` (bukan inline `BlocListener`) untuk mendengarkan `Authenticated`, `Unauthenticated`, dan `AuthFailure` state.
+*   Halaman yang sudah menggunakan: `LoginPage`, `SimpleSignInPage`, `SignUpPage`, `PreOnboardingPage`, `HomePage`.
+
+---
+
+## 8. Aturan Memory Safety
+
+*   **TextEditingController**: Selalu di-dispose di `dispose()` lifecycle. Untuk dialog, dispose via `.then()` callback setelah dialog ditutup.
+*   **Cubit/BLoC Scoping**: Scope ke `ShellRoute` lokal jika lifecycle terbatas (contoh: `SetupCubit` hanya aktif selama 4 halaman setup wizard, di-dispose otomatis setelah onboarding selesai).
+*   **StreamSubscription**: Selalu cancel di `close()` atau `dispose()`. Gunakan `StreamSubscription?` nullable dan null check.
+
+---
+
+## 9. Aturan Import
+
+*   **Relative Imports**: Gunakan path relatif (`../`, `../../`) untuk import internal. **JANGAN** gunakan `package:mobile/...`.
+*   **Dart Format**: Urutkan import secara alfabet per group (dart:, package:, relative).
+*   **Unused Imports**: `flutter analyze` harus bersih tanpa warning unused import.
+
+---
+
+## 10. Ceklis Sebelum Melakukan Commit / Push
 Sebelum mengunggah kode ke GitHub, jalankan perintah berikut di direktori `mobile/`:
 1.  `dart format .` → Merapikan format kode Dart.
 2.  `flutter analyze` → Memastikan tidak ada warning, lints, atau error kode statis.

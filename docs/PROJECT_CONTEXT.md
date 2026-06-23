@@ -61,19 +61,23 @@ Dokumentasi teknis untuk setiap fitur disimpan secara terpisah di folder `docs/f
   mobile/lib/
   ├── core/
   │   ├── config/         # Supabase credentials
-  │   ├── constants/      # Spacing, radius, durasi, form rules
+  │   ├── constants/      # Spacing, radius, durasi, form rules, SVG icons
+  │   ├── errors/         # [NEW] Penanganan error terpusat
+  │   │   ├── app_exception.dart   # Hierarki sealed class AppException
+  │   │   └── error_handler.dart   # Mapper: DioException → AppException
   │   ├── network/        # DioClient + JWT interceptor
-  │   ├── router/         # GoRouter + Routes constants
+  │   ├── router/         # GoRouter + Routes constants + redirect guard
   │   ├── theme/          # AppColors, AppTextStyles, AppTheme, AppDecorations
-  │   ├── utils/          # Validators, extensions
-  │   └── widgets/        # GenesisButton, GenesisTextField, GenesisLoading
+  │   ├── utils/          # Validators, extensions (GenesisSnackBar)
+  │   └── widgets/        # GenesisButton, GenesisTextField, GenesisLoading,
+  │                       # GenesisErrorWidget, AuthListenerWrapper, IosButton
   └── features/
       ├── splash/         # Splash screen animasi (3 detik)
-      ├── introduction/   # 3-screen intro (Lapor, Gamifikasi, Kota)
+      ├── introduction/   # Pre-onboarding + 3-screen intro (swipeable)
       ├── auth/           # Login, Sign Up, Forgot PW, OTP, Reset PW
       │   ├── data/       # DataSource (Supabase Auth SDK) & Repository
       │   ├── domain/     # Repository interface (DIP)
-      │   └── presentation/# AuthBloc, 5 pages, 3 shared widgets
+      │   └── presentation/# AuthBloc, 5 pages, AuthListenerWrapper
       ├── setup/          # Post-login wizard (Welcome, Lokasi, Notif, Profil)
       ├── home/           # Beranda utama
       ├── profile/        # Profil user, streak, & badges

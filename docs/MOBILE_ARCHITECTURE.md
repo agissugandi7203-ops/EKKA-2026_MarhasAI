@@ -15,6 +15,9 @@ mobile/lib/
 │   │   └── supabase_config.dart
 │   ├── constants/           # Konstanta global (spacing, radius, durasi)
 │   │   └── app_constants.dart
+│   ├── errors/              # [NEW] Penanganan error terpusat
+│   │   ├── app_exception.dart     # Sealed class hierarki (Network, Server, Auth, Device, Unexpected)
+│   │   └── error_handler.dart     # Mapper: DioException/SocketException → AppException
 │   ├── network/             # Koneksi HTTP kustom (Dio Client)
 │   │   └── dio_client.dart
 │   ├── router/              # Navigasi terpusat (GoRouter + redirect guard)
@@ -26,12 +29,15 @@ mobile/lib/
 │   │   └── app_decorations.dart  # BoxDecoration, shadow, gradient presets
 │   ├── utils/               # Utilitas global
 │   │   ├── validators.dart       # Form validators (email, password, username)
-│   │   └── extensions.dart       # Dart extensions (context, string)
+│   │   └── extensions.dart       # Dart extensions (context snackbar, string)
 │   └── widgets/             # Widget reusable bermerek
 │       ├── genesis_button.dart       # Tombol utama (primary, secondary, text)
 │       ├── genesis_text_field.dart   # Input field (password toggle, validasi)
 │       ├── genesis_loading.dart      # Loading indicator
-│       └── genesis_scaffold.dart     # Scaffold wrapper (SafeArea, gradient)
+│       ├── genesis_scaffold.dart     # Scaffold wrapper (SafeArea, gradient)
+│       ├── genesis_error_widget.dart # [NEW] Fullscreen error + GenesisSnackBar extension
+│       ├── auth_listener_wrapper.dart# [NEW] Centralized BlocListener untuk auth state
+│       └── ios_button.dart          # iOS-style edge-to-edge button
 └── features/
     ├── splash/              # Splash screen animasi
     │   └── presentation/
@@ -88,13 +94,7 @@ mobile/lib/
     │   │   ├── models/
     │   │   └── repositories/
     │   └── domain/repositories/
-    └── reports/             # Pelaporan spasial & upload data layer
-        ├── data/
-        │   ├── datasources/report_remote_data_source.dart
-        │   ├── models/report_model.dart & upload_report_response.dart
-        │   └── repositories/report_repository_impl.dart
-        ├── domain/repositories/
-        └── presentation/bloc/
+    └── chat/           # Chatbot AI RAG warga (data source, model, BLoC)
 ```
 
 ### Struktur Aset
@@ -201,6 +201,80 @@ All pemanggilan API kustom ke NestJS dialirkan melalui **DioClient** ([dio_clien
 
 ---
 
+## 4.5. Penanganan Error Terpusat (Error Handling Architecture)
+
+Aplikasi Genesis.id menerapkan penanganan error berlapis (multi-layer) agar setiap jenis kegagalan ditangani secara konsisten dan ramah pengguna.
+
+### A. Global Error Catcher (`main.dart`)
+Tiga lapisan perlindungan global dipasang di `main.dart`:
+1. **`runZonedGuarded`** — Menangkap semua uncaught synchronous & asynchronous errors
+2. **`FlutterError.onError`** — Menangkap error rendering/widget framework
+3. **`PlatformDispatcher.instance.onError`** — Menangkap error Dart async yang lolos dari Zone
+4. **Custom `ErrorWidget.builder`** — Menggantikan Red Screen of Death (RSOD) menjadi `GenesisErrorWidget` yang bersih dan bertema
+
+### B. Hierarki AppException (`core/errors/app_exception.dart`)
+Sealed class `AppException` dengan 5 subclass:
+
+| Subclass | Contoh Trigger | Pesan Default |
+|---|---|---|
+| `NetworkException` | WiFi mati, timeout | "Tidak ada koneksi internet" |
+| `ServerException` | HTTP 500, 503, 429 | "Server sedang bermasalah" |
+| `AuthException` | HTTP 401, JWT expired | "Sesi Anda telah berakhir" |
+| `DeviceException` | GPS denied, file error | "Izin perangkat diperlukan" |
+| `UnexpectedException` | TypeError, fallback | "Terjadi kesalahan tak terduga" |
+
+### C. ErrorHandler Mapper (`core/errors/error_handler.dart`)
+Utilitas `ErrorHandler.handle(dynamic error)` yang mengkonversi error mentah ke `AppException`:
+- `DioException.connectionTimeout` → `NetworkException`
+- `DioException.badResponse(401)` → `AuthException`
+- `DioException.badResponse(500)` → `ServerException`
+- `SocketException` → `NetworkException`
+- `FormatException` / `TypeError` → `UnexpectedException`
+
+HTTP status code mapping:
+- 400 → Bad Request, 401 → Session Expired, 403 → Forbidden
+- 404 → Not Found, 429 → Rate Limited
+- 500 → Internal Error, 503 → Maintenance
+
+### D. Repository Layer Integration
+Semua 4 repository implementation membungkus operasi dengan `try-catch` + `ErrorHandler.handle`:
+- `AuthRepositoryImpl` — Auth operations
+- `ProfileRepositoryImpl` — Profile & onboarding
+- `LeaderboardRepositoryImpl` — Leaderboard queries
+- `ReportRepositoryImpl` — Report submissions
+
+### E. BLoC Layer Integration
+Semua 3 BLoC menggunakan `ErrorHandler.handle` untuk pesan error user-friendly:
+- `AuthBloc._parseError()` — Konversi error auth ke pesan UI
+- `ReportsBloc` — Error saat submit/fetch laporan
+- `ChatBloc.onError` — Error saat streaming chat
+
+### F. GenesisErrorWidget (`core/widgets/genesis_error_widget.dart`)
+Widget error premium fullscreen dengan:
+- Ikon kontekstual (WiFi off, server down, auth expired)
+- Tombol retry opsional
+- Factory constructors: `.fromException()`, `.offline()`, `.serverDown()`, `.empty()`
+
+### G. GenesisSnackBar (Extension on `BuildContext`)
+Extension method terpusat di `genesis_error_widget.dart` yang menggantikan semua manual `ScaffoldMessenger.showSnackBar`:
+- `context.showErrorSnackBar(message)` — Merah, ikon error
+- `context.showSuccessSnackBar(message)` — Hijau emerald, ikon check
+- `context.showWarningSnackBar(message)` — Kuning warning, ikon warning
+- `context.showInfoSnackBar(message)` — Navy blue, ikon info
+
+Semua SnackBar: floating, rounded, auto-dismiss, swipe-to-dismiss horizontal.
+
+### H. AuthListenerWrapper (`core/widgets/auth_listener_wrapper.dart`)
+Widget DRY yang menggantikan pola `BlocListener<AuthBloc, AuthState>` duplikat di 5+ halaman:
+- Mendengarkan `Authenticated` → navigate ke setup/home
+- Mendengarkan `AuthFailure` → `showErrorSnackBar`
+- Menerima callback opsional `onAuthenticated` dan `onAuthFailure`
+
+Halaman yang menggunakan `AuthListenerWrapper`:
+- `LoginPage`, `SimpleSignInPage`, `SignUpPage`, `PreOnboardingPage`, `HomePage`
+
+---
+
 ## 5. Implementasi Pemrosesan Data & Repositori
 
 Setiap fitur memiliki lapisan data source yang terisolasi dengan baik:
@@ -282,6 +356,8 @@ Post-login setup menggunakan **`SetupCubit`** (lebih sederhana dari Bloc) untuk 
 3. **Notification** — Push notification permission
 4. **Profile** — Username + nama lengkap → submit ke `POST /profiles/onboard`
 
+> **Catatan Arsitektur**: `SetupCubit` di-scope ke `ShellRoute` lokal di `AppRouter` (bukan global `MultiBlocProvider`). Cubit ini hanya hidup selama 4 halaman setup wizard dan otomatis di-dispose setelah user selesai onboarding. Ini mencegah memory leak dan memastikan state setup tidak bocor ke halaman lain.
+
 ### B. Chatbot AI Warga (ChatBloc)
 Mengelola riwayat pesan dan pemrosesan asinkronus (streaming) dari OpenRouter:
 *   **Events**:
@@ -297,10 +373,16 @@ Mengelola riwayat pesan dan pemrosesan asinkronus (streaming) dari OpenRouter:
 
 ## 7. Standar Clean Code Dart di Genesis.id
 
-1.  **Strict Type Safety**: Menghindari tipe data `dynamic` pada parsing JSON atau properti data. Menggunakan class model terdefinisi (`ProfileModel`, `BadgeModel`).
+1.  **Strict Type Safety**: Menghindari tipe data `dynamic` pada parsing JSON atau properti data. Menggunakan class model terdefinisi (`ProfileModel`, `BadgeModel`). Safe cast untuk route extras.
 2.  **Immutability**: Semua model data dan state dideklarasikan menggunakan properti `final` untuk mencegah perubahan data yang tidak sengaja. State menggunakan `Equatable` + `copyWith`.
 3.  **Dependency Injection**: Repositori disuntikkan (*injected*) ke konstruktor BLoC secara eksplisit untuk mempermudah pembuatan mock unit test.
 4.  **No Magic Numbers**: Semua spacing, durasi, dan ukuran didefinisikan di `AppConstants`.
 5.  **Design System Terpusat**: Semua warna di `AppColors`, typography di `AppTextStyles`, dekorasi di `AppDecorations` — tidak ada styling ad-hoc.
 6.  **Form Validation Konsisten**: Validator di `core/utils/validators.dart` selaras dengan aturan DTO backend NestJS.
-7.  **Widget Reusable**: Tombol (`GenesisButton`), input (`GenesisTextField`), loading (`GenesisLoading`) — tidak ada duplikasi styling.
+7.  **Widget Reusable**: Tombol (`GenesisButton`, `IosButton`), input (`GenesisTextField`), loading (`GenesisLoading`), error (`GenesisErrorWidget`) — tidak ada duplikasi styling.
+8.  **Error Handling Terpusat**: Semua error di-mapping via `ErrorHandler.handle()` → `AppException`. Tidak ada `catch` kosong. Semua pesan error user-friendly ditampilkan via `GenesisSnackBar` extension.
+9.  **DRY Auth Listener**: Pola `BlocListener<AuthBloc, AuthState>` terpusat di `AuthListenerWrapper` — tidak ada duplikasi listener di setiap halaman auth.
+10. **Relative Imports**: Semua import internal menggunakan path relatif, bukan `package:mobile/...`.
+11. **Memory Safety**: `TextEditingController` selalu di-dispose. Dialog controllers di-dispose via `.then()` callback. State cubit di-scope ke route lifecycle.
+12. **Null Safety Defensive**: Model `fromJson()` menggunakan fallback value untuk field nullable (contoh: `createdAt ?? ''`).
+13. **Global Error Boundary**: `ErrorWidget.builder` override di `main.dart` mencegah Red Screen of Death — digantikan `GenesisErrorWidget` bertema.

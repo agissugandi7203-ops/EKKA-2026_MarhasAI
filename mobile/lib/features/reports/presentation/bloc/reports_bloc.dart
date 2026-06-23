@@ -1,5 +1,4 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../core/errors/app_exception.dart';
 import '../../../../core/errors/error_handler.dart';
 import '../../domain/repositories/report_repository.dart';
 import 'reports_event.dart';

@@ -45,6 +45,38 @@ Setiap data yang masuk ke sistem dari luar (request API, input form, input file)
 - **Next.js & Flutter**: Gunakan konsep Error Boundary di frontend/UI agar aplikasi tidak crash total saat terjadi eror di sub-komponen UI. Tampilkan UI fallback yang ramah pengguna.
 - Gunakan tipe data `Result` (atau pustaka pemrograman fungsional seperti `fpdart` untuk Flutter) untuk menangani operasi yang rentan gagal daripada terus-menerus menggunakan `try-catch`.
 
+### A. Arsitektur Error Flutter (Implementasi Genesis.id)
+Aplikasi Flutter Genesis.id sudah menerapkan penanganan error berlapis:
+
+1. **Global Error Catcher** (`main.dart`):
+   - `runZonedGuarded` untuk uncaught errors
+   - `FlutterError.onError` untuk framework errors
+   - `PlatformDispatcher.instance.onError` untuk async Dart errors
+   - Custom `ErrorWidget.builder` → `GenesisErrorWidget` (menggantikan Red Screen of Death)
+
+2. **Hierarki Exception** (`core/errors/app_exception.dart`):
+   - Sealed class `AppException` dengan subclass: `NetworkException`, `ServerException`, `AuthException`, `DeviceException`, `UnexpectedException`
+   - Setiap exception punya pesan ramah pengguna berbahasa Indonesia
+
+3. **Error Mapper** (`core/errors/error_handler.dart`):
+   - `ErrorHandler.handle()` mengkonversi `DioException`, `SocketException`, `FormatException`, `TypeError` ke `AppException`
+   - Mapping HTTP status: 400→BadRequest, 401→SessionExpired, 403→Forbidden, 404→NotFound, 429→RateLimited, 500→InternalError, 503→Maintenance
+
+4. **Repository Layer**: Semua 4 repo wrap operasi dengan `try-catch` + `ErrorHandler.handle`
+
+5. **BLoC Layer**: 3 BLoC (`AuthBloc`, `ReportsBloc`, `ChatBloc`) menggunakan `ErrorHandler.handle` untuk pesan error user-friendly
+
+6. **UI Presentation** (`core/widgets/genesis_error_widget.dart`):
+   - `GenesisErrorWidget` — Fullscreen error dengan ikon kontekstual & tombol retry
+   - `GenesisSnackBar` extension pada `BuildContext`:
+     - `context.showErrorSnackBar(msg)` — Merah, ikon error
+     - `context.showSuccessSnackBar(msg)` — Hijau emerald, ikon check
+     - `context.showWarningSnackBar(msg)` — Kuning warning, ikon warning
+     - `context.showInfoSnackBar(msg)` — Navy blue, ikon info
+
+7. **AuthListenerWrapper** (`core/widgets/auth_listener_wrapper.dart`):
+   - Widget DRY menggantikan pola `BlocListener<AuthBloc, AuthState>` duplikat di 5+ halaman
+
 ---
 
 ## 4. Struktur Kode & Separation of Concerns (SoC)
@@ -61,6 +93,17 @@ Pemisahan lapisan logika yang ketat:
 - **Custom Hooks**: Tempatkan state UI kompleks dan logika fetch API (menggunakan React Query / SWR) di dalam custom hooks.
 
 ### C. Flutter (Mobile)
-- **Data Layer**: Menangani pemanggilan API (Data Source) dan serialisasi data (Model).
+- **Data Layer**: Menangani pemanggilan API (Data Source) dan serialisasi data (Model). Semua operasi dibungkus `try-catch` + `ErrorHandler.handle`.
 - **Domain Layer**: Berisi Entity murni dan Usecase (proses bisnis mandiri yang tidak bergantung pada framework/library luar).
-- **Presentation Layer**: Widget UI yang berinteraksi dengan State Management (BLoC/Cubit, Riverpod, atau ChangeNotifier). Widget hanya boleh bertugas menggambar UI berdasarkan state saat ini.
+- **Presentation Layer**: Widget UI yang berinteraksi dengan State Management (BLoC/Cubit). Widget hanya boleh bertugas menggambar UI berdasarkan state saat ini. Error ditampilkan via `GenesisSnackBar` extension.
+
+---
+
+## 5. Memory Safety & Null Safety (Flutter)
+
+- **TextEditingController**: Selalu di-dispose di `dispose()` lifecycle. Untuk dialog, gunakan `.then()` callback untuk dispose.
+- **Cubit/BLoC Scoping**: Scope ke `ShellRoute` lokal jika lifecycle terbatas (contoh: `SetupCubit` hanya aktif selama 4 halaman setup wizard).
+- **Null Safety Defensive**: Model `fromJson()` gunakan fallback value untuk field nullable (`createdAt ?? ''`).
+- **Safe Cast**: Route `extra` parameter di-cast secara aman (`extra as String? ?? ''`) untuk mencegah `TypeError`.
+- **Relative Imports**: Gunakan path relatif (`../`), bukan `package:mobile/...`, untuk import internal.
+
