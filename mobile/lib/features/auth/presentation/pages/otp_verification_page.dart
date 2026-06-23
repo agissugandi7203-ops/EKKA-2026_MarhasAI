@@ -9,15 +9,17 @@ import '../../../../core/constants/app_constants.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/ios_button.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
 import '../widgets/auth_header.dart';
 
-/// Halaman verifikasi kode OTP dari email.
+/// Halaman verifikasi kode OTP dari email — Redesain.
 ///
-/// Menampilkan 6-digit PIN input field dengan countdown timer
-/// untuk pengiriman ulang kode.
+/// Menyediakan:
+/// - Input OTP 6-digit PIN
+/// - Pinned bottom buttons: "Next" & "Back"
 class OtpVerificationPage extends StatefulWidget {
   final String email;
 
@@ -32,18 +34,28 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
   Timer? _resendTimer;
   int _resendSeconds = AppConstants.otpResendSeconds;
   bool _canResend = false;
+  bool _isButtonEnabled = false;
 
   @override
   void initState() {
     super.initState();
     _startResendTimer();
+    _otpController.addListener(_onOtpLengthChanged);
   }
 
   @override
   void dispose() {
+    _otpController.removeListener(_onOtpLengthChanged);
     _otpController.dispose();
     _resendTimer?.cancel();
     super.dispose();
+  }
+
+  void _onOtpLengthChanged() {
+    final bool isComplete = _otpController.text.length == 6;
+    if (isComplete != _isButtonEnabled) {
+      setState(() => _isButtonEnabled = isComplete);
+    }
   }
 
   void _startResendTimer() {
@@ -59,10 +71,12 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
     });
   }
 
-  void _onOtpComplete(String otp) {
-    context.read<AuthBloc>().add(
-          VerifyOtpRequested(email: widget.email, token: otp),
-        );
+  void _onSubmit() {
+    if (_otpController.text.length == 6) {
+      context.read<AuthBloc>().add(
+            VerifyOtpRequested(email: widget.email, token: _otpController.text),
+          );
+    }
   }
 
   void _onResend() {
@@ -88,108 +102,110 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
       },
       child: Scaffold(
         backgroundColor: AppColors.surface,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_rounded,
-                color: AppColors.textPrimary),
-            onPressed: () => context.pop(),
-          ),
-        ),
         body: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppConstants.pagePaddingH,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const AuthHeader(
-                    title: 'Verifikasi Email',
-                    subtitle: 'Masukkan 6 digit kode yang dikirim ke',
-                    icon: Icons.mark_email_read_outlined,
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppConstants.pagePaddingH,
                   ),
-                  const SizedBox(height: AppConstants.spacing8),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: AppConstants.spacing32),
 
-                  // Email target
-                  Text(
-                    widget.email,
-                    style: AppTextStyles.labelMedium.copyWith(
-                      color: AppColors.navy700,
-                    ),
-                  ),
-                  const SizedBox(height: AppConstants.spacing40),
+                      // Header
+                      AuthHeader(
+                        title: 'Verification Code',
+                        subtitle: 'We have sent the OTP code to your email for the verification process.',
+                        icon: Icons.mark_email_read_outlined,
+                      ),
+                      const SizedBox(height: AppConstants.spacing8),
 
-                  // ── OTP PIN Input ──
-                  BlocBuilder<AuthBloc, AuthState>(
-                    builder: (context, state) {
-                      return PinCodeTextField(
-                        appContext: context,
-                        length: 6,
-                        controller: _otpController,
-                        keyboardType: TextInputType.number,
-                        animationType: AnimationType.fade,
-                        enabled: state is! AuthLoading,
-                        pinTheme: PinTheme(
-                          shape: PinCodeFieldShape.box,
-                          borderRadius: BorderRadius.circular(
-                            AppConstants.radiusMedium,
-                          ),
-                          fieldHeight: 56,
-                          fieldWidth: 48,
-                          activeFillColor: AppColors.cardBackground,
-                          inactiveFillColor: AppColors.surface,
-                          selectedFillColor: AppColors.navy50,
-                          activeColor: AppColors.navy600,
-                          inactiveColor: AppColors.divider,
-                          selectedColor: AppColors.navy700,
-                        ),
-                        enableActiveFill: true,
-                        textStyle: AppTextStyles.headlineMedium,
-                        onCompleted: _onOtpComplete,
-                        onChanged: (_) {},
-                      );
-                    },
-                  ),
-                  const SizedBox(height: AppConstants.spacing24),
-
-                  // ── Loading indicator ──
-                  BlocBuilder<AuthBloc, AuthState>(
-                    builder: (context, state) {
-                      if (state is AuthLoading) {
-                        return const Padding(
-                          padding:
-                              EdgeInsets.only(bottom: AppConstants.spacing24),
-                          child: CircularProgressIndicator(
-                            color: AppColors.navy700,
-                          ),
-                        );
-                      }
-                      return const SizedBox.shrink();
-                    },
-                  ),
-
-                  // ── Resend Timer ──
-                  if (_canResend)
-                    TextButton(
-                      onPressed: _onResend,
-                      child: Text(
-                        'Kirim Ulang Kode',
-                        style: AppTextStyles.labelMedium.copyWith(
-                          color: AppColors.navy600,
+                      // Email Target
+                      Text(
+                        widget.email,
+                        style: AppTextStyles.labelLarge.copyWith(
+                          color: const Color(0xFF007AFF),
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                    )
-                  else
-                    Text(
-                      'Kirim ulang kode dalam ${_resendSeconds}s',
-                      style: AppTextStyles.bodySmall,
-                    ),
-                ],
+                      const SizedBox(height: AppConstants.spacing40),
+
+                      // PIN Input (Spacious & Rounded boxes)
+                      BlocBuilder<AuthBloc, AuthState>(
+                        builder: (context, state) {
+                          return PinCodeTextField(
+                            appContext: context,
+                            length: 6,
+                            controller: _otpController,
+                            keyboardType: TextInputType.number,
+                            animationType: AnimationType.fade,
+                            enabled: state is! AuthLoading,
+                            pinTheme: PinTheme(
+                              shape: PinCodeFieldShape.box,
+                              borderRadius: BorderRadius.circular(16),
+                              fieldHeight: 56,
+                              fieldWidth: 46,
+                              activeFillColor: Colors.white,
+                              inactiveFillColor: AppColors.navy50,
+                              selectedFillColor: Colors.white,
+                              activeColor: const Color(0xFF007AFF),
+                              inactiveColor: AppColors.divider,
+                              selectedColor: const Color(0xFF007AFF),
+                              borderWidth: 1.5,
+                            ),
+                            enableActiveFill: true,
+                            textStyle: AppTextStyles.headlineMedium.copyWith(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            onCompleted: (_) => _onSubmit(),
+                            onChanged: (_) {},
+                          );
+                        },
+                      ),
+                      const SizedBox(height: AppConstants.spacing24),
+
+                      // Resend Code Link
+                      if (_canResend)
+                        TextButton(
+                          onPressed: _onResend,
+                          child: Text(
+                            'Kirim Ulang Kode',
+                            style: AppTextStyles.labelMedium.copyWith(
+                              color: const Color(0xFF007AFF),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        )
+                      else
+                        Text(
+                          'Kirim ulang kode dalam ${_resendSeconds}s',
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
               ),
-            ),
+
+              // Bottom Buttons
+              BlocBuilder<AuthBloc, AuthState>(
+                builder: (context, state) {
+                  final bool isLoading = state is AuthLoading;
+                  return IosBottomButtons(
+                    nextText: 'Next',
+                    onNextPressed: _onSubmit,
+                    isNextLoading: isLoading,
+                    isNextEnabled: _isButtonEnabled,
+                    backText: 'Back',
+                    onBackPressed: () => context.pop(),
+                  );
+                },
+              ),
+            ],
           ),
         ),
       ),

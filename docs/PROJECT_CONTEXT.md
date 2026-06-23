@@ -35,12 +35,15 @@ Dokumentasi teknis untuk setiap fitur disimpan secara terpisah di folder `docs/f
 - **Backend (NestJS)**: Menggunakan modul NestJS bawaan untuk memisahkan fitur.
   ```
   backend/src/
-  ├── auth/               # Modul autentikasi & RBAC Guard
+  ├── auth/               # Modul autentikasi, RBAC Guard, & ChatThrottlerGuard
   ├── profiles/           # Modul profil & onboarding
   ├── badges/             # Modul katalog lencana (badges)
   ├── leaderboard/        # Modul papan peringkat global & kota
   ├── reports/            # Modul pelaporan masalah lingkungan spasial (Fitur 3)
   ├── storage/            # Modul Google Cloud Storage & Vision PII sensor (Fitur 3)
+  ├── openrouter/         # Integrasi API OpenRouter (global)
+  ├── knowledge-base/     # CRUD berkas regulasi kota oleh admin (Fitur 5)
+  ├── chat/               # Chatbot AI RAG & streaming SSE warga (Fitur 5)
   └── common/             # Interceptor, guard, decorator global
   ```
 - **Frontend (Next.js)**: Memisahkan folder `features` untuk logika bisnis dan UI dashboard interaktif.
@@ -75,7 +78,8 @@ Dokumentasi teknis untuk setiap fitur disimpan secara terpisah di folder `docs/f
       ├── home/           # Beranda utama
       ├── profile/        # Profil user, streak, & badges
       ├── leaderboard/    # Papan peringkat global & wilayah kota
-      └── reports/        # Pelaporan spasial & upload data layer
+      ├── reports/        # Pelaporan spasial & upload data layer
+      └── chat/           # Chatbot AI RAG warga (data source, model, BLoC)
   ```
 
 ---

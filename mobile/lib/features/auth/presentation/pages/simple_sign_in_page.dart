@@ -13,32 +13,39 @@ import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
 import '../widgets/auth_header.dart';
 
-/// Halaman lupa password — Redesain.
+/// Halaman login email/password sederhana — Redesain.
 ///
 /// Menyediakan:
-/// - Input Email (rounded & spacious)
-/// - Pinned bottom buttons: "Next" & "Back"
-class ForgotPasswordPage extends StatefulWidget {
-  const ForgotPasswordPage({super.key});
+/// - Input Email & Password dengan styling membulat penuh (rounded) & luas
+/// - Link Forgot Password
+/// - Pinned bottom buttons: "Log In" & "Back"
+class SimpleSignInPage extends StatefulWidget {
+  const SimpleSignInPage({super.key});
 
   @override
-  State<ForgotPasswordPage> createState() => _ForgotPasswordPageState();
+  State<SimpleSignInPage> createState() => _SimpleSignInPageState();
 }
 
-class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
+class _SimpleSignInPageState extends State<SimpleSignInPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _isPasswordVisible = false;
 
   @override
   void dispose() {
     _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
-  void _onSubmit() {
+  void _onLogin() {
     if (!_formKey.currentState!.validate()) return;
     context.read<AuthBloc>().add(
-          ForgotPasswordRequested(_emailController.text.trim()),
+          SignInRequested(
+            _emailController.text.trim(),
+            _passwordController.text,
+          ),
         );
   }
 
@@ -46,11 +53,12 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
-        if (state is PasswordResetEmailSent) {
-          context.pushNamed(
-            Routes.otpVerificationName,
-            extra: state.email,
-          );
+        if (state is Authenticated) {
+          if (state.needsOnboarding) {
+            context.goNamed(Routes.setupWelcomeName);
+          } else {
+            context.goNamed(Routes.homeName);
+          }
         } else if (state is AuthFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -80,9 +88,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                         // Header
                         const Center(
                           child: AuthHeader(
-                            title: 'Forget Password',
-                            subtitle: 'Reset your account password and access your personal account again.',
-                            icon: Icons.lock_reset_rounded,
+                            title: 'Log In',
+                            subtitle: 'Welcome back to Genesis.id! Come on in now to continue your eco adventure.',
                           ),
                         ),
                         const SizedBox(height: AppConstants.spacing40),
@@ -96,6 +103,59 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                           keyboardType: TextInputType.emailAddress,
                           prefixIcon: Icons.email_outlined,
                         ),
+                        const SizedBox(height: AppConstants.spacing20),
+
+                        // Password Field (Rounded)
+                        _buildRoundedField(
+                          label: 'Password',
+                          hint: 'Enter your password',
+                          controller: _passwordController,
+                          validator: Validators.password,
+                          isPassword: true,
+                          isVisible: _isPasswordVisible,
+                          onToggleVisibility: () {
+                            setState(() => _isPasswordVisible = !_isPasswordVisible);
+                          },
+                          prefixIcon: Icons.lock_outline_rounded,
+                        ),
+                        const SizedBox(height: AppConstants.spacing12),
+
+                        // Lupa Password & Sign Up
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            TextButton(
+                              style: TextButton.styleFrom(
+                                padding: EdgeInsets.zero,
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              onPressed: () => context.pushNamed(Routes.forgotPasswordName),
+                              child: Text(
+                                'Forget Password?',
+                                style: AppTextStyles.bodyMedium.copyWith(
+                                  color: AppColors.textSecondary,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            TextButton(
+                              style: TextButton.styleFrom(
+                                padding: EdgeInsets.zero,
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              onPressed: () => context.pushNamed(Routes.signUpName),
+                              child: Text(
+                                'Create Account',
+                                style: AppTextStyles.bodyMedium.copyWith(
+                                  color: const Color(0xFF007AFF),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                         const SizedBox(height: AppConstants.spacing32),
                       ],
                     ),
@@ -108,8 +168,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 builder: (context, state) {
                   final bool isLoading = state is AuthLoading;
                   return IosBottomButtons(
-                    nextText: 'Next',
-                    onNextPressed: _onSubmit,
+                    nextText: 'Log In',
+                    onNextPressed: _onLogin,
                     isNextLoading: isLoading,
                     backText: 'Back',
                     onBackPressed: () => context.pop(),
@@ -128,6 +188,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     required String hint,
     required TextEditingController controller,
     required String? Function(String?) validator,
+    bool isPassword = false,
+    bool isVisible = false,
+    VoidCallback? onToggleVisibility,
     TextInputType keyboardType = TextInputType.text,
     IconData? prefixIcon,
   }) {
@@ -148,11 +211,22 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         TextFormField(
           controller: controller,
           validator: validator,
+          obscureText: isPassword && !isVisible,
           keyboardType: keyboardType,
           style: AppTextStyles.bodyLarge.copyWith(color: AppColors.textPrimary),
           decoration: InputDecoration(
             hintText: hint,
             prefixIcon: prefixIcon != null ? Icon(prefixIcon, color: AppColors.textSecondary) : null,
+            suffixIcon: isPassword
+                ? IconButton(
+                    icon: Icon(
+                      isVisible ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                      color: AppColors.textSecondary,
+                      size: 20,
+                    ),
+                    onPressed: onToggleVisibility,
+                  )
+                : null,
             contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
             filled: true,
             fillColor: Colors.white,

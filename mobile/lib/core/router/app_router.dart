@@ -4,11 +4,13 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/auth/presentation/pages/forgot_password_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
+import '../../features/auth/presentation/pages/simple_sign_in_page.dart';
 import '../../features/auth/presentation/pages/otp_verification_page.dart';
 import '../../features/auth/presentation/pages/reset_password_page.dart';
 import '../../features/auth/presentation/pages/sign_up_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/introduction/presentation/pages/introduction_page.dart';
+import '../../features/introduction/presentation/pages/pre_onboarding_page.dart';
 import '../../features/setup/presentation/pages/setup_location_page.dart';
 import '../../features/setup/presentation/pages/setup_notification_page.dart';
 import '../../features/setup/presentation/pages/setup_profile_page.dart';
@@ -52,6 +54,11 @@ class AppRouter {
         builder: (context, state) => const SplashPage(),
       ),
       GoRoute(
+        path: Routes.preOnboarding,
+        name: Routes.preOnboardingName,
+        builder: (context, state) => const PreOnboardingPage(),
+      ),
+      GoRoute(
         path: Routes.introduction,
         name: Routes.introductionName,
         builder: (context, state) => const IntroductionPage(),
@@ -62,6 +69,11 @@ class AppRouter {
         path: Routes.login,
         name: Routes.loginName,
         builder: (context, state) => const LoginPage(),
+      ),
+      GoRoute(
+        path: Routes.simpleSignIn,
+        name: Routes.simpleSignInName,
+        builder: (context, state) => const SimpleSignInPage(),
       ),
       GoRoute(
         path: Routes.signUp,
@@ -141,12 +153,18 @@ abstract final class Routes {
   static const String splash = '/splash';
   static const String splashName = 'splash';
 
+  static const String preOnboarding = '/pre-onboarding';
+  static const String preOnboardingName = 'preOnboarding';
+
   static const String introduction = '/introduction';
   static const String introductionName = 'introduction';
 
   // ── Auth ──
   static const String login = '/login';
   static const String loginName = 'login';
+
+  static const String simpleSignIn = '/simple-sign-in';
+  static const String simpleSignInName = 'simpleSignIn';
 
   static const String signUp = '/sign-up';
   static const String signUpName = 'signUp';

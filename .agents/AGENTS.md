@@ -10,6 +10,7 @@ Sebelum memulai tugas apa pun atau menulis kode, Anda **WAJIB** membaca dokumen 
 4.  **[BACKEND_ARCHITECTURE.md](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/docs/BACKEND_ARCHITECTURE.md)**: Detail arsitektur backend NestJS + Fastify, alur keamanan JWT & RBAC (Role-Based Access Control), dan katalog API.
 5.  **[MOBILE_ARCHITECTURE.md](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/docs/MOBILE_ARCHITECTURE.md)**: Detail arsitektur Flutter kustom Dio, pemrosesan Data Sources, serta logika alur onboarding lokasi pada Auth BLoC.
 6.  **[SEO_GUIDELINE.md](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/docs/SEO_GUIDELINE.md)**: Panduan konfigurasi SEO, penanganan DNS, Google Search Console, dan sitemap dinamis/statis.
+7.  **[chat.md](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/docs/features/chat.md)**: Panduan fitur Chatbot RAG, skema vector, model OpenRouter, dan respon streaming.
 
 ---
 

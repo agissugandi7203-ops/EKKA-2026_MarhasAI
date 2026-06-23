@@ -5,17 +5,19 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/validators.dart';
-import '../../../../core/widgets/genesis_button.dart';
-import '../../../../core/widgets/genesis_text_field.dart';
+import '../../../../core/widgets/ios_button.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
-import '../widgets/auth_footer_link.dart';
 import '../widgets/auth_header.dart';
-import '../widgets/social_sign_in_button.dart';
 
-/// Halaman registrasi akun baru Genesis.id.
+/// Halaman registrasi akun baru Genesis.id — Redesain.
+///
+/// Menyediakan:
+/// - Form pendaftaran dengan Email, Password, & Konfirmasi Password (rounded & spacious)
+/// - Pinned bottom buttons: "Create Account" & "Back"
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
 
@@ -28,6 +30,9 @@ class _SignUpPageState extends State<SignUpPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+
+  bool _isPasswordVisible = false;
+  bool _isConfirmPasswordVisible = false;
 
   @override
   void dispose() {
@@ -45,10 +50,6 @@ class _SignUpPageState extends State<SignUpPage> {
             _passwordController.text,
           ),
         );
-  }
-
-  void _onGoogleSignUp() {
-    context.read<AuthBloc>().add(GoogleSignInRequested());
   }
 
   @override
@@ -72,124 +73,170 @@ class _SignUpPageState extends State<SignUpPage> {
       },
       child: Scaffold(
         backgroundColor: AppColors.surface,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_rounded, color: AppColors.textPrimary),
-            onPressed: () => context.pop(),
-          ),
-        ),
         body: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppConstants.pagePaddingH,
-              ),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // ── Header ──
-                    const AuthHeader(
-                      title: 'Buat Akun Baru',
-                      subtitle: 'Bergabunglah dan mulai berkontribusi',
-                      icon: Icons.person_add_outlined,
-                    ),
-                    const SizedBox(height: AppConstants.spacing40),
-
-                    // ── Email ──
-                    GenesisTextField(
-                      label: 'Email',
-                      hint: 'contoh@email.com',
-                      controller: _emailController,
-                      validator: Validators.email,
-                      keyboardType: TextInputType.emailAddress,
-                      prefixIcon: Icons.email_outlined,
-                    ),
-                    const SizedBox(height: AppConstants.spacing16),
-
-                    // ── Password ──
-                    GenesisTextField(
-                      label: 'Password',
-                      hint: 'Minimal 8 karakter, 1 huruf besar, 1 angka',
-                      controller: _passwordController,
-                      validator: Validators.password,
-                      isPassword: true,
-                      prefixIcon: Icons.lock_outline,
-                    ),
-                    const SizedBox(height: AppConstants.spacing16),
-
-                    // ── Konfirmasi Password ──
-                    GenesisTextField(
-                      label: 'Konfirmasi Password',
-                      hint: 'Ketik ulang password',
-                      controller: _confirmPasswordController,
-                      validator: (value) => Validators.confirmPassword(
-                        value,
-                        _passwordController.text,
-                      ),
-                      isPassword: true,
-                      prefixIcon: Icons.lock_outline,
-                      textInputAction: TextInputAction.done,
-                      onEditingComplete: _onSignUp,
-                    ),
-                    const SizedBox(height: AppConstants.spacing24),
-
-                    // ── Tombol Daftar ──
-                    BlocBuilder<AuthBloc, AuthState>(
-                      builder: (context, state) {
-                        return GenesisButton(
-                          text: 'Daftar',
-                          onPressed: _onSignUp,
-                          isLoading: state is AuthLoading,
-                        );
-                      },
-                    ),
-                    const SizedBox(height: AppConstants.spacing24),
-
-                    // ── Divider ──
-                    Row(
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppConstants.pagePaddingH,
+                  ),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Expanded(child: Divider()),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppConstants.spacing16,
+                        const SizedBox(height: AppConstants.spacing32),
+
+                        // Header
+                        const Center(
+                          child: AuthHeader(
+                            title: 'Create New Account',
+                            subtitle: 'Join us and start contributing to a cleaner, greener earth.',
+                            icon: Icons.person_add_outlined,
                           ),
-                          child: Text('atau',
-                              style: Theme.of(context).textTheme.bodySmall),
                         ),
-                        const Expanded(child: Divider()),
+                        const SizedBox(height: AppConstants.spacing40),
+
+                        // Email Field (Rounded)
+                        _buildRoundedField(
+                          label: 'Email',
+                          hint: 'Enter your email',
+                          controller: _emailController,
+                          validator: Validators.email,
+                          keyboardType: TextInputType.emailAddress,
+                          prefixIcon: Icons.email_outlined,
+                        ),
+                        const SizedBox(height: AppConstants.spacing16),
+
+                        // Password Field (Rounded)
+                        _buildRoundedField(
+                          label: 'Password',
+                          hint: 'Enter your password',
+                          controller: _passwordController,
+                          validator: Validators.password,
+                          isPassword: true,
+                          isVisible: _isPasswordVisible,
+                          onToggleVisibility: () {
+                            setState(() => _isPasswordVisible = !_isPasswordVisible);
+                          },
+                          prefixIcon: Icons.lock_outline_rounded,
+                        ),
+                        const SizedBox(height: AppConstants.spacing16),
+
+                        // Confirm Password Field (Rounded)
+                        _buildRoundedField(
+                          label: 'Confirm Password',
+                          hint: 'Confirm your password',
+                          controller: _confirmPasswordController,
+                          validator: (value) => Validators.confirmPassword(
+                            value,
+                            _passwordController.text,
+                          ),
+                          isPassword: true,
+                          isVisible: _isConfirmPasswordVisible,
+                          onToggleVisibility: () {
+                            setState(() => _isConfirmPasswordVisible = !_isConfirmPasswordVisible);
+                          },
+                          prefixIcon: Icons.lock_outline_rounded,
+                        ),
+                        const SizedBox(height: AppConstants.spacing32),
                       ],
                     ),
-                    const SizedBox(height: AppConstants.spacing24),
-
-                    // ── Google Sign-Up ──
-                    BlocBuilder<AuthBloc, AuthState>(
-                      builder: (context, state) {
-                        return SocialSignInButton(
-                          onPressed: _onGoogleSignUp,
-                          isLoading: state is AuthLoading,
-                        );
-                      },
-                    ),
-                    const SizedBox(height: AppConstants.spacing32),
-
-                    // ── Footer ──
-                    AuthFooterLink(
-                      prefixText: 'Sudah punya akun? ',
-                      linkText: 'Masuk',
-                      onPressed: () => context.pop(),
-                    ),
-                    const SizedBox(height: AppConstants.spacing32),
-                  ],
+                  ),
                 ),
               ),
-            ),
+
+              // Bottom Buttons
+              BlocBuilder<AuthBloc, AuthState>(
+                builder: (context, state) {
+                  final bool isLoading = state is AuthLoading;
+                  return IosBottomButtons(
+                    nextText: 'Create Account',
+                    onNextPressed: _onSignUp,
+                    isNextLoading: isLoading,
+                    backText: 'Back',
+                    onBackPressed: () => context.pop(),
+                  );
+                },
+              ),
+            ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildRoundedField({
+    required String label,
+    required String hint,
+    required TextEditingController controller,
+    required String? Function(String?) validator,
+    bool isPassword = false,
+    bool isVisible = false,
+    VoidCallback? onToggleVisibility,
+    TextInputType keyboardType = TextInputType.text,
+    IconData? prefixIcon,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 8),
+          child: Text(
+            label,
+            style: AppTextStyles.labelLarge.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          validator: validator,
+          obscureText: isPassword && !isVisible,
+          keyboardType: keyboardType,
+          style: AppTextStyles.bodyLarge.copyWith(color: AppColors.textPrimary),
+          decoration: InputDecoration(
+            hintText: hint,
+            prefixIcon: prefixIcon != null ? Icon(prefixIcon, color: AppColors.textSecondary) : null,
+            suffixIcon: isPassword
+                ? IconButton(
+                    icon: Icon(
+                      isVisible ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                      color: AppColors.textSecondary,
+                      size: 20,
+                    ),
+                    onPressed: onToggleVisibility,
+                  )
+                : null,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(28),
+              borderSide: const BorderSide(color: AppColors.divider, width: 1.5),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(28),
+              borderSide: const BorderSide(color: AppColors.divider, width: 1.5),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(28),
+              borderSide: const BorderSide(color: Color(0xFF007AFF), width: 2.0),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(28),
+              borderSide: const BorderSide(color: AppColors.error, width: 1.5),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(28),
+              borderSide: const BorderSide(color: AppColors.error, width: 2.0),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

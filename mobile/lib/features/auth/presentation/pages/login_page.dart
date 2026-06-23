@@ -1,30 +1,29 @@
+import 'dart:ui';
+
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/constants/app_svgs.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/utils/validators.dart';
-import '../../../../core/widgets/genesis_button.dart';
-import '../../../../core/widgets/genesis_text_field.dart';
+import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/ios_button.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
-import '../widgets/auth_footer_link.dart';
 import '../widgets/auth_header.dart';
-import '../widgets/social_sign_in_button.dart';
 
-/// Halaman login Genesis.id.
+/// Halaman login masuk utama (Social Login Hub) — Redesain Final.
 ///
 /// Menyediakan:
-/// - Login email/password
-/// - Google Sign-In
-/// - Link ke Sign Up & Forgot Password
-///
-/// Navigasi otomatis via [BlocListener]:
-/// - [Authenticated] + needsOnboarding → Setup Welcome
-/// - [Authenticated] + !needsOnboarding → Home
+/// - Google Sign-In (fungsional dengan logo SVG Google asli)
+/// - Facebook, GitHub, Magic Link (dengan logo SVG asli)
+/// - Tombol "OR Log in to my account" untuk form email/password
+/// - Tanpa tombol navigasi ganda di bawah (clear sampai Log in to my account)
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -33,29 +32,163 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
-
-  void _onLogin() {
-    if (!_formKey.currentState!.validate()) return;
-    context.read<AuthBloc>().add(
-          SignInRequested(
-            _emailController.text.trim(),
-            _passwordController.text,
-          ),
-        );
-  }
-
   void _onGoogleLogin() {
     context.read<AuthBloc>().add(GoogleSignInRequested());
+  }
+
+  void _showFeatureMock(String provider) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Login dengan $provider segera hadir!'),
+        backgroundColor: AppColors.navy700,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _showMagicLinkDialog() {
+    final emailController = TextEditingController();
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.15), // Barrier transparan tipis
+      builder: (context) => Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Stack(
+          children: [
+            // ── Backdrop Blur Fullscreen (Efek Glassmorphism) ──
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                  child: Container(
+                    color: Colors.black.withValues(alpha: 0.1),
+                  ),
+                ),
+              ),
+            ),
+
+            // ── Dialog Box Glassmorphism Diperbesar ──
+            Center(
+              child: Container(
+                width: MediaQuery.of(context).size.width * 0.88,
+                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 32),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.75), // Frosted glass
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.3),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Magic Link Sign In',
+                      style: AppTextStyles.headlineLarge.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Masukkan email Anda untuk menerima link masuk tanpa password.',
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: AppColors.textSecondary,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Kolom Input Diperbesar (Spacious, Rounded & Glassy)
+                    TextFormField(
+                      controller: emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      style: const TextStyle(fontSize: 16),
+                      decoration: InputDecoration(
+                        hintText: 'contoh@email.com',
+                        prefixIcon: const Icon(Icons.email_outlined, size: 22, color: AppColors.textSecondary),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+                        filled: true,
+                        fillColor: Colors.white.withValues(alpha: 0.8),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(28),
+                          borderSide: const BorderSide(color: AppColors.divider, width: 1.5),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(28),
+                          borderSide: const BorderSide(color: AppColors.divider, width: 1.5),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(28),
+                          borderSide: const BorderSide(color: Color(0xFF007AFF), width: 2.0),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+
+                    // Tombol Dialog
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        CupertinoButton(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          child: const Text(
+                            'Batal',
+                            style: TextStyle(
+                              color: CupertinoColors.systemGrey,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                        const SizedBox(width: 8),
+                        CupertinoButton(
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                          color: const Color(0xFF007AFF),
+                          borderRadius: BorderRadius.circular(20),
+                          child: const Text(
+                            'Kirim',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          onPressed: () {
+                            final email = emailController.text.trim();
+                            Navigator.pop(context);
+                            if (email.isNotEmpty) {
+                              ScaffoldMessenger.of(this.context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Link masuk telah dikirim ke $email!'),
+                                  backgroundColor: AppColors.emerald,
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -80,113 +213,109 @@ class _LoginPageState extends State<LoginPage> {
       child: Scaffold(
         backgroundColor: AppColors.surface,
         body: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppConstants.pagePaddingH,
-              ),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const SizedBox(height: AppConstants.spacing32),
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppConstants.pagePaddingH,
+                  ),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: AppConstants.spacing32),
 
-                    // ── Header ──
-                    const AuthHeader(
-                      title: 'Selamat Datang!',
-                      subtitle: 'Masuk untuk melanjutkan misi lingkunganmu',
-                    ),
-                    const SizedBox(height: AppConstants.spacing40),
-
-                    // ── Email Field ──
-                    GenesisTextField(
-                      label: 'Email',
-                      hint: 'contoh@email.com',
-                      controller: _emailController,
-                      validator: Validators.email,
-                      keyboardType: TextInputType.emailAddress,
-                      prefixIcon: Icons.email_outlined,
-                      textInputAction: TextInputAction.next,
-                    ),
-                    const SizedBox(height: AppConstants.spacing16),
-
-                    // ── Password Field ──
-                    GenesisTextField(
-                      label: 'Password',
-                      hint: 'Minimal 8 karakter',
-                      controller: _passwordController,
-                      validator: Validators.password,
-                      isPassword: true,
-                      prefixIcon: Icons.lock_outline,
-                      textInputAction: TextInputAction.done,
-                      onEditingComplete: _onLogin,
-                    ),
-                    const SizedBox(height: AppConstants.spacing8),
-
-                    // ── Lupa Password ──
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: () =>
-                            context.pushNamed(Routes.forgotPasswordName),
-                        child: const Text('Lupa Password?'),
+                      // ── Header branding (Selamat Datang) ──
+                      const AuthHeader(
+                        title: 'Welcome to Genesis.id',
+                        subtitle: 'Pilih metode masuk untuk melanjutkan aksi lingkunganmu',
                       ),
-                    ),
-                    const SizedBox(height: AppConstants.spacing16),
+                      const SizedBox(height: AppConstants.spacing40),
 
-                    // ── Tombol Masuk ──
-                    BlocBuilder<AuthBloc, AuthState>(
-                      builder: (context, state) {
-                        return GenesisButton(
-                          text: 'Masuk',
-                          onPressed: _onLogin,
-                          isLoading: state is AuthLoading,
-                        );
-                      },
-                    ),
-                    const SizedBox(height: AppConstants.spacing24),
-
-                    // ── Divider ──
-                    Row(
-                      children: [
-                        const Expanded(child: Divider()),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppConstants.spacing16,
-                          ),
-                          child: Text(
-                            'atau',
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
+                      // ── Google Sign-In (Edge-to-Edge dengan SVG Asli) ──
+                      IosButton(
+                        text: 'Login with Google',
+                        backgroundColor: Colors.white,
+                        textColor: Colors.black,
+                        icon: SvgPicture.string(
+                          AppSvgs.googleLogo,
+                          width: 24,
+                          height: 24,
                         ),
-                        const Expanded(child: Divider()),
-                      ],
-                    ),
-                    const SizedBox(height: AppConstants.spacing24),
+                        onPressed: _onGoogleLogin,
+                      ),
+                      const SizedBox(height: AppConstants.spacing12),
 
-                    // ── Google Sign-In ──
-                    BlocBuilder<AuthBloc, AuthState>(
-                      builder: (context, state) {
-                        return SocialSignInButton(
-                          onPressed: _onGoogleLogin,
-                          isLoading: state is AuthLoading,
-                        );
-                      },
-                    ),
-                    const SizedBox(height: AppConstants.spacing32),
+                      // ── Facebook Sign-In (Edge-to-Edge dengan SVG Asli) ──
+                      IosButton(
+                        text: 'Login with Facebook',
+                        backgroundColor: const Color(0xFF1877F2),
+                        textColor: Colors.white,
+                        icon: SvgPicture.string(
+                          AppSvgs.facebookLogo,
+                          width: 24,
+                          height: 24,
+                        ),
+                        onPressed: () => _showFeatureMock('Facebook'),
+                      ),
+                      const SizedBox(height: AppConstants.spacing12),
 
-                    // ── Footer: Link ke Sign Up ──
-                    AuthFooterLink(
-                      prefixText: 'Belum punya akun? ',
-                      linkText: 'Daftar',
-                      onPressed: () => context.pushNamed(Routes.signUpName),
-                    ),
-                    const SizedBox(height: AppConstants.spacing32),
-                  ],
+                      // ── GitHub Sign-In (Edge-to-Edge dengan SVG Asli) ──
+                      IosButton(
+                        text: 'Login with GitHub',
+                        backgroundColor: const Color(0xFF24292F),
+                        textColor: Colors.white,
+                        icon: SvgPicture.string(
+                          AppSvgs.githubLogo,
+                          width: 24,
+                          height: 24,
+                        ),
+                        onPressed: () => _showFeatureMock('GitHub'),
+                      ),
+                      const SizedBox(height: AppConstants.spacing12),
+
+                      // ── Magic Link Sign-In (Edge-to-Edge dengan SVG Asli) ──
+                      IosButton(
+                        text: 'Login with Magic Link',
+                        backgroundColor: AppColors.navy700,
+                        textColor: Colors.white,
+                        icon: SvgPicture.string(
+                          AppSvgs.magicLinkLogo,
+                          width: 24,
+                          height: 24,
+                        ),
+                        onPressed: _showMagicLinkDialog,
+                      ),
+                      const SizedBox(height: AppConstants.spacing32),
+
+                      // ── OR Log in to my account divider/button ──
+                      Row(
+                        children: [
+                          const Expanded(child: Divider()),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Text(
+                              'atau',
+                              style: AppTextStyles.labelMedium.copyWith(color: AppColors.textSecondary),
+                            ),
+                          ),
+                          const Expanded(child: Divider()),
+                        ],
+                      ),
+                      const SizedBox(height: AppConstants.spacing24),
+
+                      IosButton(
+                        text: 'Log in to my account',
+                        isFilled: false,
+                        backgroundColor: AppColors.navy600,
+                        textColor: AppColors.navy700,
+                        onPressed: () => context.pushNamed(Routes.simpleSignInName),
+                      ),
+                      const SizedBox(height: AppConstants.spacing32),
+                    ],
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
         ),
       ),

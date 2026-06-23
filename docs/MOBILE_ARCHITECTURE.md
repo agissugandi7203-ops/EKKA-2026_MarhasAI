@@ -235,9 +235,18 @@ Setiap fitur memiliki lapisan data source yang terisolasi dengan baik:
 *   **ReportRepositoryImpl** ([report_repository_impl.dart](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/mobile/lib/features/reports/data/repositories/report_repository_impl.dart)):
     Menjembatani akses data laporan ke presentation layer.
 
+### E. Chatbot AI Warga (Chat)
+*   **ChatMessageModel** ([chat_message_model.dart](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/mobile/lib/features/chat/data/models/chat_message_model.dart)):
+    Menyimpan riwayat pesan, pengirim (`user`/`bot`), lampiran base64 (gambar, PDF, audio), dan timestamp.
+*   **ChatRemoteDataSource** ([chat_remote_data_source.dart](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/mobile/lib/features/chat/data/datasources/chat_remote_data_source.dart)):
+    Menghubungi endpoint `/chat/stream` NestJS, melakukan decoding bytes chunk stream UTF-8, dan mem-parsing Server-Sent Events (SSE) secara real-time.
+
 ---
 
-## 6. Manajemen State & Alur Onboarding (Auth BLoC)
+## 6. Manajemen State & Alur Onboarding (Auth & Chat BLoC)
+
+### A. Autentikasi & Onboarding (Auth BLoC)
+State management autentikasi diatur secara ketat menggunakan **`flutter_bloc`**:
 
 State management autentikasi diatur secara ketat menggunakan **`flutter_bloc`**:
 
@@ -272,6 +281,17 @@ Post-login setup menggunakan **`SetupCubit`** (lebih sederhana dari Bloc) untuk 
 2. **Location** — GPS permission + reverse geocoding
 3. **Notification** — Push notification permission
 4. **Profile** — Username + nama lengkap → submit ke `POST /profiles/onboard`
+
+### B. Chatbot AI Warga (ChatBloc)
+Mengelola riwayat pesan dan pemrosesan asinkronus (streaming) dari OpenRouter:
+*   **Events**:
+    *   `SendMessageRequested(message)` — Mengirim pesan (teks/media) ke backend, menempelkan placeholder balasan bot kosong, dan mendengarkan stream.
+    *   `ClearChatRequested` — Menghapus riwayat obrolan dan menutup koneksi stream aktif.
+    *   `_StreamChunkReceived(chunk)` *(Internal)* — Menerima potongan karakter teks dari SSE dan mengakumulasikannya ke bubble pesan bot aktif.
+    *   `_StreamCompleted` *(Internal)* — Aliran data selesai, mengubah isStreaming ke false.
+    *   `_StreamFailed(error)` *(Internal)* — Menampilkan pesan kesalahan.
+*   **States**:
+    *   `ChatState(messages, isStreaming, errorMessage)` — Menyimpan daftar seluruh chat history (`messages`), indikator loading/streaming (`isStreaming`), dan error jika ada.
 
 ---
 

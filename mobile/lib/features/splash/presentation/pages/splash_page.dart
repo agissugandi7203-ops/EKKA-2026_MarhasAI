@@ -72,7 +72,7 @@ class _SplashPageState extends State<SplashPage>
     if (hasSeenIntro) {
       context.goNamed(Routes.loginName);
     } else {
-      context.goNamed(Routes.introductionName);
+      context.goNamed(Routes.preOnboardingName);
     }
   }
 

@@ -281,3 +281,83 @@ Semua endpoint dilindungi oleh `AuthGuard` (membutuhkan header `Authorization: B
           }
         ]
         ```
+
+### E. Modul Chatbot AI RAG & Regulasi Kota
+*   **POST `/chat`**
+    *   **Deskripsi**: Mengirim pertanyaan warga secara instan. Mengembalikan jawaban lengkap dari asisten hukum kota.
+    *   **Rate Limit**: Maksimal 10 request per menit untuk warga biasa.
+    *   **Request Body**:
+        ```json
+        {
+          "message": "Bagaimana aturan denda membuang sampah?",
+          "image": "base64-string-optional",
+          "pdf": "base64-string-optional",
+          "audio": "base64-string-optional"
+        }
+        ```
+    *   **Response (200 OK)**:
+        ```json
+        {
+          "reply": "Berdasarkan Perda Kota Surabaya No 5 Tahun 2014 Pasal 12, setiap warga dilarang membuang sampah di luar tempat yang ditentukan. Pelanggar diancam denda maksimal Rp 75.000."
+        }
+        ```
+
+*   **POST `/chat/stream`**
+    *   **Deskripsi**: Mengirim pertanyaan warga dan menerima respons token-by-token real-time melalui Server-Sent Events (SSE).
+    *   **Rate Limit**: Maksimal 10 request per menit untuk warga biasa.
+    *   **Request Body**: Sama seperti `/chat`.
+    *   **Response (200 OK - Event Stream)**:
+        ```
+        data: {"choices": [{"delta": {"content": "Berdasarkan "}}]}
+        data: {"choices": [{"delta": {"content": "Perda "}}]}
+        ...
+        data: [DONE]
+        ```
+
+*   **GET `/knowledge-base`** *(Admin Only)*
+    *   **Deskripsi**: Mengambil seluruh daftar regulasi kota yang terdaftar dalam basis pengetahuan AI.
+    *   **Response (200 OK)**:
+        ```json
+        [
+          {
+            "id": "uuid-kb-1",
+            "title": "Perda Kebersihan No 5/2014",
+            "content": "Larangan membuang sampah sembarangan...",
+            "metadata": {},
+            "created_at": "2026-06-23T08:00:00.000Z"
+          }
+        ]
+        ```
+
+*   **POST `/knowledge-base`** *(Admin Only)*
+    *   **Deskripsi**: Mengunggah dokumen regulasi kota baru. Backend otomatis menghasilkan vektor embedding (768 dimensi via OpenRouter) untuk disimpan di Supabase.
+    *   **Request Body**:
+        ```json
+        {
+          "title": "Perda Kebersihan No 5/2014",
+          "content": "Larangan membuang sampah sembarangan...",
+          "metadata": {}
+        }
+        ```
+    *   **Response (201 Created)**:
+        ```json
+        {
+          "message": "Document successfully added to knowledge base",
+          "document": {
+            "id": "uuid-kb-1",
+            "title": "Perda Kebersihan No 5/2014",
+            "metadata": {},
+            "created_at": "2026-06-23T08:00:00.000Z"
+          }
+        }
+        ```
+
+*   **DELETE `/knowledge-base/:id`** *(Admin Only)*
+    *   **Deskripsi**: Menghapus dokumen regulasi dari basis pengetahuan.
+    *   **Response (200 OK)**:
+        ```json
+        {
+          "message": "Document successfully deleted"
+        }
+        ```
+
