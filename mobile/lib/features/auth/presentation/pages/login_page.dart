@@ -11,10 +11,10 @@ import '../../../../core/constants/app_svgs.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/auth_listener_wrapper.dart';
 import '../../../../core/widgets/ios_button.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
-import '../bloc/auth_state.dart';
 import '../widgets/auth_header.dart';
 
 /// Halaman login masuk utama (Social Login Hub) — Redesain Final.
@@ -188,28 +188,15 @@ class _LoginPageState extends State<LoginPage> {
           ],
         ),
       ),
-    );
+    ).then((_) {
+      // Dispose controller saat dialog ditutup untuk mencegah memory leak
+      emailController.dispose();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AuthBloc, AuthState>(
-      listener: (context, state) {
-        if (state is Authenticated) {
-          if (state.needsOnboarding) {
-            context.goNamed(Routes.setupWelcomeName);
-          } else {
-            context.goNamed(Routes.homeName);
-          }
-        } else if (state is AuthFailure) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.errorMessage),
-              backgroundColor: AppColors.error,
-            ),
-          );
-        }
-      },
+    return AuthListenerWrapper(
       child: Scaffold(
         backgroundColor: AppColors.surface,
         body: SafeArea(

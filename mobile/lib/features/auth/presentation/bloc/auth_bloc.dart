@@ -1,5 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show User;
 
+import '../../../../core/errors/app_exception.dart';
+import '../../../../core/errors/error_handler.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../../profile/domain/repositories/profile_repository.dart';
 import 'auth_event.dart';
@@ -199,7 +202,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   // ══════════════════════════════════════════════════════════════════════
 
   /// Cek apakah user perlu menyelesaikan onboarding (profil lokasi).
-  Future<AuthState> _checkOnboardingStatus(dynamic user) async {
+  Future<AuthState> _checkOnboardingStatus(User user) async {
     try {
       final profile = await _profileRepository.getMyProfile();
       final bool needsOnboarding =
@@ -213,11 +216,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   /// Mengekstrak pesan error yang user-friendly dari exception.
   String _parseError(Object error) {
-    final message = error.toString();
-    // Hapus prefix "Exception: " yang tidak informatif
-    if (message.startsWith('Exception: ')) {
-      return message.substring(11);
+    if (error is AppException) {
+      return error.message;
     }
-    return message;
+    return ErrorHandler.handle(error).message;
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/genesis_error_widget.dart';
 
 /// Extension pada [BuildContext] untuk akses cepat ke tema & ukuran layar.
 ///
@@ -28,14 +29,11 @@ extension BuildContextExtensions on BuildContext {
 
   /// Tampilkan [SnackBar] dengan pesan singkat.
   void showSnackBar(String message, {bool isError = false}) {
-    ScaffoldMessenger.of(this).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError
-            ? Theme.of(this).colorScheme.error
-            : null,
-      ),
-    );
+    if (isError) {
+      showErrorSnackBar(message);
+    } else {
+      showSuccessSnackBar(message);
+    }
   }
 }
 

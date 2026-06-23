@@ -8,6 +8,8 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/genesis_button.dart';
+import '../../../../core/errors/error_handler.dart';
+import '../../../../core/widgets/genesis_error_widget.dart';
 import '../../../../core/widgets/genesis_text_field.dart';
 import '../../../profile/domain/repositories/profile_repository.dart';
 import '../bloc/setup_cubit.dart';
@@ -59,12 +61,8 @@ class _SetupProfilePageState extends State<SetupProfilePage> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _isSubmitting = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Gagal menyimpan profil: ${e.toString()}'),
-          backgroundColor: AppColors.error,
-        ),
-      );
+      final appError = ErrorHandler.handle(e);
+      context.showErrorSnackBar('Gagal menyimpan profil: ${appError.message}');
     }
   }
 

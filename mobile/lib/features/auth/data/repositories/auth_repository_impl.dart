@@ -1,12 +1,12 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../../core/errors/error_handler.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_remote_data_source.dart';
 
 /// Implementasi konkret [AuthRepository].
 ///
-/// Membungkus [AuthRemoteDataSource] dan meneruskan operasi.
-/// Di masa depan, bisa ditambahkan caching atau error handling.
+/// Membungkus [AuthRemoteDataSource] dan meneruskan operasi dengan error handling terpusat.
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource _remoteDataSource;
 
@@ -17,10 +17,14 @@ class AuthRepositoryImpl implements AuthRepository {
     required String email,
     required String password,
   }) async {
-    return await _remoteDataSource.signUpWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
+    try {
+      return await _remoteDataSource.signUpWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+    } catch (e, stack) {
+      throw ErrorHandler.handle(e, stack);
+    }
   }
 
   @override
@@ -28,30 +32,47 @@ class AuthRepositoryImpl implements AuthRepository {
     required String email,
     required String password,
   }) async {
-    return await _remoteDataSource.signInWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
+    try {
+      return await _remoteDataSource.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+    } catch (e, stack) {
+      throw ErrorHandler.handle(e, stack);
+    }
   }
 
   @override
   Future<AuthResponse> signInWithGoogle() async {
-    return await _remoteDataSource.signInWithGoogle();
+    try {
+      return await _remoteDataSource.signInWithGoogle();
+    } catch (e, stack) {
+      throw ErrorHandler.handle(e, stack);
+    }
   }
 
   @override
   Future<void> signOut() async {
-    await _remoteDataSource.signOut();
+    try {
+      await _remoteDataSource.signOut();
+    } catch (e, stack) {
+      throw ErrorHandler.handle(e, stack);
+    }
   }
 
   @override
   User? getCurrentUser() {
+    // Operasi sinkronus murni tidak memerlukan error handler pemetaan
     return _remoteDataSource.getCurrentUser();
   }
 
   @override
   Future<void> resetPasswordForEmail(String email) async {
-    await _remoteDataSource.resetPasswordForEmail(email);
+    try {
+      await _remoteDataSource.resetPasswordForEmail(email);
+    } catch (e, stack) {
+      throw ErrorHandler.handle(e, stack);
+    }
   }
 
   @override
@@ -59,11 +80,19 @@ class AuthRepositoryImpl implements AuthRepository {
     required String email,
     required String token,
   }) async {
-    return await _remoteDataSource.verifyOtp(email: email, token: token);
+    try {
+      return await _remoteDataSource.verifyOtp(email: email, token: token);
+    } catch (e, stack) {
+      throw ErrorHandler.handle(e, stack);
+    }
   }
 
   @override
   Future<UserResponse> updatePassword(String newPassword) async {
-    return await _remoteDataSource.updatePassword(newPassword);
+    try {
+      return await _remoteDataSource.updatePassword(newPassword);
+    } catch (e, stack) {
+      throw ErrorHandler.handle(e, stack);
+    }
   }
 }

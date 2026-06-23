@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_constants.dart';
@@ -8,6 +9,7 @@ import '../../../../core/constants/app_svgs.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/auth_listener_wrapper.dart';
 import '../../../../core/widgets/ios_button.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
@@ -26,23 +28,7 @@ class PreOnboardingPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AuthBloc, AuthState>(
-      listener: (context, state) {
-        if (state is Authenticated) {
-          if (state.needsOnboarding) {
-            context.goNamed(Routes.setupWelcomeName);
-          } else {
-            context.goNamed(Routes.homeName);
-          }
-        } else if (state is AuthFailure) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.errorMessage),
-              backgroundColor: AppColors.error,
-            ),
-          );
-        }
-      },
+    return AuthListenerWrapper(
       child: Scaffold(
         body: Stack(
           children: [
@@ -51,6 +37,14 @@ class PreOnboardingPage extends StatelessWidget {
               child: Image.network(
                 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?q=80&w=1080',
                 fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Shimmer.fromColors(
+                    baseColor: AppColors.navy800,
+                    highlightColor: AppColors.navy700,
+                    child: Container(color: AppColors.navy800),
+                  );
+                },
                 errorBuilder: (context, error, stackTrace) {
                   // Fallback gradient jika offline
                   return Container(

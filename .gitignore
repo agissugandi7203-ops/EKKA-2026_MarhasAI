@@ -36,3 +36,8 @@
 *.njsproj
 *.sln
 *.sw?
+
+# Secrets and Credentials
+**/secrets/
+*.json
+

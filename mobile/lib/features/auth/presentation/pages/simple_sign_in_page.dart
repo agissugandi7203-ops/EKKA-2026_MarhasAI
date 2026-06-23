@@ -7,6 +7,7 @@ import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/validators.dart';
+import '../../../../core/widgets/auth_listener_wrapper.dart';
 import '../../../../core/widgets/ios_button.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
@@ -51,23 +52,7 @@ class _SimpleSignInPageState extends State<SimpleSignInPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AuthBloc, AuthState>(
-      listener: (context, state) {
-        if (state is Authenticated) {
-          if (state.needsOnboarding) {
-            context.goNamed(Routes.setupWelcomeName);
-          } else {
-            context.goNamed(Routes.homeName);
-          }
-        } else if (state is AuthFailure) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.errorMessage),
-              backgroundColor: AppColors.error,
-            ),
-          );
-        }
-      },
+    return AuthListenerWrapper(
       child: Scaffold(
         backgroundColor: AppColors.surface,
         body: SafeArea(

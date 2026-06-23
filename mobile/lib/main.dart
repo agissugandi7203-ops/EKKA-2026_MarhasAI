@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -6,7 +9,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/config/supabase_config.dart';
 import 'core/network/dio_client.dart';
 import 'core/router/app_router.dart';
+import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
+import 'core/widgets/genesis_error_widget.dart';
 import 'features/auth/data/datasources/auth_remote_data_source.dart';
 import 'features/auth/data/repositories/auth_repository_impl.dart';
 import 'features/auth/domain/repositories/auth_repository.dart';
@@ -15,34 +20,74 @@ import 'features/auth/presentation/bloc/auth_event.dart';
 import 'features/profile/data/datasources/profile_remote_data_source.dart';
 import 'features/profile/data/repositories/profile_repository_impl.dart';
 import 'features/profile/domain/repositories/profile_repository.dart';
-import 'features/setup/presentation/bloc/setup_cubit.dart';
 
 /// Entry point aplikasi Genesis.id.
 ///
 /// Inisialisasi:
-/// 1. Supabase SDK
-/// 2. Dependency Injection (manual — tanpa library DI)
-/// 3. MultiBlocProvider untuk state management global
-/// 4. GoRouter untuk navigasi
-/// 5. Material 3 Theme dari design system
+/// 1. Global error handler (menangkap crash yang tidak terduga)
+/// 2. Supabase SDK
+/// 3. Dependency Injection (manual — tanpa library DI)
+/// 4. MultiBlocProvider untuk state management global
+/// 5. GoRouter untuk navigasi
+/// 6. Material 3 Theme dari design system
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  // ── Global Error Handler ──
+  // Menangkap semua error Flutter & Dart yang tidak tertangkap,
+  // mencegah Red Screen of Death dan blank screen di production.
+  runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
 
-  // Status bar transparan agar splash screen gradient terlihat penuh
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-    ),
-  );
+    // Tangkap error framework Flutter (rendering, layout, gesture)
+    FlutterError.onError = (FlutterErrorDetails details) {
+      debugPrint('═══ FLUTTER ERROR ═══');
+      debugPrint('Exception: ${details.exceptionAsString()}');
+      debugPrint('Stack: ${details.stack}');
+      // Di production, kirim ke crash reporting (Firebase Crashlytics, Sentry, dll)
+    };
 
-  // Inisialisasi Supabase
-  await Supabase.initialize(
-    url: SupabaseConfig.url,
-    publishableKey: SupabaseConfig.anonKey,
-  );
+    // Override ErrorWidget.builder untuk menampilkan error screen yang ramah pengguna
+    ErrorWidget.builder = (FlutterErrorDetails details) {
+      return Scaffold(
+        backgroundColor: AppColors.surface,
+        body: GenesisErrorWidget(
+          message: kDebugMode
+              ? details.exceptionAsString()
+              : 'Terjadi kesalahan internal aplikasi. Tim kami sedang memperbaikinya.',
+          icon: Icons.bug_report_rounded,
+          iconColor: AppColors.error,
+        ),
+      );
+    };
 
-  runApp(const GenesisApp());
+    // Tangkap error asinkronus Dart yang lolos dari framework
+    PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
+      debugPrint('═══ PLATFORM ERROR ═══');
+      debugPrint('Error: $error');
+      debugPrint('Stack: $stack');
+      return true; // Tandai sebagai "ditangani" agar app tidak crash
+    };
+
+    // Status bar transparan agar splash screen gradient terlihat penuh
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+      ),
+    );
+
+    // Inisialisasi Supabase
+    await Supabase.initialize(
+      url: SupabaseConfig.url,
+      publishableKey: SupabaseConfig.anonKey,
+    );
+
+    runApp(const GenesisApp());
+  }, (Object error, StackTrace stack) {
+    // Fallback terakhir: error di luar zona Flutter
+    debugPrint('═══ UNCAUGHT ZONE ERROR ═══');
+    debugPrint('Error: $error');
+    debugPrint('Stack: $stack');
+  });
 }
 
 /// Root widget Genesis.id.
@@ -126,7 +171,8 @@ class _GenesisAppState extends State<GenesisApp> {
       child: MultiBlocProvider(
         providers: [
           BlocProvider<AuthBloc>.value(value: _authBloc),
-          BlocProvider<SetupCubit>(create: (_) => SetupCubit()),
+          // SetupCubit TIDAK lagi di sini — dipindahkan ke scope lokal
+          // di SetupWelcomePage wrapper (hanya hidup selama 4 halaman setup).
         ],
         child: MaterialApp.router(
           title: 'Genesis.id',

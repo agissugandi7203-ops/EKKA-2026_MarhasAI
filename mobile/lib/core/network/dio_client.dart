@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class DioClient {
@@ -33,7 +34,8 @@ class DioClient {
               final refreshResponse = await supabase.auth.refreshSession();
               session = refreshResponse.session;
             } catch (e) {
-              // Jika gagal refresh, biarkan request lewat dan ditangani oleh auth guard backend
+              // Log error refresh token agar bisa di-debug
+              debugPrint('[DioClient] Token refresh gagal saat onRequest: $e');
             }
           }
 
@@ -59,8 +61,9 @@ class DioClient {
                 final clonedResponse = await _dio.fetch(options);
                 return handler.resolve(clonedResponse);
               }
-            } catch (_) {
-              // Jika gagal refresh, teruskan error asli
+            } catch (e) {
+              // Log error refresh saat retry 401 agar bisa di-debug
+              debugPrint('[DioClient] Token refresh gagal saat retry 401: $e');
             }
           }
           return handler.next(error);

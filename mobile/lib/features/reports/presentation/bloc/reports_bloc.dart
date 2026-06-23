@@ -1,4 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/errors/app_exception.dart';
+import '../../../../core/errors/error_handler.dart';
 import '../../domain/repositories/report_repository.dart';
 import 'reports_event.dart';
 import 'reports_state.dart';
@@ -23,7 +25,8 @@ class ReportsBloc extends Bloc<ReportsEvent, ReportsState> {
       final reports = await _reportRepository.getReports();
       emit(ReportsFetchSuccess(reports));
     } catch (e) {
-      emit(ReportsFailure(e.toString()));
+      final appError = ErrorHandler.handle(e);
+      emit(ReportsFailure(appError.message));
     }
   }
 
@@ -41,7 +44,8 @@ class ReportsBloc extends Bloc<ReportsEvent, ReportsState> {
       );
       emit(ReportUploadSuccess(response));
     } catch (e) {
-      emit(ReportsFailure(e.toString()));
+      final appError = ErrorHandler.handle(e);
+      emit(ReportsFailure(appError.message));
     }
   }
 }

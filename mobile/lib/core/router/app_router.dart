@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/setup/presentation/bloc/setup_cubit.dart';
+
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
+import '../../features/auth/presentation/bloc/auth_state.dart';
 import '../../features/auth/presentation/pages/forgot_password_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/simple_sign_in_page.dart';
@@ -29,15 +33,17 @@ import '../../features/splash/presentation/pages/splash_page.dart';
 ///                     ForgotPassword → OTP → ResetPassword
 /// ```
 class AppRouter {
-  final GoRouter _router;
+  final AuthBloc _authBloc;
+  late final GoRouter _router;
 
-  AppRouter({required AuthBloc authBloc})
-      : _router = GoRouter(
-          initialLocation: Routes.splash,
-          debugLogDiagnostics: true,
-          routes: _buildRoutes(),
-          redirect: (context, state) => _handleRedirect(context, state),
-        );
+  AppRouter({required AuthBloc authBloc}) : _authBloc = authBloc {
+    _router = GoRouter(
+      initialLocation: Routes.splash,
+      debugLogDiagnostics: true,
+      routes: _buildRoutes(),
+      redirect: _handleRedirect,
+    );
+  }
 
   GoRouter get router => _router;
 
@@ -89,7 +95,8 @@ class AppRouter {
         path: Routes.otpVerification,
         name: Routes.otpVerificationName,
         builder: (context, state) {
-          final email = state.extra as String? ?? '';
+          // Safe cast — hindari TypeError jika extra bukan String
+          final email = (state.extra is String) ? state.extra as String : '';
           return OtpVerificationPage(email: email);
         },
       ),
@@ -100,25 +107,37 @@ class AppRouter {
       ),
 
       // ── Post-Login Setup ──
-      GoRoute(
-        path: Routes.setupWelcome,
-        name: Routes.setupWelcomeName,
-        builder: (context, state) => const SetupWelcomePage(),
-      ),
-      GoRoute(
-        path: Routes.setupLocation,
-        name: Routes.setupLocationName,
-        builder: (context, state) => const SetupLocationPage(),
-      ),
-      GoRoute(
-        path: Routes.setupNotification,
-        name: Routes.setupNotificationName,
-        builder: (context, state) => const SetupNotificationPage(),
-      ),
-      GoRoute(
-        path: Routes.setupProfile,
-        name: Routes.setupProfileName,
-        builder: (context, state) => const SetupProfilePage(),
+      // ShellRoute menyediakan SetupCubit lokal hanya selama 4 halaman setup.
+      // Cubit ini otomatis di-dispose saat user keluar dari setup flow.
+      ShellRoute(
+        builder: (context, state, child) {
+          return BlocProvider<SetupCubit>(
+            create: (_) => SetupCubit(),
+            child: child,
+          );
+        },
+        routes: [
+          GoRoute(
+            path: Routes.setupWelcome,
+            name: Routes.setupWelcomeName,
+            builder: (context, state) => const SetupWelcomePage(),
+          ),
+          GoRoute(
+            path: Routes.setupLocation,
+            name: Routes.setupLocationName,
+            builder: (context, state) => const SetupLocationPage(),
+          ),
+          GoRoute(
+            path: Routes.setupNotification,
+            name: Routes.setupNotificationName,
+            builder: (context, state) => const SetupNotificationPage(),
+          ),
+          GoRoute(
+            path: Routes.setupProfile,
+            name: Routes.setupProfileName,
+            builder: (context, state) => const SetupProfilePage(),
+          ),
+        ],
       ),
 
       // ── Main App ──
@@ -134,9 +153,56 @@ class AppRouter {
   // REDIRECT GUARD
   // ══════════════════════════════════════════════════════════════════════
 
-  static String? _handleRedirect(BuildContext context, GoRouterState state) {
-    // Biarkan splash, introduction, dan halaman auth berjalan tanpa guard.
-    // Redirect logic utama ditangani oleh BlocListener di masing-masing page.
+  /// Route yang boleh diakses tanpa autentikasi.
+  static const Set<String> _publicRoutes = {
+    Routes.splash,
+    Routes.preOnboarding,
+    Routes.introduction,
+    Routes.login,
+    Routes.simpleSignIn,
+    Routes.signUp,
+    Routes.forgotPassword,
+    Routes.otpVerification,
+    Routes.resetPassword,
+  };
+
+  /// Route yang hanya boleh diakses setelah autentikasi.
+  static const Set<String> _protectedRoutes = {
+    Routes.setupWelcome,
+    Routes.setupLocation,
+    Routes.setupNotification,
+    Routes.setupProfile,
+    Routes.home,
+  };
+
+  String? _handleRedirect(BuildContext context, GoRouterState state) {
+    final currentPath = state.matchedLocation;
+    final authState = _authBloc.state;
+
+    // Biarkan splash screen berjalan tanpa guard — ia punya logika navigasi sendiri.
+    if (currentPath == Routes.splash) return null;
+
+    final bool isAuthenticated = authState is Authenticated;
+    final bool isOnPublicRoute = _publicRoutes.contains(currentPath);
+    final bool isOnProtectedRoute = _protectedRoutes.contains(currentPath);
+
+    // Jika user belum login dan mencoba akses route terproteksi → redirect ke login.
+    if (!isAuthenticated && isOnProtectedRoute) {
+      return Routes.login;
+    }
+
+    // Jika user sudah login dan masih di halaman login/signup → redirect berdasarkan onboarding.
+    if (authState is Authenticated && isOnPublicRoute) {
+      // Kecuali halaman yang memang perlu diakses saat flow reset password
+      final bool isResetFlow = currentPath == Routes.forgotPassword ||
+          currentPath == Routes.otpVerification ||
+          currentPath == Routes.resetPassword;
+
+      if (!isResetFlow) {
+        return authState.needsOnboarding ? Routes.setupWelcome : Routes.home;
+      }
+    }
+
     return null;
   }
 }

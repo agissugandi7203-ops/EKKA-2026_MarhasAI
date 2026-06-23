@@ -1,3 +1,4 @@
+import '../../../../core/errors/error_handler.dart';
 import '../../domain/repositories/profile_repository.dart';
 import '../datasources/profile_remote_data_source.dart';
 import '../models/profile_model.dart';
@@ -9,7 +10,11 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
   @override
   Future<ProfileModel> getMyProfile() async {
-    return await _remoteDataSource.getMyProfile();
+    try {
+      return await _remoteDataSource.getMyProfile();
+    } catch (e, stack) {
+      throw ErrorHandler.handle(e, stack);
+    }
   }
 
   @override
@@ -19,11 +24,15 @@ class ProfileRepositoryImpl implements ProfileRepository {
     required String province,
     required String cityOrDistrict,
   }) async {
-    return await _remoteDataSource.onboardProfile(
-      username: username,
-      fullName: fullName,
-      province: province,
-      cityOrDistrict: cityOrDistrict,
-    );
+    try {
+      return await _remoteDataSource.onboardProfile(
+        username: username,
+        fullName: fullName,
+        province: province,
+        cityOrDistrict: cityOrDistrict,
+      );
+    } catch (e, stack) {
+      throw ErrorHandler.handle(e, stack);
+    }
   }
 }

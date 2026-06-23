@@ -52,8 +52,8 @@ class ProfileModel {
       currentStreak: json['current_streak'] as int? ?? 0,
       lastReportDate: json['last_report_date'] as String?,
       role: json['role'] as String? ?? 'citizen',
-      createdAt: json['created_at'] as String,
-      updatedAt: json['updated_at'] as String,
+      createdAt: json['created_at'] as String? ?? '',
+      updatedAt: json['updated_at'] as String? ?? '',
       badges: parsedBadges,
     );
   }

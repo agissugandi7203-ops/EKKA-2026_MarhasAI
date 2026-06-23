@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:mobile/features/chat/data/datasources/chat_remote_data_source.dart';
-import 'package:mobile/features/chat/data/models/chat_message_model.dart';
+import '../../../../core/errors/app_exception.dart';
+import '../../../../core/errors/error_handler.dart';
+import '../../data/datasources/chat_remote_data_source.dart';
+import '../../data/models/chat_message_model.dart';
 
 // ── EVENTS ──
 abstract class ChatEvent extends Equatable {
@@ -118,7 +120,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         add(_StreamChunkReceived(chunk));
       },
       onError: (err) {
-        add(_StreamFailed(err.toString()));
+        final appError = ErrorHandler.handle(err);
+        add(_StreamFailed(appError.message));
       },
       onDone: () {
         add(_StreamCompleted());

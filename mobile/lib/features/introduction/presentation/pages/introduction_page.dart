@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -132,6 +133,14 @@ class _IntroductionPageState extends State<IntroductionPage> {
                         child: Image.network(
                           _slides[index].imageUrl,
                           fit: BoxFit.cover,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Shimmer.fromColors(
+                              baseColor: AppColors.navy800,
+                              highlightColor: AppColors.navy700,
+                              child: Container(color: AppColors.navy800),
+                            );
+                          },
                           errorBuilder: (context, error, stackTrace) {
                             return Container(color: AppColors.navy800);
                           },
@@ -189,33 +198,35 @@ class _IntroductionPageState extends State<IntroductionPage> {
                       // Title & Description (Transisi halus dengan AnimatedSwitcher)
                       AnimatedSwitcher(
                         duration: AppConstants.animNormal,
-                        child: Column(
-                          key: ValueKey<int>(_currentPage),
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              _slides[_currentPage].title,
-                              style: AppTextStyles.headlineLarge.copyWith(
-                                color: Colors.white,
-                                fontSize: 28,
-                                fontWeight: FontWeight.w700,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: AppConstants.spacing16),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              child: Text(
-                                _slides[_currentPage].description,
-                                style: AppTextStyles.bodyLarge.copyWith(
-                                  color: Colors.white.withValues(alpha: 0.8),
-                                  height: 1.5,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                          ],
-                        ),
+                        child: _currentPage < _slides.length
+                            ? Column(
+                                key: ValueKey<int>(_currentPage),
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    _slides[_currentPage].title,
+                                    style: AppTextStyles.headlineLarge.copyWith(
+                                      color: Colors.white,
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: AppConstants.spacing16),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                                    child: Text(
+                                      _slides[_currentPage].description,
+                                      style: AppTextStyles.bodyLarge.copyWith(
+                                        color: Colors.white.withValues(alpha: 0.8),
+                                        height: 1.5,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : const SizedBox.shrink(),
                       ),
 
                       const SizedBox(height: AppConstants.spacing40),

@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:dio/dio.dart';
-import 'package:mobile/core/network/dio_client.dart';
-import 'package:mobile/features/chat/data/models/chat_message_model.dart';
+import '../../../../core/network/dio_client.dart';
+import '../models/chat_message_model.dart';
 
 class ChatRemoteDataSource {
   final DioClient _dioClient;
