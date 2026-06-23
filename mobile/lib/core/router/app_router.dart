@@ -20,6 +20,8 @@ import '../../features/setup/presentation/pages/setup_notification_page.dart';
 import '../../features/setup/presentation/pages/setup_profile_page.dart';
 import '../../features/setup/presentation/pages/setup_welcome_page.dart';
 import '../../features/splash/presentation/pages/splash_page.dart';
+import '../theme/app_theme.dart';
+import '../widgets/auth_listener_wrapper.dart';
 import '../widgets/genesis_loading.dart';
 
 /// Router terpusat Genesis.id menggunakan GoRouter.
@@ -43,6 +45,32 @@ class AppRouter {
       debugLogDiagnostics: true,
       routes: _buildRoutes(),
       redirect: _handleRedirect,
+      errorBuilder: (context, state) {
+        final location = state.uri.toString();
+        debugPrint('GoRouter Error Location: $location');
+        if (location.startsWith('genesis://')) {
+          return MaterialApp(
+            title: 'Genesis.id',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.lightTheme,
+            home: const AuthListenerWrapper(
+              child: Scaffold(
+                body: Center(
+                  child: GenesisLoading(message: 'Menghubungkan akun...'),
+                ),
+              ),
+            ),
+          );
+        }
+        return MaterialApp(
+          title: 'Genesis.id',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.lightTheme,
+          home: Scaffold(
+            body: Center(child: Text('Error: ${state.error}')),
+          ),
+        );
+      },
     );
   }
 
@@ -115,15 +143,6 @@ class AppRouter {
           ),
         ),
       ),
-      GoRoute(
-        path: Routes.loginCallbackSlash,
-        name: Routes.loginCallbackSlashName,
-        builder: (context, state) => const Scaffold(
-          body: Center(
-            child: GenesisLoading(message: 'Menghubungkan akun...'),
-          ),
-        ),
-      ),
 
       // ── Post-Login Setup ──
       // ShellRoute menyediakan SetupCubit lokal hanya selama 4 halaman setup.
@@ -184,7 +203,6 @@ class AppRouter {
     Routes.otpVerification,
     Routes.resetPassword,
     Routes.loginCallback,
-    Routes.loginCallbackSlash,
   };
 
   /// Route yang hanya boleh diakses setelah autentikasi.
@@ -267,9 +285,6 @@ abstract final class Routes {
 
   static const String loginCallback = '/login-callback';
   static const String loginCallbackName = 'loginCallback';
-
-  static const String loginCallbackSlash = '/login-callback/';
-  static const String loginCallbackSlashName = 'loginCallbackSlash';
 
   // ── Post-Login Setup ──
   static const String setupWelcome = '/setup/welcome';

@@ -29,7 +29,8 @@ import '../../features/auth/presentation/bloc/auth_state.dart';
 ///   child: Scaffold(...),
 /// )
 /// ```
-class AuthListenerWrapper extends StatelessWidget {
+
+class AuthListenerWrapper extends StatefulWidget {
   /// Widget child yang dibungkus.
   final Widget child;
 
@@ -48,42 +49,80 @@ class AuthListenerWrapper extends StatelessWidget {
   });
 
   @override
+  State<AuthListenerWrapper> createState() => _AuthListenerWrapperState();
+}
+
+class _AuthListenerWrapperState extends State<AuthListenerWrapper> {
+  @override
+  void initState() {
+    super.initState();
+    // Jalankan pengecekan setelah frame pertama selesai dirender.
+    // Ini menangani kasus di mana status autentikasi sudah aktif (Authenticated)
+    // sebelum widget ini masuk ke widget tree (misalnya saat deep link diproses).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _checkCurrentState();
+      }
+    });
+  }
+
+  void _checkCurrentState() {
+    final state = context.read<AuthBloc>().state;
+    if (state is Authenticated) {
+      _handleAuthenticated(state);
+    } else if (state is Unauthenticated) {
+      _handleUnauthenticated(state);
+    }
+  }
+
+  void _handleAuthenticated(Authenticated state) {
+    if (widget.onAuthenticated != null) {
+      final handled = widget.onAuthenticated!(state.user, state.needsOnboarding);
+      if (handled) return;
+    }
+
+    final currentPath = GoRouterState.of(context).matchedLocation;
+    if (state.needsOnboarding) {
+      if (currentPath != Routes.setupWelcome) {
+        context.goNamed(Routes.setupWelcomeName);
+      }
+    } else {
+      if (currentPath != Routes.home) {
+        context.goNamed(Routes.homeName);
+      }
+    }
+  }
+
+  void _handleUnauthenticated(Unauthenticated state) {
+    final currentPath = GoRouterState.of(context).matchedLocation;
+    final bool isProtectedRoute = currentPath.startsWith('/setup') ||
+        currentPath.startsWith('/home');
+    if (isProtectedRoute) {
+      if (currentPath != Routes.login) {
+        context.goNamed(Routes.loginName);
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is Authenticated) {
-          // Jika ada callback custom dan mengembalikan true, skip navigasi default
-          if (onAuthenticated != null) {
-            final handled = onAuthenticated!(state.user, state.needsOnboarding);
-            if (handled) return;
-          }
-
-          // Navigasi default: ke setup wizard jika perlu onboarding, atau ke home
-          if (state.needsOnboarding) {
-            context.goNamed(Routes.setupWelcomeName);
-          } else {
-            context.goNamed(Routes.homeName);
-          }
+          _handleAuthenticated(state);
         } else if (state is AuthFailure) {
           // Tampilkan error SnackBar dengan visual premium
           context.showErrorSnackBar(state.errorMessage);
 
           // Callback tambahan jika ada
-          onAuthFailure?.call(state.errorMessage);
+          widget.onAuthFailure?.call(state.errorMessage);
         } else if (state is MagicLinkSent) {
           context.showSuccessSnackBar('Link masuk telah dikirim ke ${state.email}!');
         } else if (state is Unauthenticated) {
-          // Jika user logout, arahkan ke login
-          // Hanya redirect jika bukan di halaman publik
-          final currentPath = GoRouterState.of(context).matchedLocation;
-          final bool isProtectedRoute = currentPath.startsWith('/setup') ||
-              currentPath.startsWith('/home');
-          if (isProtectedRoute) {
-            context.goNamed(Routes.loginName);
-          }
+          _handleUnauthenticated(state);
         }
       },
-      child: child,
+      child: widget.child,
     );
   }
 }
