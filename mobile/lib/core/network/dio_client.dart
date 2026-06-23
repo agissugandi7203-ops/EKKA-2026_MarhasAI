@@ -21,18 +21,48 @@ class DioClient {
     ),
   ) {
     _dio.interceptors.add(
-      InterceptorsWrapper(
+      QueuedInterceptorsWrapper(
         onRequest: (options, handler) async {
-          // Otomatis mengambil access token JWT dari Supabase Auth yang sedang aktif
-          final session = Supabase.instance.client.auth.currentSession;
+          // Ambil session Supabase aktif
+          final supabase = Supabase.instance.client;
+          var session = supabase.auth.currentSession;
+          
+          // Jika token telah kadaluarsa, lakukan refresh token secara sinkron untuk antrean request
+          if (session != null && session.isExpired) {
+            try {
+              final refreshResponse = await supabase.auth.refreshSession();
+              session = refreshResponse.session;
+            } catch (e) {
+              // Jika gagal refresh, biarkan request lewat dan ditangani oleh auth guard backend
+            }
+          }
+
           if (session != null) {
             final token = session.accessToken;
             options.headers['Authorization'] = 'Bearer $token';
           }
           return handler.next(options);
         },
-        onError: (DioException error, handler) {
-          // Logika penanganan error global dapat ditambahkan di sini
+        onError: (DioException error, handler) async {
+          // Jika terjadi error 401 (Unauthorized), coba refresh token sekali lagi dan jalankan ulang request asli
+          if (error.response?.statusCode == 401) {
+            try {
+              final supabase = Supabase.instance.client;
+              final refreshResponse = await supabase.auth.refreshSession();
+              final token = refreshResponse.session?.accessToken;
+              
+              if (token != null) {
+                final options = error.requestOptions;
+                options.headers['Authorization'] = 'Bearer $token';
+                
+                // Kirim ulang request asli
+                final clonedResponse = await _dio.fetch(options);
+                return handler.resolve(clonedResponse);
+              }
+            } catch (_) {
+              // Jika gagal refresh, teruskan error asli
+            }
+          }
           return handler.next(error);
         },
       ),

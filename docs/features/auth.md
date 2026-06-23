@@ -146,3 +146,45 @@ Auth di backend hanya memiliki 1 endpoint untuk verifikasi token:
 | Password | Min 8 char, 1 uppercase, 1 digit | `@MinLength(8)` |
 | Username | `^[a-zA-Z0-9_]+$`, 3-30 char | `/^[a-zA-Z0-9_]+$/` regex |
 | Full Name | 2-100 char | `@MinLength(2)`, `@MaxLength(100)` |
+
+---
+
+## 8. Panduan Konfigurasi Supabase Auth (Dashboard)
+
+Untuk memastikan alur autentikasi email, OTP, dan pemulihan password berjalan lancar di aplikasi Flutter dan Next.js, Anda wajib mengonfigurasi pengaturan berikut di **Supabase Console**:
+
+### A. Konfigurasi Provider Email
+1. Buka dashboard proyek Supabase Anda.
+2. Navigasi ke menu **Authentication** -> **Providers** -> klik **Email**.
+3. Pastikan konfigurasi diatur sebagai berikut:
+   *   **Enable Signup**: `true` (Mengizinkan pendaftaran akun baru).
+   *   **Confirm Email**: `true` (Wajib memverifikasi email sebelum login) atau `false` (Bisa langsung login setelah daftar).
+   *   **Secure email change**: `true`.
+   *   **Double Confirm Email Change**: `true`.
+
+### B. Konfigurasi Layanan SMTP (Wajib untuk Produksi)
+Secara default, Supabase membatasi pengiriman email maksimal **3 email per jam** (menggunakan SMTP internal bawaan). Anda wajib memasang SMTP kustom untuk produksi (seperti Gmail SMTP, Resend, SendGrid, atau Mailgun):
+1. Navigasi ke **Authentication** -> **SMTP Settings**.
+2. Nyalakan toggle **Enable Custom SMTP**.
+3. Isi parameter berikut (Contoh menggunakan Gmail SMTP):
+   *   **Sender Email**: `no-reply@genesisHub.web.id` (Sesuaikan dengan domain)
+   *   **Sender Name**: `Genesis.id Support`
+   *   **Host**: `smtp.gmail.com` (Atau SMTP provider Anda)
+   *   **Port**: `587` (Gunakan TLS) atau `465` (SSL)
+   *   **Username**: Alamat email pengirim
+   *   **Password**: *App Password* khusus yang dibuat dari Google Account Settings (bukan password email biasa).
+
+### C. Konfigurasi Redirect URL (Deep Linking)
+Saat pengguna melakukan klik pada link verifikasi email atau Magic Link di handphone, Supabase harus tahu ke mana ia harus mengarahkan kembali pengguna agar masuk ke dalam aplikasi Flutter:
+1. Navigasi ke **Authentication** -> **URL Configuration**.
+2. **Site URL**: `https://genesisHub.web.id` (Domain utama frontend Next.js).
+3. **Redirect URLs**: Tambahkan redirect URL untuk schema deep link Flutter Anda:
+   *   `genesis://reset-password` (Skema deep link untuk diarahkan kembali ke aplikasi Flutter setelah klik tautan email reset).
+   *   `https://genesisHub.web.id/reset-password` (Bila membuka web admin).
+
+### D. Konfigurasi Keamanan & Durasi OTP
+1. Navigasi ke **Authentication** -> **Security**.
+2. **Email OTP Expiry**: Set ke `600` detik (10 menit) agar masa aktif OTP tidak terlalu singkat.
+3. **Minimum Token Length**: Set ke `6` digit (Sesuai dengan `otp_verification_page.dart` yang menangani kode 6-angka).
+4. Klik **Save**.
+
