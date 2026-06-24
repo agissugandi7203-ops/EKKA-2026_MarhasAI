@@ -806,89 +806,148 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
       barrierColor: Colors.black.withValues(alpha: 0.5),
       isScrollControlled: true,
       builder: (context) {
-        return BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.95),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.4),
-                width: 1.5,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 20,
-                  offset: const Offset(0, -5),
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.95),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.4),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 20,
+                      offset: const Offset(0, -5),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: SafeArea(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 44,
-                      height: 5,
-                      decoration: BoxDecoration(
-                        color: AppColors.divider.withValues(alpha: 0.6),
-                        borderRadius: BorderRadius.circular(2.5),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'LAMPIRKAN BERKAS',
-                    style: AppTextStyles.labelSmall.copyWith(
-                      color: AppColors.navy900,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                child: SafeArea(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildAttachmentGridItem(
-                        icon: Icons.image_rounded,
-                        label: 'Galeri Foto',
-                        gradientColors: [AppColors.emerald, const Color(0xFF34D399)],
-                        onTap: () {
-                          Navigator.pop(context);
-                          _pickImage(ImageSource.gallery);
-                        },
+                      Center(
+                        child: Container(
+                          width: 44,
+                          height: 5,
+                          decoration: BoxDecoration(
+                            color: AppColors.divider.withValues(alpha: 0.6),
+                            borderRadius: BorderRadius.circular(2.5),
+                          ),
+                        ),
                       ),
-                      _buildAttachmentGridItem(
-                        icon: Icons.camera_alt_rounded,
-                        label: 'Kamera',
-                        gradientColors: [AppColors.gold, const Color(0xFFFBBF24)],
-                        onTap: () {
-                          Navigator.pop(context);
-                          _pickImage(ImageSource.camera);
-                        },
+                      const SizedBox(height: 24),
+                      Text(
+                        'PILIH MODEL AI',
+                        style: AppTextStyles.labelSmall.copyWith(
+                          color: AppColors.navy900,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.5,
+                        ),
                       ),
-                      _buildAttachmentGridItem(
-                        icon: Icons.picture_as_pdf_rounded,
-                        label: 'Berkas PDF',
-                        gradientColors: [AppColors.burgundy500, const Color(0xFFF87171)],
-                        onTap: () {
-                          Navigator.pop(context);
-                          _pickPDF();
-                        },
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: AppColors.navy50.withValues(alpha: 0.5),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          children: [
+                            _buildSheetModelItem('google/gemini-2.5-flash', '⚡ Flash', setSheetState),
+                            _buildSheetModelItem('google/gemini-2.5-pro', '💎 Pro', setSheetState),
+                            _buildSheetModelItem('deepseek/deepseek-chat', '🤖 DeepSeek', setSheetState),
+                          ],
+                        ),
                       ),
+                      const SizedBox(height: 28),
+                      Text(
+                        'LAMPIRKAN BERKAS',
+                        style: AppTextStyles.labelSmall.copyWith(
+                          color: AppColors.navy900,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _buildAttachmentGridItem(
+                            icon: Icons.image_rounded,
+                            label: 'Galeri Foto',
+                            gradientColors: [AppColors.emerald, const Color(0xFF34D399)],
+                            onTap: () {
+                              Navigator.pop(context);
+                              _pickImage(ImageSource.gallery);
+                            },
+                          ),
+                          _buildAttachmentGridItem(
+                            icon: Icons.camera_alt_rounded,
+                            label: 'Kamera',
+                            gradientColors: [AppColors.gold, const Color(0xFFFBBF24)],
+                            onTap: () {
+                              Navigator.pop(context);
+                              _pickImage(ImageSource.camera);
+                            },
+                          ),
+                          _buildAttachmentGridItem(
+                            icon: Icons.picture_as_pdf_rounded,
+                            label: 'Berkas PDF',
+                            gradientColors: [AppColors.burgundy500, const Color(0xFFF87171)],
+                            onTap: () {
+                              Navigator.pop(context);
+                              _pickPDF();
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                ],
+                ),
               ),
-            ),
-          ),
+            );
+          },
         );
       },
+    );
+  }
+
+  Widget _buildSheetModelItem(String modelId, String label, StateSetter setSheetState) {
+    final isSelected = _selectedModel == modelId;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _selectedModel = modelId;
+          });
+          setSheetState(() {});
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.navy700 : Colors.transparent,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: AppTextStyles.labelSmall.copyWith(
+              color: isSelected ? Colors.white : AppColors.textSecondary,
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -943,50 +1002,6 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
 
 
 
-  Widget _buildModelSelectorBarInline() {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        child: Row(
-          children: [
-            _buildModelBarItemInline('google/gemini-2.5-flash', '⚡ Gemini-Flash'),
-            _buildModelBarItemInline('google/gemini-2.5-pro', '💎 Gemini-Pro'),
-            _buildModelBarItemInline('deepseek/deepseek-chat', '🤖 DeepSeek'),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildModelBarItemInline(String modelId, String label) {
-    final isSelected = _selectedModel == modelId;
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedModel = modelId;
-        });
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        margin: const EdgeInsets.symmetric(horizontal: 3),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.navy700 : AppColors.navy50.withValues(alpha: 0.6),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Text(
-          label,
-          style: AppTextStyles.labelSmall.copyWith(
-            color: isSelected ? Colors.white : AppColors.textSecondary,
-            fontWeight: FontWeight.bold,
-            fontSize: 10.5,
-          ),
-        ),
-      ),
-    );
-  }
 
   Widget _buildAttachmentPreviewInline() {
     final isPdf = _attachedFilePath!.endsWith('.pdf');
@@ -1190,11 +1205,6 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Model selector inside the box
-                      _buildModelSelectorBarInline(),
-                      
-                      const SizedBox(height: 6),
-                      
                       // Attachment preview inside the box (above text input field)
                       if (_attachedFilePath != null) ...[
                         _buildAttachmentPreviewInline(),
