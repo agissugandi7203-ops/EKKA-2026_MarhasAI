@@ -383,6 +383,42 @@ Basis pengetahuan asisten RAG Geni AI dilengkapi dengan produk hukum resmi Indon
 * `PP RI No. 22 Tahun 2021 tentang Penyelenggaraan PPLH`: Persetujuan lingkungan hidup, baku mutu emisi industri, dan baku mutu air nasional.
 * `Permen LHK No. 6 Tahun 2021 tentang Pengelolaan Limbah B3`: Tata cara penyimpanan, pelabelan simbol limbah B3, batas kedaluwarsa penyimpanan (90-180 hari), dan manifest elektronik (Festronik).
 * `UU RI No. 18 Tahun 2013 tentang Pencegahan Perusakan Hutan`: Pencegahan pembalakan liar, perambahan hutan, dan denda pidana korporasi kehutanan.
+* `Perda Provinsi DKI Jakarta No. 3 Tahun 2013 tentang Pengelolaan Sampah`: Kewajiban pemilahan 3 jenis sampah, larangan pembuangan sampah sembarangan (denda maksimal Rp 500.000), dan sanksi kelalaian bagi pengelola kawasan.
+* `Perda Kota Surabaya No. 1 Tahun 2019 tentang Pengelolaan Sampah dan Kebersihan`: Larangan kantong plastik sekali pakai di pusat ritel, kewajiban pemilahan sampah 4 kategori (organik, anorganik, residu, B3), denda tilang kebersihan sebesar Rp 75.000.
+* `Perda Provinsi Bali No. 5 Tahun 2011 tentang Pengelolaan Sampah`: Integrasi pengelolaan sampah berbasis adat (Desa Adat), landasan filosofis Tri Hita Karana, denda administratif hingga Rp 50.000.000 atau hukum adat setempat.
+* `UU No. 5 Tahun 1990 tentang Konservasi Sumber Daya Alam Hayati dan Ekosistemnya`: Larangan pengambilan satwa liar/tumbuhan dilindungi, perlindungan kawasan cagar alam/taman nasional (pidana hingga 5 tahun & denda Rp 100 Juta).
+* `Permen LHK No. P.75 Tahun 2019 tentang Peta Jalan Pengurangan Sampah oleh Produsen`: Target pengurangan sampah kemasan sebesar 30% pada akhir tahun 2029 bagi manufaktur FMCG, ritel, dan jasa makanan-minuman.
+* `UU No. 17 Tahun 2019 tentang Sumber Daya Air`: Pengendalian pencemaran dan perlindungan sumber air (pidana penjara 3-9 tahun & denda Rp 5 Miliar - Rp 15 Miliar bagi pelaku perusakan).
+* `Perda Provinsi DKI Jakarta No. 2 Tahun 2005 tentang Pengendalian Pencemaran Udara`: Kewajiban uji emisi gas buang kendaraan bermotor tahunan (denda Rp 250.000), penyediaan kawasan tanpa rokok.
+* `Perda Kota Surabaya No. 2 Tahun 2014 tentang Penyelenggaraan Ketertiban Umum`: Larangan membuang limbah cair komersial/zat kimia ke drainase kota (denda administratif Rp 25.000.000).
+* `Perda Provinsi Jawa Barat No. 1 Tahun 2016 tentang Pengelolaan Sampah Regional`: Koordinasi penyediaan TPA Regional Jawa Barat (Legok Nangka & Lulut Nambo) serta skema tipping fee bersama lintas daerah.
+* `Perda Kota Bandung No. 3 Tahun 2019 tentang Kawasan Tanpa Rokok`: Larangan merokok di area KTR (sekolah, angkutan, rumah sakit) dan denda administratif langsung di tempat sebesar Rp 150.000.
+* `Perda Provinsi Bali No. 8 Tahun 2002 tentang Penanggulangan Pencemaran Lingkungan Laut`: Larangan membuang minyak kotor (ballast water) dan sampah plastik ke perairan pesisir Bali (denda hingga Rp 50.000.000).
+* `Perda Kota Yogyakarta No. 10 Tahun 2012 tentang Pengelolaan Sampah`: Pengelolaan bank sampah berbasis RT/RW serta kewajiban penyaluran sampah anorganik ekonomis ke tabungan warga.
+* `UU No. 26 Tahun 2007 tentang Penataan Ruang`: Kewajiban penyediaan Ruang Terbuan Hijau (RTH) minimal 30% wilayah perkotaan dan pidana pelanggaran pemanfaatan tata ruang.
+* `UU No. 41 Tahun 1999 tentang Kehutanan`: Larangan membakar hutan secara sengaja (karhutla) dengan sanksi pidana penjara hingga 15 tahun dan denda Rp 5 Miliar.
+* `PP No. 82 Tahun 2001 tentang Pengelolaan Kualitas Air dan Pengendalian Pencemaran Air`: Klasifikasi mutu air sungai (kelas 1-4) dan kewajiban memiliki Izin Pembuangan Air Limbah Cair (IPLC).
+* `UU No. 32 Tahun 2004 tentang Pemerintahan Daerah`: Kewenangan urusan wajib pemda kabupaten/kota dalam pengendalian lingkungan hidup.
+* `Perpres No. 97 Tahun 2017 tentang Kebijakan dan Strategi Nasional (Jakstranas)`: Target pengelolaan sampah nasional 2025 (30% pengurangan dari sumber, 70% penanganan/daur ulang).
+* `Perda Kota Malang No. 10 Tahun 2010 tentang Pengelolaan Sampah`: Larangan membuang sampah/puing bangunan ke drainase kota Malang (denda maksimal Rp 10.000.000).
+* `Perda Kota Semarang No. 6 Tahun 2012 tentang Pengelolaan Sampah`: Pengelolaan gas metana TPA Jatibarang menjadi listrik, pemilahan pupuk kompos pasar.
+* `Perda Provinsi Sumatera Selatan No. 8 Tahun 2016 tentang Pengendalian Kebakaran Hutan`: Pengendalian karhutla di lahan gambut, pembentukan satgas karhutla, larangan pembukaan lahan gambut komersial.
+* `Perda Kota Medan No. 6 Tahun 2015 tentang Pengelolaan Persampahan`: Sanksi denda administratif Rp 10.000.000 bagi perseorangan yang membuang sampah sembarangan di sungai/jalur hijau Medan.
+* `Perda Provinsi DKI Jakarta No. 1 Tahun 2015 tentang Rencana Tata Ruang Wilayah 2030`: Regulasi zonasi pemanfaatan ruang kota Jakarta, pembatasan industri berat di pusat kota, kewajiban sumur resapan air hujan.
+* `Perda Kota Bandung No. 1 Tahun 2013 tentang Rencana Zonasi`: Zonasi tata ruang, penetapan Kawasan Bandung Utara (KBU) sebagai wilayah lindung tangkapan air, sanksi pembongkaran bangunan komersial ilegal.
+* `Perda Kota Surabaya No. 5 Tahun 2014 tentang Pengelolaan RTH`: Kewajiban developer properti untuk menyediakan Ruang Terbuka Hijau (RTH) minimal 20%, denda administratif penutupan proyek bagi pelanggar.
+* `Perda Provinsi Bali No. 3 Tahun 2020 tentang RZWP3K`: Zonasi kawasan pesisir, perlindungan ekosistem mangrove Teluk Benoa, larangan reklamasi ilegal, penetapan sempadan pantai minimal 100 meter.
+* `Perda Provinsi Jawa Tengah No. 4 Tahun 2019 tentang Pengelolaan DAS Terpadu`: Upaya pemeliharaan hulu DAS Bengawan Solo, konservasi tanah menggunakan vetiver grass, kewajiban terasering lahan miring.
+* `Perda Provinsi Jawa Timur No. 2 Tahun 2016 tentang Upaya Pelestarian Lingkungan Hidup`: Pengendalian mutu udara industri daerah (Gresik, Sidoarjo, Pasuruan), kewajiban pelaporan berkala kelayakan lingkungan.
+* `Perda Provinsi Sumatera Selatan No. 10 Tahun 2018 tentang Pengelolaan Hutan Lindung`: Perlindungan keanekaragaman hayati, hak kemitraan kehutanan sosial masyarakat adat, larangan perkebunan sawit ilegal.
+* `Perda Provinsi Kalimantan Timur No. 2 Tahun 2011 tentang Pengelolaan Kualitas Air`: Pengendalian pencemaran air sungai Mahakam dari limbah tambang batubara, kewajiban pembangunan sediment pond.
+* `Perda Provinsi Riau No. 1 Tahun 2019 tentang Kemitraan Kehutanan Sosial`: Pengakuan akses kelola wilayah hutan bagi suku anak dalam, pembatasan kepemilikan lahan tani agroforestri berkelanjutan.
+* `Perda Kota Medan No. 1 Tahun 2016 tentang Penyelenggaraan Kota Sehat`: Pembangunan sanitasi lingkungan pemukiman padat penduduk, kewajiban septictank komunal di sepanjang bantaran sungai Deli.
+* `Perda Provinsi Sulawesi Selatan No. 2 Tahun 2015 tentang Perlindungan Terumbu Karang`: Pelarangan penangkapan ikan menggunakan bahan peledak (bom), racun potasium, pelestarian TNL Takabonerate.
+* `Perda Provinsi Maluku No. 1 Tahun 2018 tentang Hak Adat Kelautan (Sasi)`: Pengakuan pranata kearifan lokal Sasi Laut Maluku dalam penutupan dan pembatasan pemanenan biota laut berkelanjutan.
+* `Perda Provinsi Papua No. 5 Tahun 2008 tentang Perlindungan Hutan Adat Ulayat`: Pengakuan hak kelola marga adat Papua atas hutan adat, kewajiban FPIP (musyawarah) bagi korporasi kehutanan.
+* `Perda Provinsi DIY Yogyakarta No. 3 Tahun 2015 tentang Lahan Pertanian`: Pelarangan alih fungsi lahan sawah subur menjadi perumahan/industri, pemberian insentif pajak bumi.
+* `Perda Kota Tangerang No. 3 Tahun 2012 tentang Sampah Tangerang`: Kewajiban retribusi kebersihan toko/ruko bulanan, pelarangan penimbunan sampah di trotoar atau median jalan protokol kota.
 
 ---
 
