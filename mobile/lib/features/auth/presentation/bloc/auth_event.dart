@@ -101,3 +101,6 @@ class AuthSessionChanged extends AuthEvent {
   List<Object?> get props => [user, event];
 }
 
+/// Force update status onboarding untuk bypass debug/testing.
+class OnboardingBypassed extends AuthEvent {}
+

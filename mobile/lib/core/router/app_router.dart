@@ -19,6 +19,7 @@ import '../../features/setup/presentation/pages/setup_location_page.dart';
 import '../../features/setup/presentation/pages/setup_notification_page.dart';
 import '../../features/setup/presentation/pages/setup_profile_page.dart';
 import '../../features/setup/presentation/pages/setup_welcome_page.dart';
+import '../../features/home/presentation/pages/statistic_detail_page.dart';
 import '../../features/splash/presentation/pages/splash_page.dart';
 import '../widgets/auth_listener_wrapper.dart';
 import '../widgets/genesis_loading.dart';
@@ -157,22 +158,34 @@ class AppRouter {
           GoRoute(
             path: Routes.setupWelcome,
             name: Routes.setupWelcomeName,
-            builder: (context, state) => const SetupWelcomePage(),
+            pageBuilder: (context, state) => _fadeTransitionPage(
+              state: state,
+              child: const SetupWelcomePage(),
+            ),
           ),
           GoRoute(
             path: Routes.setupLocation,
             name: Routes.setupLocationName,
-            builder: (context, state) => const SetupLocationPage(),
+            pageBuilder: (context, state) => _fadeTransitionPage(
+              state: state,
+              child: const SetupLocationPage(),
+            ),
           ),
           GoRoute(
             path: Routes.setupNotification,
             name: Routes.setupNotificationName,
-            builder: (context, state) => const SetupNotificationPage(),
+            pageBuilder: (context, state) => _fadeTransitionPage(
+              state: state,
+              child: const SetupNotificationPage(),
+            ),
           ),
           GoRoute(
             path: Routes.setupProfile,
             name: Routes.setupProfileName,
-            builder: (context, state) => const SetupProfilePage(),
+            pageBuilder: (context, state) => _fadeTransitionPage(
+              state: state,
+              child: const SetupProfilePage(),
+            ),
           ),
         ],
       ),
@@ -182,6 +195,11 @@ class AppRouter {
         path: Routes.home,
         name: Routes.homeName,
         builder: (context, state) => const HomePage(),
+      ),
+      GoRoute(
+        path: Routes.statistics,
+        name: Routes.statisticsName,
+        builder: (context, state) => const StatisticDetailPage(),
       ),
     ];
   }
@@ -217,6 +235,11 @@ class AppRouter {
     final currentPath = state.matchedLocation;
     final authState = _authBloc.state;
 
+    // Cegah redirect saat auth state sedang dimuat (initial / loading)
+    if (authState is AuthInitial || authState is AuthLoading) {
+      return null;
+    }
+
     // Biarkan splash screen berjalan tanpa guard — ia punya logika navigasi sendiri.
     if (currentPath == Routes.splash) return null;
 
@@ -245,6 +268,24 @@ class AppRouter {
     }
 
     return null;
+  }
+
+  static Page<dynamic> _fadeTransitionPage({
+    required GoRouterState state,
+    required Widget child,
+  }) {
+    return CustomTransitionPage<void>(
+      key: state.pageKey,
+      child: child,
+      transitionDuration: const Duration(milliseconds: 350),
+      reverseTransitionDuration: const Duration(milliseconds: 350),
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        return FadeTransition(
+          opacity: animation.drive(CurveTween(curve: Curves.easeOutQuint)),
+          child: child,
+        );
+      },
+    );
   }
 }
 
@@ -304,4 +345,7 @@ abstract final class Routes {
   // ── Main App ──
   static const String home = '/home';
   static const String homeName = 'home';
+
+  static const String statistics = '/statistics';
+  static const String statisticsName = 'statistics';
 }

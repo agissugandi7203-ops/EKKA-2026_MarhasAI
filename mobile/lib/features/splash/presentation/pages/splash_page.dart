@@ -26,12 +26,20 @@ class _SplashPageState extends State<SplashPage>
   late final AnimationController _controller;
   late final Animation<double> _fadeAnimation;
   late final Animation<Offset> _slideAnimation;
+  bool _startLoading = false;
 
   @override
   void initState() {
     super.initState();
     _setupAnimations();
     _navigateAfterDelay();
+
+    // Trigger smooth loading indicator animation after the first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        setState(() => _startLoading = true);
+      }
+    });
   }
 
   void _setupAnimations() {
@@ -48,12 +56,12 @@ class _SplashPageState extends State<SplashPage>
     );
 
     _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
+      begin: const Offset(0, 0.15), // Lebih halus & soft (bukan 0.3)
       end: Offset.zero,
     ).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: const Interval(0.3, 0.8, curve: Curves.easeOutCubic),
+        curve: const Interval(0.3, 0.9, curve: Curves.easeOutQuint), // Transisi eksponensial premium
       ),
     );
 
@@ -88,11 +96,22 @@ class _SplashPageState extends State<SplashPage>
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(gradient: AppColors.navyGradient),
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFFE8F6F0), // Sangat lembut hijau mint
+              Color(0xFFFAFAF8), // Warm white surface
+            ],
+          ),
+        ),
         child: SafeArea(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              const Spacer(),
+
               // Logo animasi
               const SplashLogo(),
               const SizedBox(height: AppConstants.spacing32),
@@ -103,7 +122,7 @@ class _SplashPageState extends State<SplashPage>
                 child: Text(
                   'Genesis.id',
                   style: AppTextStyles.displayLarge.copyWith(
-                    color: AppColors.textOnDark,
+                    color: AppColors.textPrimary,
                     letterSpacing: 1.5,
                   ),
                 ),
@@ -118,12 +137,41 @@ class _SplashPageState extends State<SplashPage>
                   child: Text(
                     'Laporkan. Kumpulkan. Ubah Dunia.',
                     style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.textOnDark.withValues(alpha: 0.7),
+                      color: AppColors.textSecondary,
                     ),
                     textAlign: TextAlign.center,
                   ),
                 ),
               ),
+
+              const Spacer(),
+
+              // Indikator loading linear yang elegan di bagian bawah
+              FadeTransition(
+                opacity: _fadeAnimation,
+                child: Container(
+                  width: 140,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.emerald.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 2500),
+                      curve: Curves.easeInOut,
+                      width: _startLoading ? 140 : 0,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: AppColors.emerald,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppConstants.spacing40),
             ],
           ),
         ),

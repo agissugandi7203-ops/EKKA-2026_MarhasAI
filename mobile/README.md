@@ -21,6 +21,10 @@ Aplikasi gawai **Genesis.id** dibangun menggunakan **Flutter** (Dart) untuk sisi
 | 5 | **Profile & Gamifikasi** | XP bar, level, streak harian, katalog lencana |
 | 6 | **Onboarding Geolokasi** | Auto-detect kota via reverse geocoding (Geolocator) |
 | 7 | **Dio Client + JWT** | Interceptor otomatis Bearer token ke backend NestJS |
+| 8 | **Streaming Chatbot AI RAG** | Chatbot asisten warga real-time dengan streaming Server-Sent Events (SSE) |
+| 9 | **Dinamis Model AI Selector** | Pemilihan model AI (`Geni-Flash`, `Geni-Pro`, `DeepSeek-Chat`) melalui Modal Bottom Sheet yang terintegrasi langsung dengan state BLoC dan request payload Dio |
+| 10| **Voice Waveform Indicator** | Visualisasi gelombang suara dinamis ketika warga merekam suara |
+| 11| **Kamera Aktif & GPS Laporan** | Kamera fisik aktif dengan pratinjau foto dan penandaan lokasi GPS Geolocator |
 
 ---
 
@@ -85,6 +89,22 @@ Splash (3s) → [Pertama?] Introduction → Login
 |-------|------|----------|
 | Heading | **Nunito** | Soft, rounded, friendly |
 | Body | **Plus Jakarta Sans** | Modern, readable, Indonesia-origin |
+
+## 4.1. Dinamis Model AI Selector & Aliran Data
+Aplikasi mobile menyediakan fitur pemilihan model AI secara real-time:
+*   **Antarmuka Pengguna (UI)**: Ditempatkan pada Modal Bottom Sheet ketika pengguna menekan tombol `+` di sebelah input composer halaman `ChatPage`.
+*   **State Management (BLoC)**:
+    1.  Pengguna memilih model pada UI. Model ID disimpan di state lokal halaman Chat (`_selectedModel`).
+    2.  Saat mengirim pesan, event `SendMessageRequested(message: _controller.text, model: _selectedModel)` dikirim ke `ChatBloc`.
+    3.  `ChatBloc` memanggil `ChatRepository` yang diteruskan ke `ChatRemoteDataSource`.
+*   **Payload Dio Interceptor**:
+    `ChatRemoteDataSource` mengirimkan data ke backend NestJS `/chat/stream` (SSE) dengan menyertakan kunci `"model"` di dalam JSON body request:
+    ```json
+    {
+      "message": "Apa isi Pasal 28H UUD 1945?",
+      "model": "google/gemini-2.5-pro"
+    }
+    ```
 
 ---
 

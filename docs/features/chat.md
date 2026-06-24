@@ -59,6 +59,7 @@ $$\text{Similarity} = 1 - \text{Cosine Distance}(A, B)$$
     ```json
     {
       "message": "Bagaimana aturan denda membuang sampah sembarangan?",
+      "model": "google/gemini-2.5-pro",
       "image": "data:image/jpeg;base64,...",
       "pdf": "data:application/pdf;base64,...",
       "audio": "data:audio/wav;base64,..."

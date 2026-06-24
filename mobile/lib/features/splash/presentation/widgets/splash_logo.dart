@@ -62,10 +62,18 @@ class _SplashLogoState extends State<SplashLogo>
           height: 120,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: AppColors.textOnDark.withValues(alpha: 0.1),
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.emerald.withValues(alpha: 0.08),
+                blurRadius: 24,
+                spreadRadius: 2,
+                offset: const Offset(0, 8),
+              ),
+            ],
             border: Border.all(
-              color: AppColors.textOnDark.withValues(alpha: 0.2),
-              width: 2,
+              color: AppColors.emerald.withValues(alpha: 0.15),
+              width: 1.5,
             ),
           ),
           child: const Icon(

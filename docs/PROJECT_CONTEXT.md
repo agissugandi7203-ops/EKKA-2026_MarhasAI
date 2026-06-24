@@ -107,22 +107,36 @@ Proyek ini dikonfigurasi untuk siap dideploy secara mandiri ke Google Cloud Run 
 
 ## 6. Roadmap & Rencana Fitur Masa Depan
 
-Berdasarkan kesiapan sistem saat ini (Fondasi Backend, Mobile Network/BLoC, dan SEO telah siap), berikut adalah usulan rencana pengerjaan fitur selanjutnya untuk mencapai level produksi:
+Berdasarkan kesiapan sistem saat ini (Fondasi Backend, Mobile Network/BLoC, dan SEO telah siap), berikut adalah rencana pengerjaan fitur selanjutnya untuk mencapai tingkat produksi penuh:
 
-### A. Fitur 6: Sistem Notifikasi Real-time (FCM & Realtime DB)
-*   **Alasan**: Warga perlu tahu kapan status laporan mereka berubah (Disetujui oleh AI, Ditolak, atau Selesai Ditangani Dinas) dan kapan mereka mendapatkan lencana baru tanpa harus me-refresh aplikasi.
-*   **Teknis**: Integrasi Firebase Admin SDK di NestJS untuk pengiriman Push Notifications (FCM) dan Supabase Realtime Channel untuk pembaruan instan in-app.
+### A. Integrasi RAG & OpenRouter (Flutter-to-Backend)
+*   **Alasan**: Menghubungkan visualisasi chat melayang citizen dan analitik bottom-sheet AI Scan di Flutter ke server NestJS.
+*   **Teknis**:
+    *   Uji endpoint `/chat/stream` menggunakan SSE (Server-Sent Events) decoder di Flutter BLoC dengan real host production `https://genesisHub.my.id`.
+    *   Ingestion pipeline regulasi daerah (.pdf/txt) dari Next.js Admin Dashboard ke NestJS `/knowledge-base` untuk auto-vectorize ke Supabase pgvector.
 
-### B. Fitur 7: Integrasi UI Dashboard Admin (Next.js Frontend)
-*   **Alasan**: Kita sudah membangun seluruh endpoint administrasi di NestJS (`/reports`, `/badges/award`, `/knowledge-base`), kini saatnya mengintegrasikan antarmuka visual admin di Next.js.
-*   **Teknis**: Pembuatan halaman visualisasi analitik laporan (berbasis Tremor/Recharts), panel peninjauan manual laporan (`pending_human`), manajemen catalog lencana, serta modul pengeditan regulasi RAG (`knowledge_base`).
+### B. Integrasi Google Vision API (PII Sensor) & Google Cloud Storage
+*   **Alasan**: Menghubungkan fungsionalitas kamera nyata di Flutter dengan PII censorship wajah & plat nomor otomatis di backend NestJS.
+*   **Teknis**:
+    *   Konfigurasi `GOOGLE_APPLICATION_CREDENTIALS` (Service Account Key) di `.env` server backend.
+    *   Aktifkan call Google Vision API untuk deteksi boundary box wajah dan teks plat nomor.
+    *   Hubungkan stream/buffer gambar terpotong ke Sharp library untuk Gaussian Blurring, dilanjutkan upload otomatis ke bucket GCS via GcsService.
+    *   Ganti pengiriman mock camera di Flutter ke multipart file upload asli `POST /reports`.
 
-### C. Fitur 8: Sistem Penugasan Dinas & GIS Map Interaktif (Spatial GIS)
-*   **Alasan**: Laporan spasial dari warga perlu ditindaklanjuti secara taktis. Dibutuhkan peta interaktif yang memetakan tumpukan sampah dan kerusakan lingkungan secara kewilayahan untuk dinas kebersihan kota.
-*   **Teknis**: Integrasi Leaflet/Google Maps di Next.js dan Flutter Map menggunakan koordinat GeoJSON `Point(lng, lat)` dari data spasial PostGIS Supabase.
+### C. Fitur Notifikasi Real-time (FCM & Realtime DB)
+*   **Alasan**: Memberitahu warga kapan laporan mereka divalidasi dinas atau mendapatkan lencana baru secara instan.
+*   **Teknis**: Integrasi Firebase Admin SDK di NestJS untuk Push Notifications (FCM) dan Supabase Realtime Channel untuk in-app notification badge.
 
-### D. Fitur 9: Toko Rewards & Penukaran Poin Gamifikasi (E-Voucher)
-*   **Alasan**: Untuk meningkatkan retensi warga dalam melapor, Level dan XP yang didapatkan harus bisa ditukarkan dengan hadiah nyata (seperti tiket bus kota, e-voucher, dsb.).
-*   **Teknis**: Tabel catalog `rewards` dan pencatatan transaksi penukaran `user_redemptions` dengan validasi kuota voucher di backend.
+### D. Integrasi UI Dashboard Admin (Next.js Frontend)
+*   **Alasan**: Menyediakan antarmuka manajemen laporan, catalog lencana, dan edit basis pengetahuan perda bagi Admin/Operator Dinas.
+*   **Teknis**: Pembuatan halaman visualisasi analitik laporan (Tremor/Recharts), panel peninjauan manual laporan (`pending_human`), dan upload perda.
+
+### E. Sistem Penugasan Dinas & GIS Map Interaktif (Spatial GIS)
+*   **Alasan**: Dinas kebersihan kota perlu memetakan sebaran tumpukan sampah secara geografis untuk penugasan kru taktis.
+*   **Teknis**: Integrasi Leaflet/Google Maps di Next.js & Flutter Map dengan memanfaatkan PostgreSQL/PostGIS spatial query (`ST_DWithin` & GeoJSON).
+
+### F. Toko Rewards & Penukaran Poin Gamifikasi (E-Voucher)
+*   **Alasan**: Meningkatkan partisipasi pelaporan warga dengan hadiah voucher nyata (voucher bus kota, e-wallet).
+*   **Teknis**: Katalog `rewards` dan transaksi penukaran `user_redemptions` dengan validasi kuota voucher di backend.
 
 

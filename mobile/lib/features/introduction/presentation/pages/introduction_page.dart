@@ -9,6 +9,7 @@ import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/ios_button.dart';
+import '../../../../core/widgets/fade_slide_entrance.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../auth/presentation/pages/login_page.dart';
@@ -163,89 +164,97 @@ class _IntroductionPageState extends State<IntroductionPage> {
                           ),
                         ),
                       ),
+                      // Swipeable Title & Description inside the slide itself
+                      SafeArea(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppConstants.pagePaddingH,
+                            vertical: AppConstants.pagePaddingV,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              const SizedBox(height: 60), // Space to clear skip button
+                              const Spacer(),
+                              FadeSlideEntrance(
+                                key: ValueKey<String>('title_$index'),
+                                delay: const Duration(milliseconds: 100),
+                                child: Text(
+                                  _slides[index].title,
+                                  style: AppTextStyles.headlineLarge.copyWith(
+                                    color: Colors.white,
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                              const SizedBox(height: AppConstants.spacing16),
+                              FadeSlideEntrance(
+                                key: ValueKey<String>('desc_$index'),
+                                delay: const Duration(milliseconds: 300),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                                  child: Text(
+                                    _slides[index].description,
+                                    style: AppTextStyles.bodyLarge.copyWith(
+                                      color: Colors.white.withValues(alpha: 0.8),
+                                      height: 1.5,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 160), // Space to clear indicators/buttons
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   );
                 },
               ),
             ),
 
-            // ── Main Content Layout (Hanya dirender jika tidak di Halaman Login) ──
+            // ── Skip Button overlay ──
             if (!isAtLogin)
-              SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppConstants.pagePaddingH,
-                    vertical: AppConstants.pagePaddingV,
+              Positioned(
+                top: 8,
+                right: 16,
+                child: SafeArea(
+                  child: TextButton(
+                    onPressed: _skipIntro,
+                    child: Text(
+                      'Lewati',
+                      style: AppTextStyles.labelMedium.copyWith(
+                        color: Colors.white.withValues(alpha: 0.8),
+                      ),
+                    ),
                   ),
+                ),
+              ),
+
+            // ── Controls overlay (Dot Indicator & Action Button) ──
+            if (!isAtLogin)
+              Positioned(
+                bottom: 24,
+                left: AppConstants.pagePaddingH,
+                right: AppConstants.pagePaddingH,
+                child: SafeArea(
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Header: Skip button
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton(
-                          onPressed: _skipIntro,
-                          child: Text(
-                            'Lewati',
-                            style: AppTextStyles.labelMedium.copyWith(
-                              color: Colors.white.withValues(alpha: 0.8),
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      const Spacer(),
-
-                      // Title & Description (Transisi halus dengan AnimatedSwitcher)
-                      AnimatedSwitcher(
-                        duration: AppConstants.animNormal,
-                        child: _currentPage < _slides.length
-                            ? Column(
-                                key: ValueKey<int>(_currentPage),
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    _slides[_currentPage].title,
-                                    style: AppTextStyles.headlineLarge.copyWith(
-                                      color: Colors.white,
-                                      fontSize: 28,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                  const SizedBox(height: AppConstants.spacing16),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                                    child: Text(
-                                      _slides[_currentPage].description,
-                                      style: AppTextStyles.bodyLarge.copyWith(
-                                        color: Colors.white.withValues(alpha: 0.8),
-                                        height: 1.5,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ),
-                                ],
-                              )
-                            : const SizedBox.shrink(),
-                      ),
-
-                      const SizedBox(height: AppConstants.spacing40),
-
-                      // Dot Indicator
                       IntroPageIndicator(
                         currentPage: _currentPage,
                         pageCount: _slides.length,
                       ),
                       const SizedBox(height: AppConstants.spacing32),
-
-                      // Navigation Button (iOS-Style Capsule)
                       IosButton(
                         text: _getButtonText(),
                         backgroundColor: Colors.white,
                         textColor: AppColors.navy900,
                         onPressed: _onNextPressed,
                       ),
-                      const SizedBox(height: AppConstants.spacing24),
                     ],
                   ),
                 ),

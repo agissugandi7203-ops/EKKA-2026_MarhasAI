@@ -20,6 +20,12 @@ import 'features/auth/presentation/bloc/auth_event.dart';
 import 'features/profile/data/datasources/profile_remote_data_source.dart';
 import 'features/profile/data/repositories/profile_repository_impl.dart';
 import 'features/profile/domain/repositories/profile_repository.dart';
+import 'features/chat/data/datasources/chat_remote_data_source.dart';
+import 'features/chat/presentation/bloc/chat_bloc.dart';
+import 'features/reports/data/datasources/report_remote_data_source.dart';
+import 'features/reports/data/repositories/report_repository_impl.dart';
+import 'features/reports/domain/repositories/report_repository.dart';
+import 'features/reports/presentation/bloc/reports_bloc.dart';
 
 /// Entry point aplikasi Genesis.id.
 ///
@@ -115,13 +121,18 @@ class _GenesisAppState extends State<GenesisApp> {
   /// Data sources.
   late final AuthRemoteDataSource _authDataSource;
   late final ProfileRemoteDataSource _profileDataSource;
+  late final ChatRemoteDataSource _chatDataSource;
+  late final ReportRemoteDataSource _reportDataSource;
 
   /// Repositories.
   late final AuthRepository _authRepository;
   late final ProfileRepository _profileRepository;
+  late final ReportRepository _reportRepository;
 
   /// BLoCs.
   late final AuthBloc _authBloc;
+  late final ChatBloc _chatBloc;
+  late final ReportsBloc _reportsBloc;
 
   /// Router.
   late final AppRouter _appRouter;
@@ -140,16 +151,21 @@ class _GenesisAppState extends State<GenesisApp> {
     // ── Data Sources ──
     _authDataSource = AuthRemoteDataSourceImpl(_supabaseClient);
     _profileDataSource = ProfileRemoteDataSourceImpl(_dioClient);
+    _chatDataSource = ChatRemoteDataSource(_dioClient);
+    _reportDataSource = ReportRemoteDataSourceImpl(_dioClient);
 
     // ── Repositories ──
     _authRepository = AuthRepositoryImpl(_authDataSource);
     _profileRepository = ProfileRepositoryImpl(_profileDataSource);
+    _reportRepository = ReportRepositoryImpl(_reportDataSource);
 
     // ── BLoCs ──
     _authBloc = AuthBloc(
       authRepository: _authRepository,
       profileRepository: _profileRepository,
     )..add(AuthCheckRequested());
+    _chatBloc = ChatBloc(_chatDataSource);
+    _reportsBloc = ReportsBloc(reportRepository: _reportRepository);
 
     // ── Router ──
     _appRouter = AppRouter(authBloc: _authBloc);
@@ -158,6 +174,8 @@ class _GenesisAppState extends State<GenesisApp> {
   @override
   void dispose() {
     _authBloc.close();
+    _chatBloc.close();
+    _reportsBloc.close();
     super.dispose();
   }
 
@@ -167,12 +185,13 @@ class _GenesisAppState extends State<GenesisApp> {
       providers: [
         RepositoryProvider<AuthRepository>.value(value: _authRepository),
         RepositoryProvider<ProfileRepository>.value(value: _profileRepository),
+        RepositoryProvider<ReportRepository>.value(value: _reportRepository),
       ],
       child: MultiBlocProvider(
         providers: [
           BlocProvider<AuthBloc>.value(value: _authBloc),
-          // SetupCubit TIDAK lagi di sini — dipindahkan ke scope lokal
-          // di SetupWelcomePage wrapper (hanya hidup selama 4 halaman setup).
+          BlocProvider<ChatBloc>.value(value: _chatBloc),
+          BlocProvider<ReportsBloc>.value(value: _reportsBloc),
         ],
         child: MaterialApp.router(
           title: 'Genesis.id',

@@ -15,6 +15,7 @@ Aplikasi Web Frontend **Genesis.id** dibangun menggunakan **Next.js App Router**
     *   Memoderasi antrean laporan dari AI yang memiliki confidence score rendah.
     *   Menghapus/menolak akun pengguna yang melakukan spamming.
     *   Mengatur lencana dan gamifikasi secara manual.
+    *   **Pengelolaan Knowledge Base AI (RAG Panel)**: Antarmuka visual untuk mengunggah perda baru (melakukan chunking & auto-embedding secara dinamis), meninjau daftar regulasi aktif, dan menghapus data referensi hukum yang kedaluwarsa.
 3.  **API Documentation Portal (DaaS)**: Menyediakan Swagger UI / Dokumentasi OpenAPI interaktif yang menjelaskan bagaimana instansi pemerintah/smart city dapat mengintegrasikan data lingkungan spasial Genesis.id ke sistem mereka.
 
 ---

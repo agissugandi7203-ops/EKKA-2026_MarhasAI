@@ -27,43 +27,35 @@ class ReportRemoteDataSourceImpl implements ReportRemoteDataSource {
     required double longitude,
     String? description,
   }) async {
-    try {
-      final fileName = imageFile.path.split(RegExp(r'[/\\]')).last;
-      
-      final formData = FormData.fromMap({
-        'file': await MultipartFile.fromFile(
-          imageFile.path,
-          filename: fileName,
-        ),
-        'latitude': latitude.toString(),
-        'longitude': longitude.toString(),
-        if (description != null && description.isNotEmpty) 'description': description,
-      });
+    final fileName = imageFile.path.split(RegExp(r'[/\\]')).last;
+    
+    final formData = FormData.fromMap({
+      'file': await MultipartFile.fromFile(
+        imageFile.path,
+        filename: fileName,
+      ),
+      'latitude': latitude.toString(),
+      'longitude': longitude.toString(),
+      if (description != null && description.isNotEmpty) 'description': description,
+    });
 
-      final response = await _dioClient.dio.post(
-        '/reports',
-        data: formData,
-        options: Options(
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        ),
-      );
+    final response = await _dioClient.dio.post(
+      '/reports',
+      data: formData,
+      options: Options(
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      ),
+    );
 
-      return UploadReportResponse.fromJson(response.data as Map<String, dynamic>);
-    } on DioException catch (e) {
-      throw Exception('Gagal mengunggah laporan: ${e.response?.data['message'] ?? e.message}');
-    }
+    return UploadReportResponse.fromJson(response.data as Map<String, dynamic>);
   }
 
   @override
   Future<List<ReportModel>> getReports() async {
-    try {
-      final response = await _dioClient.dio.get('/reports');
-      final list = response.data as List? ?? [];
-      return list.map((item) => ReportModel.fromJson(item as Map<String, dynamic>)).toList();
-    } on DioException catch (e) {
-      throw Exception('Gagal mendapatkan daftar laporan: ${e.response?.data['message'] ?? e.message}');
-    }
+    final response = await _dioClient.dio.get('/reports');
+    final list = response.data as List? ?? [];
+    return list.map((item) => ReportModel.fromJson(item as Map<String, dynamic>)).toList();
   }
 }

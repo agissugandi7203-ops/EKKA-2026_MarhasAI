@@ -11,31 +11,27 @@ class ChatRemoteDataSource {
   ChatRemoteDataSource(this._dioClient);
 
   /// Mengirim pesan secara instan (mengembalikan respons lengkap langsung)
-  Future<String> sendMessageInstant(ChatMessageModel message) async {
-    try {
-      final response = await _dioClient.dio.post(
-        '/chat',
-        data: message.toJson(),
-      );
+  Future<String> sendMessageInstant(ChatMessageModel message, String model) async {
+    final Map<String, dynamic> data = message.toJson();
+    data['model'] = model;
 
-      final reply = response.data?['reply'];
-      if (reply == null) {
-        throw Exception('Format respons instan tidak valid');
-      }
-      return reply as String;
-    } on DioException catch (e) {
-      final errorMsg = e.response?.data?['message'] ?? e.message;
-      throw Exception('Gagal mengirim pesan instan: $errorMsg');
-    } catch (e) {
-      throw Exception('Terjadi kesalahan: $e');
+    final response = await _dioClient.dio.post(
+      '/chat',
+      data: data,
+    );
+
+    final reply = response.data?['reply'];
+    if (reply == null) {
+      throw const FormatException('Format respons instan tidak valid');
     }
+    return reply as String;
   }
 
   /// Mengirim pesan dengan streaming (mengembalikan Stream token kata demi kata)
-  Stream<String> sendMessageStream(ChatMessageModel message) {
+  Stream<String> sendMessageStream(ChatMessageModel message, String model) {
     final controller = StreamController<String>();
 
-    _executeStreamRequest(message, controller);
+    _executeStreamRequest(message, model, controller);
 
     return controller.stream;
   }
@@ -43,12 +39,16 @@ class ChatRemoteDataSource {
   /// Menjalankan request streaming Dio dan mem-parsing Server-Sent Events (SSE)
   void _executeStreamRequest(
     ChatMessageModel message,
+    String model,
     StreamController<String> controller,
   ) async {
     try {
+      final Map<String, dynamic> data = message.toJson();
+      data['model'] = model;
+
       final response = await _dioClient.dio.post<ResponseBody>(
         '/chat/stream',
-        data: message.toJson(),
+        data: data,
         options: Options(
           responseType: ResponseType.stream,
         ),
@@ -56,7 +56,7 @@ class ChatRemoteDataSource {
 
       final stream = response.data?.stream;
       if (stream == null) {
-        controller.addError(Exception('Gagal mendapatkan aliran data stream dari server'));
+        controller.addError(const FormatException('Gagal mendapatkan aliran data stream dari server'));
         await controller.close();
         return;
       }
@@ -87,7 +87,7 @@ class ChatRemoteDataSource {
             if (line.startsWith('data:')) {
               final jsonStr = line.substring(5).trim();
               if (jsonStr.startsWith('[ERROR]')) {
-                controller.addError(Exception(jsonStr));
+                controller.addError(FormatException(jsonStr));
                 return;
               }
 
@@ -108,7 +108,7 @@ class ChatRemoteDataSource {
           }
         },
         onError: (error) {
-          controller.addError(Exception('Terputus saat membaca stream: $error'));
+          controller.addError(error);
           controller.close();
         },
         onDone: () {
@@ -125,11 +125,10 @@ class ChatRemoteDataSource {
       };
 
     } on DioException catch (e) {
-      final errorMsg = e.response?.data?['message'] ?? e.message;
-      controller.addError(Exception('Gagal memproses stream API: $errorMsg'));
+      controller.addError(e);
       controller.close();
     } catch (e) {
-      controller.addError(Exception('Terjadi kesalahan internal stream: $e'));
+      controller.addError(e);
       controller.close();
     }
   }

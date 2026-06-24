@@ -8,6 +8,7 @@ abstract final class AppConstants {
   // ══════════════════════════════════════════════════════════════════════
 
   static const double spacing4 = 4;
+  static const double spacing6 = 6;
   static const double spacing8 = 8;
   static const double spacing12 = 12;
   static const double spacing16 = 16;
@@ -56,8 +57,8 @@ abstract final class AppConstants {
 
   static const int passwordMinLength = 8;
   static const int usernameMinLength = 3;
-  static const int usernameMaxLength = 30;
-  static const int fullNameMaxLength = 100;
+  static const int usernameMaxLength = 20;
+  static const int fullNameMaxLength = 50;
 
   // ══════════════════════════════════════════════════════════════════════
   // SHARED PREFERENCES KEYS

@@ -1,0 +1,23 @@
+PERATURAN MENTERI LINGKUNGAN HIDUP DAN KEHUTANAN REPUBLIK INDONESIA NOMOR 6 TAHUN 2021
+TENTANG TATA CARA DAN PERSYARATAN PENGELOLAAN LIMBAH BAHAN BERBAHAYA DAN BERACUN
+
+BAB I: KETENTUAN UMUM
+Pasal 1
+Pengelolaan Limbah Bahan Berbahaya dan Beracun (Limbah B3) adalah kegiatan yang meliputi pengurangan, penyimpanan, pengumpulan, pengangkutan, pemanfaatan, pengolahan, dan/atau penimbunan Limbah B3.
+
+BAB II: TATA CARA PENYIMPANAN LIMBAH B3
+Pasal 5
+(1) Setiap orang yang menghasilkan Limbah B3 wajib melakukan penyimpanan Limbah B3.
+(2) Penyimpanan sebagaimana dimaksud pada ayat (1) dilarang dicampur dengan limbah non-B3 atau jenis limbah B3 yang tidak saling cocok (inkompatibel).
+(3) Kemasan Limbah B3 wajib diberi label dan simbol Limbah B3 yang jelas sesuai dengan karakteristik bahayanya (mudah meledak, mudah menyala, reaktif, beracun, korosif, dan/atau infeksius).
+
+Pasal 12
+(1) Waktu penyimpanan Limbah B3 dibatasi paling lama:
+a. 90 (sembilan puluh) hari sejak Limbah B3 dihasilkan, untuk Limbah B3 yang dihasilkan sebesar 50 kg (lima puluh kilogram) per hari atau lebih; atau
+b. 180 (seratus delapan puluh) hari sejak Limbah B3 dihasilkan, untuk Limbah B3 yang dihasilkan kurang dari 50 kg per hari untuk kategori 1.
+(2) Jika batas waktu penyimpanan dilampaui, produsen wajib menyerahkan limbah B3 tersebut kepada pengumpul atau pengolah berizin.
+
+BAB III: MANIFEST ELEKTRONIK (FESTRONIK)
+Pasal 55
+(1) Setiap kegiatan Pengangkutan Limbah B3 wajib disertai dokumen pengangkutan Limbah B3 berupa Manifest Elektronik (Festronik).
+(2) Festronik diterbitkan melalui sistem informasi pengelolaan limbah B3 Kementerian LHK (SIRAJA) untuk memantau pergerakan limbah dari titik asal (generator) hingga ke titik akhir pengolahan.

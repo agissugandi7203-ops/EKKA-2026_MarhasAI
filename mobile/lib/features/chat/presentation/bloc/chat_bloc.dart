@@ -15,11 +15,12 @@ abstract class ChatEvent extends Equatable {
 
 class SendMessageRequested extends ChatEvent {
   final ChatMessageModel message;
+  final String model;
 
-  const SendMessageRequested(this.message);
+  const SendMessageRequested(this.message, this.model);
 
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [message, model];
 }
 
 class ClearChatRequested extends ChatEvent {}
@@ -114,7 +115,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     await _streamSubscription?.cancel();
 
     // 3. Mulai request stream ke backend
-    _streamSubscription = _chatRemoteDataSource.sendMessageStream(event.message).listen(
+    _streamSubscription = _chatRemoteDataSource.sendMessageStream(event.message, event.model).listen(
       (chunk) {
         add(_StreamChunkReceived(chunk));
       },

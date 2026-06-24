@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show User, AuthChangeEvent;
 
@@ -45,6 +46,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<ForgotPasswordRequested>(_onForgotPasswordRequested);
     on<VerifyOtpRequested>(_onVerifyOtpRequested);
     on<ResetPasswordRequested>(_onResetPasswordRequested);
+    on<OnboardingBypassed>(_onOnboardingBypassed);
 
     // Langsung mendengarkan perubahan status autentikasi di tingkat data layer/SDK.
     // Membantu menangani redirect OAuth (Google, Facebook, GitHub) dan Magic Link.
@@ -319,16 +321,30 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   // HELPERS
   // ══════════════════════════════════════════════════════════════════════
 
-  /// Cek apakah user perlu menyelesaikan onboarding (profil lokasi).
   Future<AuthState> _checkOnboardingStatus(User user) async {
     try {
       final profile = await _profileRepository.getMyProfile();
       final bool needsOnboarding =
           profile.cityOrDistrict == null || profile.cityOrDistrict!.isEmpty;
       return Authenticated(user: user, needsOnboarding: needsOnboarding);
-    } catch (e) {
+    } catch (e, stack) {
+      debugPrint('=== [AuthBloc] _checkOnboardingStatus error: $e');
+      debugPrint('=== [AuthBloc] StackTrace: $stack');
       // Jika profil belum dibuat di public.profiles, butuh onboarding.
       return Authenticated(user: user, needsOnboarding: true);
+    }
+  }
+
+  void _onOnboardingBypassed(
+    OnboardingBypassed event,
+    Emitter<AuthState> emit,
+  ) {
+    final currentState = state;
+    if (currentState is Authenticated) {
+      emit(Authenticated(
+        user: currentState.user,
+        needsOnboarding: false,
+      ));
     }
   }
 

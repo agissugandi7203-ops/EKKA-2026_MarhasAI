@@ -59,9 +59,9 @@ Pastikan Anda sudah menginstal:
 ### B. Langkah Setup
 1.  **Database & Cloud**:
     *   Buat proyek di [Supabase Cloud](https://supabase.com). Aktifkan ekstensi `postgis` dan `vector`.
-    *   Jalankan query SQL dari berkas [01_initial_schema.sql](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/docs/database/01_initial_schema.sql) di SQL Editor Supabase Anda.
+    *   Jalankan seluruh query SQL dari folder [docs/database/](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/docs/database) di SQL Editor Supabase Anda.
 2.  **Konfigurasi Backend**:
-    *   Masuk ke folder `backend/`, salin `.env.example` menjadi `.env`, lalu isi kredensial Supabase Anda.
+    *   Masuk ke folder `backend/`, salin `.env.example` menjadi `.env`, lalu isi kredensial Supabase, OpenRouter API Key, dan RAG parameters Anda.
     *   Jalankan backend:
         ```bash
         cd backend
@@ -76,3 +76,57 @@ Pastikan Anda sudah menginstal:
         flutter pub get
         flutter run
         ```
+
+---
+
+## 5. Integrasi Chat AI & Pengelolaan Basis Pengetahuan RAG (Knowledge Base)
+
+Sistem chatbot AI pada **Genesis.id** didukung oleh arsitektur **RAG (Retrieval-Augmented Generation)** tingkat tinggi yang terhubung secara real-time dengan basis data peraturan hukum resmi di Supabase.
+
+### A. Sumber Data Hukum Lingkungan Resmi (JDIH Portal)
+Asisten AI membatasi jawaban obrolan warga hanya berdasarkan dokumen regulasi valid untuk menghindari halusinasi. Sumber data hukum nasional disinkronkan dan dirangkum dari beberapa portal **JDIH (Jaringan Dokumentasi dan Informasi Hukum)** resmi pemerintah Indonesia:
+1.  **JDIH BPHN Kemenkumham (Portal Nasional - jdihn.go.id)**:
+    *   **Peran**: Pusat integrasi data dokumen hukum nasional dari seluruh instansi pemerintah daerah, kementerian, dan lembaga tinggi negara.
+    *   **Metode Integrasi**: Melalui REST API JDIHN menggunakan protokol pertukaran data JSON berbasis `access_token` dan sinkronisasi `secret_key` instansi.
+2.  **JDIH Kementerian LHK (jdih.menlhk.go.id)**:
+    *   **Peran**: Menyediakan produk hukum khusus kehutanan dan lingkungan hidup (Peraturan Menteri LHK, Keputusan Menteri LHK, dan Undang-Undang sektoral).
+3.  **JDIH BPK RI (peraturan.bpk.go.id)**:
+    *   **Peran**: Pusat data hukum terlengkap untuk mengunduh salinan berkas lembaran negara dan penjelasan resmi (UU, PP, Perpres, Permen).
+4.  **JDIH Pemerintah Kota Bandung (jdih.bandung.go.id)**:
+    *   **Peran**: Regulasi tingkat lokal/daerah kota Bandung (Perda Pengelolaan Sampah, Peraturan Walikota Bandung).
+
+### B. Berkas Regulasi Lokal Terpasang (`docs/regulations/`)
+Berkas peraturan lingkungan terperinci telah disiapkan secara lengkap dan terstruktur di dalam repositori untuk segera di-ingest:
+*   [UUD 1945 Pasal Lingkungan](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/docs/regulations/UUD_1945_Pasal_Lingkungan.txt): Konstitusi dasar Indonesia mengenai hak warga atas lingkungan yang sehat (Pasal 28H) dan demokrasi ekonomi berwawasan lingkungan (Pasal 33).
+*   [UU No. 18 Tahun 2008 tentang Pengelolaan Sampah](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/docs/regulations/UU_No_18_Tahun_2008_Pengelolaan_Sampah.txt): Regulasi nasional lengkap mengenai reduce-reuse-recycle (3R), kewajiban produsen, larangan pembakaran sampah terbuka, serta sanksi pidana kelalaian.
+*   [UU No. 32 Tahun 2009 tentang Perlindungan & Pengelolaan Lingkungan Hidup](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/docs/regulations/UU_No_32_Tahun_2009_Lingkungan_Hidup.txt): Kerangka hukum induk pengelolaan lingkungan (AMDAL, UKL-UPL, baku mutu emisi/air, persetujuan lingkungan, dan sanksi denda pidana hingga Rp15 Miliar).
+*   [Perda Kota Bandung No. 9 Tahun 2018 tentang Pengelolaan Sampah](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/docs/regulations/Perda_Kota_Bandung_No_9_Tahun_2018_Pengelolaan_Sampah.txt): Aturan praktis lokal di Kota Bandung (Gerakan Kang Pisman, pemilahan 3 jenis wadah warna hijau-kuning-merah, retribusi daerah, jadwal pembuangan pukul 18:00-21:00 WIB, denda OTT Rp 50.000, serta penahanan KTP oleh PPNS DLHK).
+*   [PP RI No. 22 Tahun 2021 tentang Penyelenggaraan PPLH](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/docs/regulations/PP_RI_Nomor_22_Tahun_2021_tentang_Penyelenggaraan_Perlindungan_dan_Pengelolaan_Lingkungan_Hidup.txt): Ketentuan teknis persetujuan lingkungan, pengawasan emisi industri, baku mutu air nasional, serta tata kelola limbah B3.
+*   [Permen LHK No. 6 Tahun 2021 tentang Pengelolaan Limbah B3](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/docs/regulations/Peraturan_Menteri_LHK_Nomor_6_Tahun_2021_tentang_Tata_Cara_dan_Persyaratan_Pengelolaan_Limbah_B3.txt): Regulasi detail pelabelan simbol B3, penyimpanan limbah B3, batas kedaluwarsa 90-180 hari, dan dokumen Manifest Elektronik (Festronik).
+*   [UU RI No. 18 Tahun 2013 tentang Pencegahan Perusakan Hutan](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/docs/regulations/UU_RI_Nomor_18_Tahun_2013_tentang_Pencegahan_dan_Pemberantasan_Perusakan_Hutan.txt): Larangan pembalakan liar, perambahan hutan, serta sanksi pidana korporasi hingga Rp15 Miliar.
+
+### C. Alur Pemrosesan Teks & Vektor RAG
+Pecahan dokumen dimasukkan ke database melalui dua skrip CLI otomatis pada direktori `backend/`:
+
+1.  **Unggah Berkas Lokal Massal (`bulk-upload-knowledge.ts`)**:
+    Membaca semua file teks `.txt`/`.md` dari folder regulations, membaginya ke dalam ukuran potongan teks kustom, dan mengirimkannya ke endpoint backend.
+    ```bash
+    cd backend
+    npx ts-node scripts/bulk-upload-knowledge.ts "../docs/regulations" "<supabase_service_role_key>" "http://localhost:3000"
+    ```
+
+2.  **Scraper JDIH & Importer Otomatis (`scrape-and-import-jdih.ts`)**:
+    Menghubungkan sistem secara simulated ke portal API JDIHN nasional untuk mencari produk hukum, mengumpulkan metadata komprehensif, dan mengunggahnya secara real-time.
+    ```bash
+    cd backend
+    npx ts-node scripts/scrape-and-import-jdih.ts "<supabase_service_role_key>" "http://localhost:3000"
+    ```
+
+**Teknis Pemrosesan**:
+*   **Text Chunking**: String panjang dipecah menggunakan algoritma Smart Space Alignment dengan ukuran token yang diatur pada berkas `.env` (`RAG_CHUNK_SIZE` default 800 karakter, `RAG_CHUNK_OVERLAP` default 150 karakter) untuk menjaga kesatuan arti kalimat.
+*   **Vektor Komparasi**: Menggunakan model `google/gemini-embedding-2` melalui OpenRouter API untuk menghasilkan vektor bernilai 768 dimensi.
+*   **Pencarian Spasial Kosinus**: Di-indeks menggunakan HNSW pada database Supabase, dicari dengan RPC kustom `match_documents(query_embedding, match_threshold, match_count)` untuk menyajikan konteks dokumen paling relevan ke model LLM (Geni-Flash, Geni-Pro, DeepSeek-Chat) secara streaming SSE.
+
+Untuk informasi detail lainnya mengenai kueri SQL vektor, silakan merujuk pada:
+👉 **[KNOWLEDGE_BASE_GUIDE.md (Panduan RAG)](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/docs/KNOWLEDGE_BASE_GUIDE.md)**
+

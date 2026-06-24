@@ -11,6 +11,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/auth_listener_wrapper.dart';
 import '../../../../core/widgets/ios_button.dart';
+import '../../../../core/widgets/fade_slide_entrance.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
@@ -87,79 +88,91 @@ class PreOnboardingPage extends StatelessWidget {
                     const Spacer(),
 
                     // Logo & App Name
-                    Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.15),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.3),
-                          width: 1.5,
+                    FadeSlideEntrance(
+                      delay: const Duration(milliseconds: 200),
+                      child: Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.3),
+                            width: 1.5,
+                          ),
                         ),
-                      ),
-                      child: const Icon(
-                        Icons.eco_rounded,
-                        size: 40,
-                        color: Colors.white,
+                        child: const Icon(
+                          Icons.eco_rounded,
+                          size: 40,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                     const SizedBox(height: AppConstants.spacing24),
 
-                    Text(
-                      'Genesis.id',
-                      style: AppTextStyles.displayLarge.copyWith(
-                        color: Colors.white,
-                        letterSpacing: 1.5,
+                    FadeSlideEntrance(
+                      delay: const Duration(milliseconds: 400),
+                      child: Text(
+                        'Genesis.id',
+                        style: AppTextStyles.displayLarge.copyWith(
+                          color: Colors.white,
+                          letterSpacing: 1.5,
+                        ),
                       ),
                     ),
                     const SizedBox(height: AppConstants.spacing12),
 
-                    Text(
-                      'Satu langkah nyata untuk bumi yang lebih bersih. Laporkan sampah, raih lencana, dan banggakan kotamu!',
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        color: Colors.white.withValues(alpha: 0.8),
-                        height: 1.5,
+                    FadeSlideEntrance(
+                      delay: const Duration(milliseconds: 600),
+                      child: Text(
+                        'Satu langkah nyata untuk bumi yang lebih bersih. Laporkan sampah, raih lencana, dan banggakan kotamu!',
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: Colors.white.withValues(alpha: 0.8),
+                          height: 1.5,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
-                      textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: AppConstants.spacing48),
 
                     // ── Buttons ──
-                    BlocBuilder<AuthBloc, AuthState>(
-                      builder: (context, state) {
-                        final bool isLoading = state is AuthLoading;
+                    FadeSlideEntrance(
+                      delay: const Duration(milliseconds: 800),
+                      child: BlocBuilder<AuthBloc, AuthState>(
+                        builder: (context, state) {
+                          final bool isLoading = state is AuthLoading;
 
-                        return Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // Button: Take a Quick Tour
-                            IosButton(
-                              text: 'Take a Quick Tour',
-                              backgroundColor: Colors.white.withValues(alpha: 0.2),
-                              textColor: Colors.white,
-                              onPressed: isLoading
-                                  ? null
-                                  : () => context.goNamed(Routes.introductionName),
-                            ),
-                            const SizedBox(height: AppConstants.spacing16),
-
-                            // Button: Login with Google (Menggunakan SVG Asli)
-                            IosButton(
-                              text: 'Login with Google',
-                              backgroundColor: Colors.white,
-                              textColor: AppColors.navy900,
-                              isLoading: isLoading,
-                              icon: SvgPicture.string(
-                                AppSvgs.googleLogo,
-                                width: 24,
-                                height: 24,
+                          return Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Button: Take a Quick Tour
+                              IosButton(
+                                text: 'Take a Quick Tour',
+                                backgroundColor: Colors.white.withValues(alpha: 0.2),
+                                textColor: Colors.white,
+                                onPressed: isLoading
+                                    ? null
+                                    : () => context.goNamed(Routes.introductionName),
                               ),
-                              onPressed: isLoading ? null : () => _onGoogleLogin(context),
-                            ),
-                          ],
-                        );
-                      },
+                              const SizedBox(height: AppConstants.spacing16),
+
+                              // Button: Login with Google (Menggunakan SVG Asli)
+                              IosButton(
+                                text: 'Login with Google',
+                                backgroundColor: Colors.white,
+                                textColor: AppColors.navy900,
+                                isLoading: isLoading,
+                                icon: SvgPicture.string(
+                                  AppSvgs.googleLogo,
+                                  width: 24,
+                                  height: 24,
+                                ),
+                                onPressed: isLoading ? null : () => _onGoogleLogin(context),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
                     ),
                     const SizedBox(height: AppConstants.spacing24),
                   ],
