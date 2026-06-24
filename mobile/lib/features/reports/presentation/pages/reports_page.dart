@@ -1,4 +1,8 @@
 import 'dart:io';
+import 'dart:convert';
+import 'package:dio/dio.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
+import '../../../../core/network/dio_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:camera/camera.dart';
@@ -667,136 +671,155 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
   }
 
   Widget _buildHistoryTab() {
-    return BlocBuilder<ReportsBloc, ReportsState>(
-      builder: (context, state) {
-        if (state is ReportsLoading) {
-          return _buildShimmerLoader();
-        } else if (state is ReportsFetchSuccess) {
-          final reports = state.reports;
-          if (reports.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.folder_open_rounded, size: 64, color: AppColors.textDisabled),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Belum Ada Riwayat Laporan',
-                    style: AppTextStyles.titleMedium.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Kirim laporan pertamamu untuk melestarikan lingkungan!',
-                    style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          return ListView.builder(
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.all(20),
-            itemCount: reports.length,
-            itemBuilder: (context, index) {
-              final report = reports[index];
-              final statusColor = _getStatusColor(report.status);
-              final statusLabel = _getStatusLabel(report.status);
-
-              return FadeSlideEntrance(
-                delay: Duration(milliseconds: 50 * index),
+    return RefreshIndicator(
+      onRefresh: () async {
+        context.read<ReportsBloc>().add(FetchReportsRequested());
+      },
+      color: AppColors.navy900,
+      backgroundColor: Colors.white,
+      child: BlocBuilder<ReportsBloc, ReportsState>(
+        builder: (context, state) {
+          if (state is ReportsLoading) {
+            return _buildShimmerLoader();
+          } else if (state is ReportsFetchSuccess) {
+            final reports = state.reports;
+            if (reports.isEmpty) {
+              return SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
                 child: Container(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: AppColors.cardBackground,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: AppColors.divider, width: 1.5),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x06000000),
-                        blurRadius: 10,
-                        offset: Offset(0, 4),
+                  height: MediaQuery.of(context).size.height * 0.6,
+                  alignment: Alignment.center,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.folder_open_rounded, size: 64, color: AppColors.textDisabled),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Belum Ada Riwayat Laporan',
+                        style: AppTextStyles.titleMedium.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Kirim laporan pertamamu untuk melestarikan lingkungan!',
+                        style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
                       ),
                     ],
                   ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: Row(
-                      children: [
-                        // Thumbnail image
-                        _buildThumbnailImage(report.imageUrl),
-                        const SizedBox(width: 14),
-                        // Text info
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 12.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  report.wasteType ?? report.description ?? 'Laporan Lingkungan',
-                                  style: AppTextStyles.labelSmall.copyWith(
-                                    color: AppColors.textPrimary,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  report.createdAt.length > 10 ? report.createdAt.substring(0, 10) : report.createdAt,
-                                  style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary, fontSize: 10),
-                                ),
-                                const SizedBox(height: 6),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      '+50 XP',
-                                      style: AppTextStyles.labelSmall.copyWith(
-                                        color: AppColors.emerald,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    // Status Badge
-                                    Container(
-                                      margin: const EdgeInsets.only(right: 12),
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                      decoration: BoxDecoration(
-                                        color: statusColor.withValues(alpha: 0.1),
-                                        borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(color: statusColor.withValues(alpha: 0.4), width: 1),
-                                      ),
-                                      child: Text(
-                                        statusLabel,
-                                        style: AppTextStyles.bodySmall.copyWith(
-                                          color: statusColor,
-                                          fontSize: 8,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
+                ),
+              );
+            }
+
+            return ListView.builder(
+              physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+              padding: const EdgeInsets.all(20),
+              itemCount: reports.length,
+              itemBuilder: (context, index) {
+                final report = reports[index];
+                final statusColor = _getStatusColor(report.status);
+                final statusLabel = _getStatusLabel(report.status);
+
+                return FadeSlideEntrance(
+                  delay: Duration(milliseconds: 50 * index),
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: AppColors.cardBackground,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppColors.divider, width: 1.5),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x06000000),
+                          blurRadius: 10,
+                          offset: Offset(0, 4),
                         ),
                       ],
                     ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: Row(
+                        children: [
+                          // Thumbnail image
+                          _buildThumbnailImage(report.imageUrl),
+                          const SizedBox(width: 14),
+                          // Text info
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 12.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    report.wasteType ?? report.description ?? 'Laporan Lingkungan',
+                                    style: AppTextStyles.labelSmall.copyWith(
+                                      color: AppColors.textPrimary,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    report.createdAt.length > 10 ? report.createdAt.substring(0, 10) : report.createdAt,
+                                    style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary, fontSize: 10),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        '+50 XP',
+                                        style: AppTextStyles.labelSmall.copyWith(
+                                          color: AppColors.emerald,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      // Status Badge
+                                      Container(
+                                        margin: const EdgeInsets.only(right: 12),
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                        decoration: BoxDecoration(
+                                          color: statusColor.withValues(alpha: 0.1),
+                                          borderRadius: BorderRadius.circular(8),
+                                          border: Border.all(color: statusColor.withValues(alpha: 0.4), width: 1),
+                                        ),
+                                        child: Text(
+                                          statusLabel,
+                                          style: AppTextStyles.bodySmall.copyWith(
+                                            color: statusColor,
+                                            fontSize: 8,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-              );
-            },
-          );
-        } else if (state is ReportsFailure) {
-          return Center(child: GenesisErrorWidget(message: state.message, onRetry: () {
-            context.read<ReportsBloc>().add(FetchReportsRequested());
-          }));
-        }
-        return const SizedBox.shrink();
-      },
+                );
+              },
+            );
+          } else if (state is ReportsFailure) {
+            return SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+              child: Container(
+                height: MediaQuery.of(context).size.height * 0.6,
+                alignment: Alignment.center,
+                child: GenesisErrorWidget(message: state.message, onRetry: () {
+                  context.read<ReportsBloc>().add(FetchReportsRequested());
+                }),
+              ),
+            );
+          }
+          return const SizedBox.shrink();
+        },
+      ),
     );
   }
 
@@ -937,23 +960,50 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
 
   void _simulateInitialAIScan() async {
     setState(() => _isTyping = true);
-    await Future.delayed(const Duration(milliseconds: 1800));
-    if (!mounted) return;
-    setState(() {
-      _messages.add({
-        'sender': 'ai',
-        'text': '🔍 **ANALISIS GAMBAR BERHASIL**\n\n'
-            '- **Kategori Sampah**: Plastik & Logam Campuran\n'
-            '- **Kondisi**: Layak Daur Ulang\n'
-            '- **Tingkat Bahaya**: Sangat Rendah\n\n'
-            '💡 **Rekomendasi Penanganan Warga**:\n'
-            '1. Harap pisahkan botol plastik PET dengan kaleng aluminium.\n'
-            '2. Pastikan wadah tidak menampung cairan berbahaya.\n'
-            '3. Tekan atau remas botol untuk menghemat volume wadah penampung.\n\n'
-            'Kirim laporan ini sekarang untuk mendapatkan bonus **+50 XP** dan koin reward lingkungan!',
+    try {
+      final dio = DioClient().dio;
+      final file = File(widget.imagePath);
+      final fileName = file.path.split(RegExp(r'[/\\]')).last;
+      
+      final formData = FormData.fromMap({
+        'file': await MultipartFile.fromFile(
+          file.path,
+          filename: fileName,
+        ),
       });
-      _isTyping = false;
-    });
+
+      final response = await dio.post(
+        '/reports/analyze',
+        data: formData,
+        options: Options(
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        ),
+      );
+
+      if (!mounted) return;
+      
+      final analysisText = response.data['analysis'] as String? ?? 'Gagal menganalisis gambar.';
+      setState(() {
+        _messages.add({
+          'sender': 'ai',
+          'text': analysisText,
+        });
+        _isTyping = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _messages.add({
+          'sender': 'ai',
+          'text': '❌ **Gagal melakukan Analisis Gambar via AI Scan**\n\n'
+              'Terjadi masalah saat menghubungi server: ${e.toString()}\n\n'
+              'Silakan coba kirim ulang atau pastikan koneksi internet Anda stabil.',
+        });
+        _isTyping = false;
+      });
+    }
     _scrollToBottom();
   }
 
@@ -968,21 +1018,37 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
     });
     _scrollToBottom();
 
-    await Future.delayed(const Duration(milliseconds: 1500));
-    if (!mounted) return;
+    try {
+      final dio = DioClient().dio;
+      final file = File(widget.imagePath);
+      final bytes = await file.readAsBytes();
+      final base64Image = base64Encode(bytes);
 
-    String responseText = '';
-    final lowerQuery = query.toLowerCase();
-    if (lowerQuery.contains('poin') || lowerQuery.contains('koin') || lowerQuery.contains('xp')) {
-      responseText = 'Setiap laporan tumpukan sampah yang disetujui bernilai +50 XP. Poin koin daur ulang dapat ditukar dengan voucher belanja di menu utama.';
-    } else {
-      responseText = 'Regulasi kebersihan kota melarang pembuangan sampah anorganik secara bercampur di fasilitas publik. Anda disarankan membawanya ke Bank Sampah terdekat.';
+      final response = await dio.post(
+        '/chat',
+        data: {
+          'message': query,
+          'image': base64Image,
+        },
+      );
+
+      if (!mounted) return;
+
+      final reply = response.data['reply'] as String? ?? 'Geni AI tidak merespons.';
+      setState(() {
+        _messages.add({'sender': 'ai', 'text': reply});
+        _isTyping = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _messages.add({
+          'sender': 'ai',
+          'text': '❌ Gagal mengirim pesan: ${e.toString()}',
+        });
+        _isTyping = false;
+      });
     }
-
-    setState(() {
-      _messages.add({'sender': 'ai', 'text': responseText});
-      _isTyping = false;
-    });
     _scrollToBottom();
   }
 
@@ -1061,13 +1127,31 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
                         width: 1,
                       ),
                     ),
-                    child: Text(
-                      msg['text']!,
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        color: isUser ? Colors.white : AppColors.textPrimary,
-                        fontSize: 13,
-                      ),
-                    ),
+                    child: isUser
+                        ? Text(
+                            msg['text']!,
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              color: Colors.white,
+                              fontSize: 13,
+                            ),
+                          )
+                        : MarkdownBody(
+                            data: msg['text']!,
+                            styleSheet: MarkdownStyleSheet(
+                              p: AppTextStyles.bodyMedium.copyWith(
+                                color: AppColors.textPrimary,
+                                fontSize: 13,
+                              ),
+                              strong: AppTextStyles.bodyMedium.copyWith(
+                                color: AppColors.textPrimary,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                              h1: AppTextStyles.titleMedium.copyWith(color: AppColors.textPrimary),
+                              h2: AppTextStyles.titleMedium.copyWith(color: AppColors.textPrimary, fontSize: 14),
+                              listBullet: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary),
+                            ),
+                          ),
                   ),
                 );
               },

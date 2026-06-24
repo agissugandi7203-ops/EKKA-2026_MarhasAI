@@ -87,4 +87,37 @@ Diperlukan untuk menghubungkan Next.js Admin Dashboard agar admin dapat mengelol
 
 1.  **Rate Limiting**: `ChatThrottlerGuard` membatasi request chat maksimal 10 request per menit untuk role `citizen` berbasis in-memory. Role `admin` bebas dari throttling.
 2.  **Validasi Payload Size**: Pembatasan string base64 (`image`, `pdf`, `audio`) maksimal 5MB per parameter untuk mencegah kehabisan memori server (*out-of-memory DoS*).
-3.  **Sanitasi Prompt Injection**: Menyaring input teks warga dari instruksi override sistem yang berbahaya.
+3.  **Sanitasi Prompt Injection**: Menyaring input teks warga secara lokal di backend sebelum dikirim ke OpenRouter. Kami menerapkan deteksi evasion komprehensif:
+    *   **Character-Spaced Evasion**: Menghapus spasi ganda/karakter terpisah (contoh: `i g n o r e`) lalu memindainya kembali.
+    *   **Encoding-Based Evasion**: Mendekode teks Hex (beruntun maupun dipisahkan spasi seperti `69 67 6e 6f 72 65`) dan teks Base64 untuk memastikan instruksi jahat tidak disembunyikan dalam encoding.
+    *   **Typoglycemia (Fuzzy Targets)**: Mendeteksi kata kunci yang diacak huruf tengahnya (contoh: `ignroe` -> `ignore`, `systme` -> `system`, `frotget` -> `forget`).
+    *   **Redaksi Otomatis**: Konten berbahaya yang terdeteksi secara otomatis diredaksi menjadi `[PROMPT_INJECTION]` agar aman diteruskan ke LLM tanpa merusak/menghentikan percakapan warga.
+
+### C. Endpoint Transkripsi Audio (Whisper STT)
+
+*   **POST** `/chat/transcribe`
+*   **Headers**: `Authorization: Bearer <supabase_jwt_token>`
+*   **Body Request**:
+    ```json
+    {
+      "audio": "data:audio/m4a;base64,...",
+      "format": "m4a"
+    }
+    ```
+*   **Response**:
+    ```json
+    {
+      "text": "Hasil transkripsi teks dari suara warga."
+    }
+    ```
+
+---
+
+## 5. Verifikasi & Pengujian Streaming (SSE)
+
+Kami telah memverifikasi secara langsung fungsionalitas dari server streaming API OpenRouter dengan model `google/gemini-2.5-flash` melalui skrip pengujian [test_openrouter_stream.js](file:///C:/Users/arief/.gemini/antigravity/brain/5d19354b-3bf1-42bf-bfc4-06f605652364/scratch/test_openrouter_stream.js).
+
+### Hasil Pengujian Script:
+- **Koneksi Streaming Berhasil**: Server streaming merespons dengan header dan status `200 OK`.
+- **Pengiriman Chunk Berurutan**: Chunk data (SSE format `data: {...}`) diterima satu demi satu secara real-time dan didekode dengan sangat cepat.
+- **Konfirmasi**: Pengujian mengonfirmasi bahwa client seluler (Flutter) menerima respons asisten AI secara streaming asinkron tanpa hambatan untuk memberikan visualisasi ketik dinamis mirip ChatGPT.

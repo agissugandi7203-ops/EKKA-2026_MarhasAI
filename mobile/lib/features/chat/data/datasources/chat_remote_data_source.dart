@@ -27,6 +27,23 @@ class ChatRemoteDataSource {
     return reply as String;
   }
 
+  /// Mentranskripsi rekaman suara audio menggunakan API Whisper di backend
+  Future<String> transcribeAudio(String base64Audio, String format) async {
+    final response = await _dioClient.dio.post(
+      '/chat/transcribe',
+      data: {
+        'audio': base64Audio,
+        'format': format,
+      },
+    );
+
+    final text = response.data?['text'];
+    if (text == null) {
+      throw const FormatException('Format respons transkripsi tidak valid');
+    }
+    return text as String;
+  }
+
   /// Mengirim pesan dengan streaming (mengembalikan Stream token kata demi kata)
   Stream<String> sendMessageStream(ChatMessageModel message, String model) {
     final controller = StreamController<String>();

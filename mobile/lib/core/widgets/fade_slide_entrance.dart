@@ -17,6 +17,7 @@ class FadeSlideEntrance extends StatefulWidget {
   final Duration delay;
   final Duration duration;
   final Offset offset;
+  final Curve curve;
 
   const FadeSlideEntrance({
     super.key,
@@ -24,6 +25,7 @@ class FadeSlideEntrance extends StatefulWidget {
     this.delay = Duration.zero,
     this.duration = const Duration(milliseconds: 800),
     this.offset = const Offset(0, 20), // offset 20px dirasa paling soft & natural
+    this.curve = Curves.easeOutQuint,
   });
 
   @override
@@ -47,14 +49,14 @@ class _FadeSlideEntranceState extends State<FadeSlideEntrance>
     _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: Curves.easeOutQuint, // Kurva eksponensial lambat di akhir (elegan)
+        curve: widget.curve,
       ),
     );
 
     _slideAnimation = Tween<Offset>(begin: widget.offset, end: Offset.zero).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: Curves.easeOutQuint,
+        curve: widget.curve,
       ),
     );
 

@@ -1,132 +1,189 @@
-# Genesis.id - Platform Crowdsourcing & DaaS Lingkungan Nasional (LKS EKKA-2026)
+# Genesis.id — Platform Crowdsourcing & DaaS Lingkungan Nasional (LKS EKKA-2026)
+
+🚀 **Platform Crowdsourcing Isu Lingkungan & Layanan Data-as-a-Service (DaaS) Pintar Berbasis Kecerdasan Artifisial Tingkat Tinggi**
 
 [![Project Status](https://img.shields.io/badge/status-active-brightgreen.svg)](#)
 [![Stack](https://img.shields.io/badge/stack-NestJS%20%7C%20Next.js%20%7C%20Flutter-blue.svg)](#)
 [![Database](https://img.shields.io/badge/database-Supabase%20%28PostgreSQL%29-red.svg)](#)
-[![Responsible AI](https://img.shields.io/badge/Responsible%20AI-PII%20Blurring%20%7C%20PostGIS%20AntiSpam-orange.svg)](#)
-
-**Genesis.id** adalah platform crowdsourcing isu lingkungan dan layanan **Data-as-a-Service (DaaS)** untuk B2G/B2B. Dibuat khusus untuk Lomba Kompetensi Siswa (LKS) Dikmen Tingkat Nasional 2026 (Ekshibisi Kecerdasan Artifisial - Studi Kasus 2: Lingkungan). Platform ini memberdayakan warga untuk memetakan masalah lingkungan via gawai, lalu menyalurkan data analitik tervalidasi AI kepada pemerintah melalui Public API.
-
----
-
-## 1. Arsitektur Proyek (Monorepo)
-
-Proyek ini terbagi menjadi tiga pilar utama yang terintegrasi secara harmonis:
-
-1.  **[Backend (NestJS + Fastify)](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/backend)**: API Gateway berkecepatan tinggi (~45.000 req/s), pengelola sensor gambar (PII Redaction), geo-deduplikasi spasial PostGIS, integrasi Gemini AI (Vertex AI), dan RAG Chatbot.
-2.  **[Mobile Client (Flutter)](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/mobile)**: Aplikasi warga untuk melaporkan isu lingkungan dengan penandaan GPS, sensor kamera, interogasi gambar ("AI Per-Seksi"), serta maskot & leaderboard gamifikasi.
-3.  **[Web Dashboard & Portal (Next.js)](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/frontend)**: Dasbor analitik interaktif berbasis chart (Tremor/Recharts) untuk admin memoderasi laporan dan memantau trafik, serta portal dokumentasi API untuk kebutuhan B2G.
+[![Responsible AI](https://img.shields.io/badge/Responsible%20AI-GCP%20Vision%20PII%20Blurring%20%7C%20PostGIS%20AntiSpam-orange.svg)](#)
+[![STT Voice](https://img.shields.io/badge/Voice%20AI-OpenAI%20Whisper--1-blueviolet.svg)](#)
+[![Guardrails](https://img.shields.io/badge/Security-Prompt%20Injection%20Guardrails-purple.svg)](#)
 
 ---
 
-## 2. Struktur Direktori Utama
+## 📖 1. Latar Belakang & Urgensi Masalah
+
+Pertumbuhan area urban yang cepat memicu tantangan pengelolaan lingkungan yang masif. Pemerintah sering kali mengalami keterlambatan dalam mendeteksi tumpukan sampah liar, kerusakan fasilitas kebersihan, atau pencemaran sungai karena keterbatasan personel lapangan. Di sisi lain, pelaporan konvensional oleh warga memiliki kendala utama:
+1. **Spamming & Duplikasi Laporan Spasial**: Banyak warga melaporkan satu tumpukan sampah yang sama berulang kali, menyebabkan beban administrasi yang tinggi dan tidak efisien.
+2. **Kebocoran Privasi (PII Leak)**: Foto laporan sering kali tidak sengaja memperlihatkan wajah orang lain atau plat nomor kendaraan pribadi yang melanggar UU Pelindungan Data Pribadi (UU PDP).
+3. **Ketidakakuratan Klasifikasi Laporan**: Petugas kota kesulitan memilah jenis sampah (organik, anorganik, B3) dan tingkat bahayanya secara manual dalam waktu singkat.
+4. **Ketidakramahan Layanan Informasi**: Portal regulasi pemerintah yang panjang, kaku, dan sulit dipahami warga.
+
+**Genesis.id** hadir sebagai solusi komprehensif. Warga dapat melaporkan isu lingkungan secara instan, sementara AI mengelola sensor privasi gambar, menduplikasi laporan secara spasial, mengklasifikasikan jenis sampah, dan bertindak sebagai asisten hukum interaktif yang cerdas.
+
+---
+
+## ⚡ 2. Fitur Unggulan Sistem (The "Flex" Factor)
+
+### 📌 A. Geospasial Anti-Spam (PostGIS Spatial Deduplication)
+Sistem dilengkapi dengan filter spasial cerdas untuk menghindari duplikasi laporan. Sebelum laporan disimpan ke database:
+*   Backend mengeksekusi fungsi RPC PostGIS `check_duplicate_report(lat, lng)` untuk memindai radius **50 meter** dari lokasi laporan baru.
+*   Jika ditemukan laporan dengan status aktif pada radius tersebut, sistem secara otomatis akan menggabungkan laporan baru tersebut (*report merging*) alih-alih membuat entitas baru. Hal ini menghemat ruang penyimpanan, mencegah tumpang tindih visual di peta admin, dan memfokuskan sumber daya petugas di lapangan.
+
+### 📌 B. PII Censorship Sensor (Google Cloud Vision API & Sharp)
+Untuk mematuhi regulasi UU PDP secara ketat, platform menerapkan sensor data sensitif gambar secara in-memory sebelum diunggah ke Google Cloud Storage (GCS):
+*   **Deteksi Wajah & Plat Nomor**: Gambar yang diunggah dikirim ke **Google Cloud Vision API** untuk mendeteksi koordinat wajah (`faceDetection`) dan plat nomor kendaraan (`textDetection`).
+*   **Gaussian Blurring**: Backend memetakan koordinat bounding box yang dideteksi, lalu membramkan area tersebut menggunakan library `sharp` dengan kekuatan Gaussian blur optimal. Warga aman melapor tanpa khawatir melanggar hak privasi orang lain.
+
+### 📌 C. AI Decision Engine & Auto-Approval
+Setiap laporan yang berhasil disensor akan dianalisis secara asinkron oleh model kecerdasan artifisial vision:
+*   AI mengklasifikasikan tipe sampah (Plastik, Organik, B3, Kertas, Logam, Kaca, dll), memperkirakan tingkat bahaya (*low, medium, high*), serta menghitung skor keyakinan (*confidence score*).
+*   **Persetujuan Otomatis**: Jika laporan tersebut valid (`isValid = true`) dan memiliki keyakinan di atas **85%** (`confidence_score > 0.85`), sistem backend NestJS langsung memperbarui status laporan menjadi **Approved** dan memberikan poin reward serta XP kepada warga secara instan tanpa perlu persetujuan manual dari admin dinas kebersihan.
+
+### 📌 D. Asisten Geni AI Chatbot RAG & Whisper STT
+Sistem chatbot RAG (*Retrieval-Augmented Generation*) terintegrasi OpenRouter menyediakan asisten hukum perkotaan yang interaktif bernama Geni:
+*   **Perekaman Suara Whisper STT**: Menggunakan paket `record` dan `path_provider` pada gawai, suara warga direkam ke format `.m4a` temporer dan dikirim ke backend NestJS `/chat/transcribe` untuk dikonversikan menjadi teks menggunakan model **OpenAI Whisper-1** via OpenRouter.
+*   **Multimodal Input (Image & PDF)**: Chatbot AI mendukung input file dokumen PDF dan gambar secara langsung menggunakan parser `cloudflare-ai` / `mistral-ocr` di OpenRouter untuk interogasi dokumen hukum yang kompleks atau pengenalan objek visual.
+*   **Vektor Cosine Similarity Supabase**: Potongan regulasi perda disimpan di tabel `knowledge_base` dengan ekstensi `pgvector` berdimensi `768` (model `google/gemini-embedding-2`), dipanggil melalui RPC `match_documents` untuk membatasi jawaban asisten hanya pada dokumen perda valid (anti-halusinasi).
+*   **Advanced Prompt Injection Guardrails**: Backend dilengkapi penyaring prompt input cerdas untuk mencegah serangan instruksi sistem:
+    *   *Character-Spaced Evasion*: Menghapus spasi antar karakter terpisah (contoh: `i g n o r e  p r e v i o u s` -> `ignore previous`).
+    *   *Encoding-Based Evasion*: Mendekode format Hex (Continuous / Spaced) dan Base64 sebelum pemindaian.
+    *   *Typoglycemia*: Mendeteksi kata-kata yang diacak huruf tengahnya (contoh: `ignroe`, `systme`).
+    *   *Redaction*: Konten berbahaya diredaksi otomatis menjadi `[PROMPT_INJECTION]` agar aman dikirim ke LLM.
+
+### 📌 E. Gamifikasi & Toko Rewards Sembako
+*   **Visual Claymorphic**: Profil warga didesain ulang dengan gaya *claymorphism* modern dengan garis Slate tebal `1.5` dan bayangan lembut.
+*   **Redemption Center Sembako**: Poin hasil laporan valid yang terhitung secara dinamis dari database (`xp * 3`) dapat ditukarkan di carousel sembako mockup berisi 5 item bernilai tinggi (Minyak Goreng 1L, Beras 2kg, Gula Kristal 1kg, Paket Sembako Lengkap, Voucher Indomaret Rp 50.000).
+*   **Leaderboard Staggered Bouncy**: Podium top 3 besar peringkat kota dan baris list ranking meluncur masuk secara staggered menggunakan kurva elastis bouncy `Curves.easeOutBack` yang memanjakan mata juri dan pengguna.
+
+---
+
+## 🏗️ 3. Arsitektur Sistem & Aliran Data
+
+### Sistem Arsitektur Monorepo
+```mermaid
+graph TD
+    A[Flutter App Warga] -->|Kirim Laporan & GPS| B(API Gateway NestJS + Fastify)
+    B -->|Check 50m Radius| C[PostgreSQL + PostGIS]
+    B -->|Censor Wajah & Plat Nomor| D[GCP Vision API]
+    D -->|Gaussian Blurring| E[Sharp Image Engine]
+    E -->|Upload Buffer Ter-Sensor| F[Google Cloud Storage]
+    B -->|Asynchronous Analysis| G[OpenRouter AI Vision Classify]
+    G -->|Confidence > 85% & Valid| H[Auto-Approve & Reward User]
+```
+
+### RAG Chatbot Flow dengan Whisper STT
+```mermaid
+sequenceDiagram
+    participant Citizen as Flutter Client (Warga)
+    participant Backend as NestJS + Fastify Server
+    participant Whisper as OpenRouter Whisper STT
+    participant DB as Supabase pgvector
+    participant LLM as OpenRouter LLM Stream
+
+    Citizen->>Citizen: Rekam Suara (.m4a)
+    Citizen->>Backend: Post /chat/transcribe (base64 audio)
+    Backend->>Whisper: Request transkripsi suara
+    Whisper-->>Backend: Kembalikan teks transkripsi
+    Backend-->>Citizen: Tampilkan teks di Input Chat
+    Citizen->>Backend: Post /chat/stream (Teks + PDF/Gambar)
+    Backend->>Backend: Cek Evasion & Prompt Injection Guardrails
+    Backend->>Backend: Generate Embedding (gemini-embedding-2)
+    Backend->>DB: Kueri match_documents (Cosine Similarity 768)
+    DB-->>Backend: 3 Dokumen Perda Terkait
+    Backend->>LLM: Kirim Konteks Perda + Riwayat Obrolan + File
+    LLM-->>Citizen: Aliran teks chunk SSE + Blinking Cursor █
+```
+
+---
+
+## 🛠️ 4. Spesifikasi & Pilihan Model AI
+
+Genesis.id menggunakan orkestrasi model AI terkemuka untuk memastikan efisiensi latensi, biaya, dan akurasi analisis:
+1.  **google/gemini-2.5-flash**: Model default penyedia chat completion cepat dengan latensi sangat rendah, ideal untuk percakapan harian.
+2.  **google/gemini-2.5-pro**: Digunakan untuk analisis dokumen regulasi daerah yang rumit atau penalaran kompleks.
+3.  **deepseek/deepseek-chat (DeepSeek-V3)**: Pilihan model alternatif untuk completion terstruktur berkinerja tinggi.
+4.  **openai/whisper-1**: Model transkripsi suara (Speech-to-Text) berakurasi tinggi dengan pemrosesan bahasa Indonesia alami yang sangat baik.
+5.  **google/gemini-embedding-2**: Model penghasil representasi vektor 768 dimensi untuk basis pengetahuan regulasi hukum lingkungan.
+
+---
+
+## 📑 5. Daftar Regulasi Hukum yang Terpasang (Knowledge Base)
+
+Basis pengetahuan asisten RAG Geni AI dilengkapi dengan produk hukum resmi Indonesia tingkat nasional hingga lokal:
+*   `UUD 1945 Pasal Lingkungan`: Hak atas lingkungan yang baik dan sehat (Pasal 28H) & pembangunan berkelanjutan berwawasan lingkungan (Pasal 33).
+*   `UU No. 18 Tahun 2008 tentang Pengelolaan Sampah`: Kewajiban reduce-reuse-recycle, larangan membakar sampah terbuka, dan tanggung jawab produsen.
+*   `UU No. 32 Tahun 2009 tentang Perlindungan & Pengelolaan Lingkungan Hidup`: Aturan AMDAL, UKL-UPL, baku mutu air/udara, denda pidana pencemaran lingkungan hingga Rp15 Miliar.
+*   `Perda Kota Bandung No. 9 Tahun 2018 tentang Pengelolaan Sampah`: Gerakan Kang Pisman, pembagian tempat sampah 3 warna (hijau, kuning, merah), jadwal pembuangan pukul 18:00-21:00 WIB, denda OTT Rp 50.000, serta penahanan KTP oleh PPNS.
+*   `PP RI No. 22 Tahun 2021 tentang Penyelenggaraan PPLH`: Persetujuan lingkungan hidup, baku mutu emisi industri, dan baku mutu air nasional.
+*   `Permen LHK No. 6 Tahun 2021 tentang Pengelolaan Limbah B3`: Tata cara penyimpanan, pelabelan simbol limbah B3, batas kedaluwarsa penyimpanan (90-180 hari), dan manifest elektronik (Festronik).
+*   `UU RI No. 18 Tahun 2013 tentang Pencegahan Perusakan Hutan`: Pencegahan pembalakan liar, perambahan hutan, dan denda pidana korporasi kehutanan.
+
+---
+
+## 📦 6. Struktur Direktori Proyek
 
 ```
 LKS Dikdasmen/
-├── backend/            # Aplikasi NestJS (TypeScript, Node.js)
+├── backend/            # Modul NestJS (Fastify, TypeScript, Node.js)
+│   ├── src/
+│   │   ├── chat/       # Perekaman suara Whisper & streaming chat
+│   │   ├── reports/    # Upload laporan & AI Scan analyze
+│   │   ├── storage/    # GCP Storage & Vision PII Blurring
+│   │   └── openrouter/ # OpenAI Whisper, Gemini, Embedding client
 ├── frontend/           # Aplikasi Web Next.js App Router (TypeScript, React)
+│   └── src/app/        # Dashboard Analitik Admin & B2G API Portal
 ├── mobile/             # Aplikasi Mobile Flutter (Dart)
-├── docs/               # Dokumentasi terpusat proyek
-│   ├── PROJECT_CONTEXT.md       # SSOT konteks & status proyek
-│   ├── CLEAN_CODE_GUIDELINES.md # Pedoman penulisan kode global (anti-slip)
-│   ├── INTEGRATION_GUIDE.md     # Panduan integrasi otomatis OpenAPI
-│   ├── BACKEND_ARCHITECTURE.md   # Detail arsitektur backend & katalog API
-│   ├── MOBILE_ARCHITECTURE.md    # Arsitektur Dio, Data Source & BLoC Flutter
-│   └── FLUTTER_CLEAN_CODE.md    # Panduan clean code Dart & Flutter
-└── README.md           # Berkas petunjuk root (Dokumen ini)
+│   └── lib/features/   # Clean Architecture (Auth, Leaderboard, Setup, Chat, Profile)
+├── docs/               # Kumpulan spesifikasi fitur & arsitektur
+└── README.md           # Berkas petunjuk utama (Dokumen ini)
 ```
 
 ---
 
-## 3. Alur Data Utama (Core Loop)
+## 🛠️ 7. Panduan Instalasi & Setup Lokal (Local Setup)
 
-```
-[Flutter App] ──> Ambil Foto & GPS ──> Sensor PII (sharp) ──> Simpan di GCS
-                                                                    │
-[Leaderboard] <── +XP & Level <── Setuju / Tolak <── Gemini AI / Admin Web
-```
+> [!NOTE]
+> *Langkah-langkah instalasi ini ditujukan untuk lingkungan pengembangan lokal (development environment).*
 
----
-
-## 4. Cara Memulai Pengembangan (Local Setup)
-
-### A. Prasyarat (Prerequisites)
-Pastikan Anda sudah menginstal:
+### A. Prasyarat Sistem
 *   [Node.js](https://nodejs.org/) (v18+)
 *   [Flutter SDK](https://docs.flutter.dev/get-started/install) (v3.19+)
 *   [Git](https://git-scm.com/)
 
-### B. Langkah Setup
-1.  **Database & Cloud**:
-    *   Buat proyek di [Supabase Cloud](https://supabase.com). Aktifkan ekstensi `postgis` dan `vector`.
-    *   Jalankan seluruh query SQL dari folder [docs/database/](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/docs/database) di SQL Editor Supabase Anda.
-2.  **Konfigurasi Backend**:
-    *   Masuk ke folder `backend/`, salin `.env.example` menjadi `.env`, lalu isi kredensial Supabase, OpenRouter API Key, dan RAG parameters Anda.
-    *   Jalankan backend:
-        ```bash
-        cd backend
-        npm install
-        npm run start:dev
-        ```
-3.  **Konfigurasi Mobile**:
-    *   Masuk ke folder `mobile/`, buka file `lib/core/config/supabase_config.dart`, lalu masukkan URL dan Anon Key Supabase Anda.
-    *   Jalankan Flutter:
-        ```bash
-        cd mobile
-        flutter pub get
-        flutter run
-        ```
+### B. Konfigurasi Database & Supabase
+1. Buat akun dan proyek baru di [Supabase Cloud](https://supabase.com).
+2. Di menu ekstensi database, aktifkan ekstensi `postgis` dan `vector`.
+3. Jalankan query SQL penyiapan tabel, views, dan RPC `match_documents` serta `check_duplicate_report` yang berada di direktori [docs/database/](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/docs/database) melalui SQL Editor Supabase Anda.
 
----
+### C. Menjalankan Server Backend (NestJS)
+1. Buka terminal, arahkan ke folder `backend/`:
+   ```bash
+   cd backend
+   npm install
+   ```
+2. Salin berkas `.env.example` menjadi `.env`:
+   ```bash
+   cp .env.example .env
+   ```
+3. Lengkapi kredensial pada berkas `.env` Anda (Supabase URL, Service Role Key, OpenRouter API Key, GCS Credentials, dll).
+4. Unggah regulasi perda awal ke database RAG menggunakan CLI script:
+   ```bash
+   npx ts-node scripts/bulk-upload-knowledge.ts "../docs/regulations" "<your_supabase_service_role_key>" "http://localhost:3000"
+   ```
+5. Jalankan server backend dalam mode pengembangan:
+   ```bash
+   npm run start:dev
+   ```
 
-## 5. Integrasi Chat AI & Pengelolaan Basis Pengetahuan RAG (Knowledge Base)
-
-Sistem chatbot AI pada **Genesis.id** didukung oleh arsitektur **RAG (Retrieval-Augmented Generation)** tingkat tinggi yang terhubung secara real-time dengan basis data peraturan hukum resmi di Supabase.
-
-### A. Sumber Data Hukum Lingkungan Resmi (JDIH Portal)
-Asisten AI membatasi jawaban obrolan warga hanya berdasarkan dokumen regulasi valid untuk menghindari halusinasi. Sumber data hukum nasional disinkronkan dan dirangkum dari beberapa portal **JDIH (Jaringan Dokumentasi dan Informasi Hukum)** resmi pemerintah Indonesia:
-1.  **JDIH BPHN Kemenkumham (Portal Nasional - jdihn.go.id)**:
-    *   **Peran**: Pusat integrasi data dokumen hukum nasional dari seluruh instansi pemerintah daerah, kementerian, dan lembaga tinggi negara.
-    *   **Metode Integrasi**: Melalui REST API JDIHN menggunakan protokol pertukaran data JSON berbasis `access_token` dan sinkronisasi `secret_key` instansi.
-2.  **JDIH Kementerian LHK (jdih.menlhk.go.id)**:
-    *   **Peran**: Menyediakan produk hukum khusus kehutanan dan lingkungan hidup (Peraturan Menteri LHK, Keputusan Menteri LHK, dan Undang-Undang sektoral).
-3.  **JDIH BPK RI (peraturan.bpk.go.id)**:
-    *   **Peran**: Pusat data hukum terlengkap untuk mengunduh salinan berkas lembaran negara dan penjelasan resmi (UU, PP, Perpres, Permen).
-4.  **JDIH Pemerintah Kota Bandung (jdih.bandung.go.id)**:
-    *   **Peran**: Regulasi tingkat lokal/daerah kota Bandung (Perda Pengelolaan Sampah, Peraturan Walikota Bandung).
-
-### B. Berkas Regulasi Lokal Terpasang (`docs/regulations/`)
-Berkas peraturan lingkungan terperinci telah disiapkan secara lengkap dan terstruktur di dalam repositori untuk segera di-ingest:
-*   [UUD 1945 Pasal Lingkungan](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/docs/regulations/UUD_1945_Pasal_Lingkungan.txt): Konstitusi dasar Indonesia mengenai hak warga atas lingkungan yang sehat (Pasal 28H) dan demokrasi ekonomi berwawasan lingkungan (Pasal 33).
-*   [UU No. 18 Tahun 2008 tentang Pengelolaan Sampah](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/docs/regulations/UU_No_18_Tahun_2008_Pengelolaan_Sampah.txt): Regulasi nasional lengkap mengenai reduce-reuse-recycle (3R), kewajiban produsen, larangan pembakaran sampah terbuka, serta sanksi pidana kelalaian.
-*   [UU No. 32 Tahun 2009 tentang Perlindungan & Pengelolaan Lingkungan Hidup](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/docs/regulations/UU_No_32_Tahun_2009_Lingkungan_Hidup.txt): Kerangka hukum induk pengelolaan lingkungan (AMDAL, UKL-UPL, baku mutu emisi/air, persetujuan lingkungan, dan sanksi denda pidana hingga Rp15 Miliar).
-*   [Perda Kota Bandung No. 9 Tahun 2018 tentang Pengelolaan Sampah](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/docs/regulations/Perda_Kota_Bandung_No_9_Tahun_2018_Pengelolaan_Sampah.txt): Aturan praktis lokal di Kota Bandung (Gerakan Kang Pisman, pemilahan 3 jenis wadah warna hijau-kuning-merah, retribusi daerah, jadwal pembuangan pukul 18:00-21:00 WIB, denda OTT Rp 50.000, serta penahanan KTP oleh PPNS DLHK).
-*   [PP RI No. 22 Tahun 2021 tentang Penyelenggaraan PPLH](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/docs/regulations/PP_RI_Nomor_22_Tahun_2021_tentang_Penyelenggaraan_Perlindungan_dan_Pengelolaan_Lingkungan_Hidup.txt): Ketentuan teknis persetujuan lingkungan, pengawasan emisi industri, baku mutu air nasional, serta tata kelola limbah B3.
-*   [Permen LHK No. 6 Tahun 2021 tentang Pengelolaan Limbah B3](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/docs/regulations/Peraturan_Menteri_LHK_Nomor_6_Tahun_2021_tentang_Tata_Cara_dan_Persyaratan_Pengelolaan_Limbah_B3.txt): Regulasi detail pelabelan simbol B3, penyimpanan limbah B3, batas kedaluwarsa 90-180 hari, dan dokumen Manifest Elektronik (Festronik).
-*   [UU RI No. 18 Tahun 2013 tentang Pencegahan Perusakan Hutan](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/docs/regulations/UU_RI_Nomor_18_Tahun_2013_tentang_Pencegahan_dan_Pemberantasan_Perusakan_Hutan.txt): Larangan pembalakan liar, perambahan hutan, serta sanksi pidana korporasi hingga Rp15 Miliar.
-
-### C. Alur Pemrosesan Teks & Vektor RAG
-Pecahan dokumen dimasukkan ke database melalui dua skrip CLI otomatis pada direktori `backend/`:
-
-1.  **Unggah Berkas Lokal Massal (`bulk-upload-knowledge.ts`)**:
-    Membaca semua file teks `.txt`/`.md` dari folder regulations, membaginya ke dalam ukuran potongan teks kustom, dan mengirimkannya ke endpoint backend.
-    ```bash
-    cd backend
-    npx ts-node scripts/bulk-upload-knowledge.ts "../docs/regulations" "<supabase_service_role_key>" "http://localhost:3000"
-    ```
-
-2.  **Scraper JDIH & Importer Otomatis (`scrape-and-import-jdih.ts`)**:
-    Menghubungkan sistem secara simulated ke portal API JDIHN nasional untuk mencari produk hukum, mengumpulkan metadata komprehensif, dan mengunggahnya secara real-time.
-    ```bash
-    cd backend
-    npx ts-node scripts/scrape-and-import-jdih.ts "<supabase_service_role_key>" "http://localhost:3000"
-    ```
-
-**Teknis Pemrosesan**:
-*   **Text Chunking**: String panjang dipecah menggunakan algoritma Smart Space Alignment dengan ukuran token yang diatur pada berkas `.env` (`RAG_CHUNK_SIZE` default 800 karakter, `RAG_CHUNK_OVERLAP` default 150 karakter) untuk menjaga kesatuan arti kalimat.
-*   **Vektor Komparasi**: Menggunakan model `google/gemini-embedding-2` melalui OpenRouter API untuk menghasilkan vektor bernilai 768 dimensi.
-*   **Pencarian Spasial Kosinus**: Di-indeks menggunakan HNSW pada database Supabase, dicari dengan RPC kustom `match_documents(query_embedding, match_threshold, match_count)` untuk menyajikan konteks dokumen paling relevan ke model LLM (Geni-Flash, Geni-Pro, DeepSeek-Chat) secara streaming SSE.
-
-Untuk informasi detail lainnya mengenai kueri SQL vektor, silakan merujuk pada:
-👉 **[KNOWLEDGE_BASE_GUIDE.md (Panduan RAG)](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/docs/KNOWLEDGE_BASE_GUIDE.md)**
-
+### D. Menjalankan Aplikasi Mobile (Flutter)
+1. Buka terminal baru, arahkan ke folder `mobile/`:
+   ```bash
+   cd mobile
+   flutter pub get
+   ```
+2. Pastikan file konfigurasi koneksi database telah sesuai di `lib/core/config/supabase_config.dart`.
+3. Jalankan aplikasi pada emulator atau perangkat yang terhubung:
+   ```bash
+   flutter run
+   ```

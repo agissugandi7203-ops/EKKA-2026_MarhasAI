@@ -186,6 +186,7 @@ class _GenesisAppState extends State<GenesisApp> {
         RepositoryProvider<AuthRepository>.value(value: _authRepository),
         RepositoryProvider<ProfileRepository>.value(value: _profileRepository),
         RepositoryProvider<ReportRepository>.value(value: _reportRepository),
+        RepositoryProvider<ChatRemoteDataSource>.value(value: _chatDataSource),
       ],
       child: MultiBlocProvider(
         providers: [

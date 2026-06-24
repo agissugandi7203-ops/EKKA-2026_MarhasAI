@@ -245,10 +245,19 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
 
     return Scaffold(
       backgroundColor: AppColors.surface,
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: Stack(
-          children: [
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await Future.delayed(const Duration(milliseconds: 1000));
+          if (mounted) {
+            setState(() {});
+          }
+        },
+        color: AppColors.navy900,
+        backgroundColor: Colors.white,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+          child: Stack(
+            children: [
             // Curved Dark Navy Header Banner
             Container(
               height: 430,
@@ -375,35 +384,47 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           // Rank 2 (Left)
-                          _buildPodiumPosition(
-                            name: currentPodium['second']!['name']!,
-                            xp: currentPodium['second']!['xp']!,
-                            rank: 2,
-                            badge: '🥈',
-                            color: const Color(0xFFC0C0C0),
-                            avatarInitial: currentPodium['second']!['initial']!,
-                            height: 72,
+                          FadeSlideEntrance(
+                            delay: const Duration(milliseconds: 250),
+                            curve: Curves.easeOutBack,
+                            child: _buildPodiumPosition(
+                              name: currentPodium['second']!['name']!,
+                              xp: currentPodium['second']!['xp']!,
+                              rank: 2,
+                              badge: '🥈',
+                              color: const Color(0xFFC0C0C0),
+                              avatarInitial: currentPodium['second']!['initial']!,
+                              height: 72,
+                            ),
                           ),
                           // Rank 1 (Center)
-                          _buildPodiumPosition(
-                            name: currentPodium['first']!['name']!,
-                            xp: currentPodium['first']!['xp']!,
-                            rank: 1,
-                            badge: '👑',
-                            color: AppColors.gold,
-                            avatarInitial: currentPodium['first']!['initial']!,
-                            height: 104,
-                            isGold: true,
+                          FadeSlideEntrance(
+                            delay: const Duration(milliseconds: 400),
+                            curve: Curves.easeOutBack,
+                            child: _buildPodiumPosition(
+                              name: currentPodium['first']!['name']!,
+                              xp: currentPodium['first']!['xp']!,
+                              rank: 1,
+                              badge: '👑',
+                              color: AppColors.gold,
+                              avatarInitial: currentPodium['first']!['initial']!,
+                              height: 104,
+                              isGold: true,
+                            ),
                           ),
                           // Rank 3 (Right)
-                          _buildPodiumPosition(
-                            name: currentPodium['third']!['name']!,
-                            xp: currentPodium['third']!['xp']!,
-                            rank: 3,
-                            badge: '🥉',
-                            color: const Color(0xFFCD7F32),
-                            avatarInitial: currentPodium['third']!['initial']!,
-                            height: 56,
+                          FadeSlideEntrance(
+                            delay: const Duration(milliseconds: 550),
+                            curve: Curves.easeOutBack,
+                            child: _buildPodiumPosition(
+                              name: currentPodium['third']!['name']!,
+                              xp: currentPodium['third']!['xp']!,
+                              rank: 3,
+                              badge: '🥉',
+                              color: const Color(0xFFCD7F32),
+                              avatarInitial: currentPodium['third']!['initial']!,
+                              height: 56,
+                            ),
                           ),
                         ],
                       ),
@@ -504,23 +525,28 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                 const SizedBox(height: 20),
 
                 // Rank List Rows (Delay 250ms)
-                FadeSlideEntrance(
-                  delay: const Duration(milliseconds: 250),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: AppConstants.pagePaddingH),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        ...currentList.map((item) => _buildRankRow(
-                              rank: item['rank'] as int,
-                              name: item['name'] as String,
-                              xp: item['xp'] as String,
-                              avatarChar: item['avatar'] as String,
-                              isSelf: item['isSelf'] == true,
-                            )),
-                        const SizedBox(height: 120), // Bottom spacer to avoid bottom navbar overlapping
-                      ],
-                    ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: AppConstants.pagePaddingH),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      ...currentList.asMap().entries.map((entry) {
+                        final index = entry.key;
+                        final item = entry.value;
+                        return FadeSlideEntrance(
+                          delay: Duration(milliseconds: 250 + index * 80),
+                          curve: Curves.easeOutBack,
+                          child: _buildRankRow(
+                            rank: item['rank'] as int,
+                            name: item['name'] as String,
+                            xp: item['xp'] as String,
+                            avatarChar: item['avatar'] as String,
+                            isSelf: item['isSelf'] == true,
+                          ),
+                        );
+                      }),
+                      const SizedBox(height: 120), // Bottom spacer to avoid bottom navbar overlapping
+                    ],
                   ),
                 ),
               ],
@@ -528,8 +554,9 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   void _showLocationSelectorBottomSheet(BuildContext context) {
     final bool isKabupaten = _selectedFilter == 0;

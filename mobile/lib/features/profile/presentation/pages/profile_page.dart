@@ -105,20 +105,24 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.only(
-          left: AppConstants.pagePaddingH,
-          right: AppConstants.pagePaddingH,
-          top: AppConstants.pagePaddingV,
-          bottom: 110, // Avoid overlapping with floating bottom navbar
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // ── Hero Profile Card (Claymorphic, Fun & Soft) ──
-            FadeSlideEntrance(
-              delay: const Duration(milliseconds: 50),
+      body: RefreshIndicator(
+        onRefresh: _fetchProfile,
+        color: AppColors.navy900,
+        backgroundColor: Colors.white,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+          padding: const EdgeInsets.only(
+            left: AppConstants.pagePaddingH,
+            right: AppConstants.pagePaddingH,
+            top: AppConstants.pagePaddingV,
+            bottom: 110, // Avoid overlapping with floating bottom navbar
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // ── Hero Profile Card (Claymorphic, Fun & Soft) ──
+              FadeSlideEntrance(
+                delay: const Duration(milliseconds: 50),
               child: Container(
                 padding: const EdgeInsets.all(AppConstants.spacing20),
                 decoration: BoxDecoration(
@@ -343,7 +347,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
             // ── Badges/Lencana Section ──
             FadeSlideEntrance(
-              delay: const Duration(milliseconds: 150),
+              delay: const Duration(milliseconds: 120),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -390,8 +394,9 @@ class _ProfilePageState extends State<ProfilePage> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildStatCard({
     required String title,

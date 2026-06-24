@@ -20,6 +20,7 @@ import '../../features/setup/presentation/pages/setup_notification_page.dart';
 import '../../features/setup/presentation/pages/setup_profile_page.dart';
 import '../../features/setup/presentation/pages/setup_welcome_page.dart';
 import '../../features/home/presentation/pages/statistic_detail_page.dart';
+import '../../features/profile/presentation/pages/tukar_poin_page.dart';
 import '../../features/splash/presentation/pages/splash_page.dart';
 import '../widgets/auth_listener_wrapper.dart';
 import '../widgets/genesis_loading.dart';
@@ -201,6 +202,11 @@ class AppRouter {
         name: Routes.statisticsName,
         builder: (context, state) => const StatisticDetailPage(),
       ),
+      GoRoute(
+        path: Routes.tukarPoin,
+        name: Routes.tukarPoinName,
+        builder: (context, state) => const TukarPoinPage(),
+      ),
     ];
   }
 
@@ -348,4 +354,7 @@ abstract final class Routes {
 
   static const String statistics = '/statistics';
   static const String statisticsName = 'statistics';
+
+  static const String tukarPoin = '/tukar-poin';
+  static const String tukarPoinName = 'tukarPoin';
 }

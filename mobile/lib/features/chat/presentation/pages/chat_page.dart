@@ -2,7 +2,13 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:record/record.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -11,6 +17,7 @@ import '../../../../core/widgets/fade_slide_entrance.dart';
 import '../../../../core/widgets/genesis_error_widget.dart';
 import '../../../../core/widgets/voice_waveform_indicator.dart';
 import '../../data/models/chat_message_model.dart';
+import '../../data/datasources/chat_remote_data_source.dart';
 import '../bloc/chat_bloc.dart';
 
 class ChatPage extends StatefulWidget {
@@ -37,11 +44,16 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
   String? _attachedFilePath;
   bool _isTyping = false;
   bool _isVoiceRecording = false;
+  bool _isTranscribing = false;
+
+  final AudioRecorder _audioRecorder = AudioRecorder();
+  String _lastWords = '';
 
   @override
   void initState() {
     super.initState();
     _textController.addListener(_onTextChanged);
+    
     // Animation controller for the breathing glowing orb
     _orbAnimationController = AnimationController(
       vsync: this,
@@ -66,6 +78,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
     _scrollController.dispose();
     _orbAnimationController.dispose();
     _orbRotationController.dispose();
+    _audioRecorder.dispose();
     super.dispose();
   }
 
@@ -226,15 +239,18 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
                           controller: _scrollController,
                           physics: const BouncingScrollPhysics(),
                           padding: const EdgeInsets.all(AppConstants.pagePaddingH),
-                          itemCount: messages.length + (isStreaming ? 1 : 0),
+                          itemCount: messages.length + (_isTranscribing ? 1 : 0),
                           itemBuilder: (context, index) {
-                            if (index == messages.length && isStreaming) {
-                              return _buildTypingIndicator();
+                            if (index == messages.length && _isTranscribing) {
+                              return _buildTranscribingIndicator();
                             }
                             final msg = messages[index];
+                            final isActiveStreaming = isStreaming &&
+                                (index == messages.length - 1) &&
+                                msg.sender == 'bot';
                             return Padding(
                               padding: const EdgeInsets.only(bottom: AppConstants.spacing12),
-                              child: _buildChatBubble(msg),
+                              child: _buildChatBubble(msg, isActiveStreaming: isActiveStreaming),
                             );
                           },
                         ),
@@ -465,75 +481,55 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildChatBubble(ChatMessageModel msg) {
+  Widget _buildChatBubble(ChatMessageModel msg, {bool isActiveStreaming = false}) {
     final isSender = msg.sender == 'user';
 
-    return Align(
-      alignment: isSender ? Alignment.centerRight : Alignment.centerLeft,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (!isSender) ...[
-            Container(
-              padding: const EdgeInsets.all(1.5),
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [AppColors.navy500, AppColors.navy200],
-                ),
-              ),
-              child: const CircleAvatar(
-                radius: 13,
-                backgroundColor: AppColors.navy900,
-                child: Text('🤖', style: TextStyle(fontSize: 12)),
+    if (isSender) {
+      return Align(
+        alignment: Alignment.centerRight,
+        child: Padding(
+          padding: const EdgeInsets.only(left: 48.0),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: const BoxDecoration(
+              color: AppColors.navy700,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+                bottomLeft: Radius.circular(20),
+                bottomRight: Radius.circular(4),
               ),
             ),
-            const SizedBox(width: 8),
-          ],
-          Flexible(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: isSender ? AppColors.navy700 : Colors.white,
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(20),
-                  topRight: const Radius.circular(20),
-                  bottomLeft: Radius.circular(isSender ? 20 : 4),
-                  bottomRight: Radius.circular(isSender ? 4 : 20),
-                ),
-                border: isSender
-                    ? null
-                    : Border.all(color: AppColors.divider.withValues(alpha: 0.8), width: 1.2),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.navy900.withValues(alpha: 0.03),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Text(
-                msg.message,
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: isSender ? Colors.white : AppColors.textPrimary,
-                  height: 1.45,
-                ),
+            child: Text(
+              msg.message,
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: Colors.white,
+                height: 1.45,
               ),
             ),
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      );
+    }
 
-  Widget _buildTypingIndicator() {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppConstants.spacing12),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
+    // Bot/AI Message: ChatGPT style (No bubble wrapper, full width, beautifully parsed Markdown)
+    final activeModel = _selectedModel;
+    String modelName = 'Geni-Flash';
+    Color badgeColor = const Color(0xFF8B5CF6); // Lavender/purple
+    if (activeModel.contains('pro')) {
+      modelName = 'Geni-Pro';
+      badgeColor = const Color(0xFF10B981); // Emerald/Green
+    } else if (activeModel.contains('deepseek')) {
+      modelName = 'DeepSeek-Chat';
+      badgeColor = const Color(0xFF06B6D4); // Cyan
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // AI Header Row: Avatar, Title, Active Model badge, Copy Button
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Container(
               padding: const EdgeInsets.all(1.5),
@@ -549,32 +545,73 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
                 child: Text('🤖', style: TextStyle(fontSize: 12)),
               ),
             ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  topRight: Radius.circular(20),
-                  bottomRight: Radius.circular(20),
-                  bottomLeft: Radius.circular(4),
-                ),
-                border: Border.all(color: AppColors.divider.withValues(alpha: 0.8), width: 1.2),
-              ),
-              child: Row(
-                children: [
-                  _buildPulseDot(0),
-                  const SizedBox(width: 4),
-                  _buildPulseDot(1),
-                  const SizedBox(width: 4),
-                  _buildPulseDot(2),
-                ],
+            const SizedBox(width: 10),
+            Text(
+              'Asisten Geni AI',
+              style: AppTextStyles.titleMedium.copyWith(
+                color: AppColors.navy900,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
               ),
             ),
+            const SizedBox(width: 8),
+            // Dynamic Model Badge
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: badgeColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: badgeColor.withValues(alpha: 0.3), width: 1),
+              ),
+              child: Text(
+                modelName,
+                style: TextStyle(
+                  color: badgeColor,
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.3,
+                ),
+              ),
+            ),
+            const Spacer(),
+            // Copy button
+            if (msg.message.isNotEmpty)
+              IconButton(
+                icon: const Icon(Icons.content_copy_rounded, color: AppColors.textSecondary, size: 16),
+                tooltip: 'Salin Pesan',
+                constraints: const BoxConstraints(),
+                padding: const EdgeInsets.all(6),
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(text: msg.message));
+                  context.showSuccessSnackBar('Pesan berhasil disalin ke papan klip!');
+                },
+              ),
           ],
         ),
-      ),
+        const SizedBox(height: 10),
+        // AI Body Content: Clean full-width text without any background, rendered with Markdown Parser
+        Padding(
+          padding: const EdgeInsets.only(left: 36.0, right: 8.0, bottom: 12.0),
+          child: msg.message.isEmpty
+              ? Row(
+                  children: [
+                    _buildPulseDot(0),
+                    const SizedBox(width: 4),
+                    _buildPulseDot(1),
+                    const SizedBox(width: 4),
+                    _buildPulseDot(2),
+                  ],
+                )
+              : _MarkdownStreamRenderer(
+                  data: msg.message,
+                  isStreaming: isActiveStreaming,
+                ),
+        ),
+        const Padding(
+          padding: EdgeInsets.only(left: 36.0, right: 8.0),
+          child: Divider(color: AppColors.divider, height: 24, thickness: 1),
+        ),
+      ],
     );
   }
 
@@ -599,159 +636,362 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
     );
   }
 
+  Widget _buildTranscribingIndicator() {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: const BoxDecoration(
+                color: AppColors.navy100,
+                shape: BoxShape.circle,
+              ),
+              child: const SizedBox(
+                width: 14,
+                height: 14,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.navy700),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Text(
+              'Mentranskripsi rekaman suara...',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textSecondary,
+                fontStyle: FontStyle.italic,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final picker = ImagePicker();
+      final img = await picker.pickImage(source: source, imageQuality: 80);
+      if (img != null) {
+        setState(() {
+          _attachedFilePath = img.path;
+        });
+        _onTextChanged();
+      }
+    } catch (e) {
+      debugPrint('Error picking image: $e');
+      if (mounted) {
+        context.showErrorSnackBar('Gagal mengambil gambar: $e');
+      }
+    }
+  }
+
+  Future<void> _pickPDF() async {
+    try {
+      FilePickerResult? result = await FilePicker.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+      );
+      if (result != null) {
+        final path = result.files.single.path;
+        if (path != null) {
+          setState(() {
+            _attachedFilePath = path;
+          });
+          _onTextChanged();
+        }
+      }
+    } catch (e) {
+      debugPrint('Error picking PDF: $e');
+      if (mounted) {
+        context.showErrorSnackBar('Gagal memilih file PDF: $e');
+      }
+    }
+  }
+
+  void _startVoiceInput() async {
+    try {
+      if (await _audioRecorder.hasPermission()) {
+        final tempDir = await getTemporaryDirectory();
+        final path = '${tempDir.path}/temp_record.m4a';
+        
+        setState(() {
+          _isVoiceRecording = true;
+          _lastWords = 'Merekam suara...';
+        });
+
+        await _audioRecorder.start(
+          RecordConfig(
+            encoder: AudioEncoder.aacLc,
+            bitRate: 128000,
+            sampleRate: 44100,
+          ),
+          path: path,
+        );
+      } else {
+        if (mounted) {
+          context.showErrorSnackBar('Izin mikrofon ditolak.');
+        }
+      }
+    } catch (e) {
+      debugPrint('Error starting record: $e');
+      if (mounted) {
+        context.showErrorSnackBar('Gagal memulai perekaman suara: $e');
+      }
+    }
+  }
+
+  void _stopVoiceInput({bool send = false}) async {
+    if (_isVoiceRecording) {
+      try {
+        final chatRemoteDataSource = context.read<ChatRemoteDataSource>();
+        final path = await _audioRecorder.stop();
+        setState(() {
+          _isVoiceRecording = false;
+        });
+
+        if (path != null) {
+          setState(() {
+            _isTranscribing = true;
+          });
+
+          final file = File(path);
+          final bytes = await file.readAsBytes();
+          final base64Audio = base64Encode(bytes);
+
+          final transcribedText = await chatRemoteDataSource.transcribeAudio(base64Audio, 'm4a');
+
+          if (!mounted) return;
+          setState(() {
+            _isTranscribing = false;
+            _textController.text = transcribedText;
+          });
+          _onTextChanged();
+
+          if (send && transcribedText.isNotEmpty) {
+            _sendMessage();
+          }
+        }
+      } catch (e) {
+        debugPrint('Error transcribing audio: $e');
+        if (mounted) {
+          setState(() {
+            _isTranscribing = false;
+          });
+          context.showErrorSnackBar('Gagal mentranskripsi audio: $e');
+        }
+      }
+    }
+  }
+
+  void _cancelVoiceInput() async {
+    if (_isVoiceRecording) {
+      await _audioRecorder.stop();
+      setState(() {
+        _isVoiceRecording = false;
+        _lastWords = '';
+      });
+    }
+  }
+
   void _showAttachmentMenu() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.cardBackground,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.5),
+      isScrollControlled: true,
       builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 14.0),
-                child: Wrap(
-                  children: [
-                    // Handle bar
-                    Center(
-                      child: Container(
-                        width: 40,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: AppColors.divider,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    
-                    // Section 1: Model AI
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                      child: Text(
-                        'PILIH MODEL AI',
-                        style: AppTextStyles.labelSmall.copyWith(
-                          color: AppColors.textSecondary,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                    ),
-                    _buildModalModelItem(
-                      id: 'google/gemini-2.5-flash',
-                      title: '⚡ Geni-Flash (Default)',
-                      subtitle: 'Cepat & hemat daya untuk aksi sehari-hari',
-                      isSelected: _selectedModel == 'google/gemini-2.5-flash',
-                      onTap: () {
-                        setState(() => _selectedModel = 'google/gemini-2.5-flash');
-                        setModalState(() {});
-                        Navigator.pop(context);
-                      },
-                    ),
-                    _buildModalModelItem(
-                      id: 'google/gemini-2.5-pro',
-                      title: '💎 Geni-Pro',
-                      subtitle: 'Penalaran kompleks & analisis detail',
-                      isSelected: _selectedModel == 'google/gemini-2.5-pro',
-                      onTap: () {
-                        setState(() => _selectedModel = 'google/gemini-2.5-pro');
-                        setModalState(() {});
-                        Navigator.pop(context);
-                      },
-                    ),
-                    _buildModalModelItem(
-                      id: 'deepseek/deepseek-chat',
-                      title: '🤖 DeepSeek-Chat',
-                      subtitle: 'Model alternatif bertenaga tinggi',
-                      isSelected: _selectedModel == 'deepseek/deepseek-chat',
-                      onTap: () {
-                        setState(() => _selectedModel = 'deepseek/deepseek-chat');
-                        setModalState(() {});
-                        Navigator.pop(context);
-                      },
-                    ),
-                    
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-                      child: Divider(color: AppColors.divider, height: 1),
-                    ),
-                    
-                    // Section 2: Lampiran
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                      child: Text(
-                        'LAMPIRKAN MEDIA',
-                        style: AppTextStyles.labelSmall.copyWith(
-                          color: AppColors.textSecondary,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                    ),
-                    ListTile(
-                      leading: const Icon(Icons.image_rounded, color: AppColors.navy600),
-                      title: Text('Ambil dari Galeri', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
-                      onTap: () {
-                        setState(() {
-                          _attachedFilePath = 'sampah_plastik.png';
-                        });
-                        _onTextChanged();
-                        Navigator.pop(context);
-                      },
-                    ),
-                    ListTile(
-                      leading: const Icon(Icons.camera_alt_rounded, color: AppColors.navy600),
-                      title: Text('Ambil Foto Kamera', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
-                      onTap: () {
-                        setState(() {
-                          _attachedFilePath = 'foto_kamera.png';
-                        });
-                        _onTextChanged();
-                        Navigator.pop(context);
-                      },
-                    ),
-                    ListTile(
-                      leading: const Icon(Icons.insert_drive_file_rounded, color: AppColors.navy600),
-                      title: Text('Pilih Dokumen/File (PDF)', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
-                      onTap: () {
-                        setState(() {
-                          _attachedFilePath = 'laporan_bulanan.pdf';
-                        });
-                        _onTextChanged();
-                        Navigator.pop(context);
-                      },
-                    ),
-                  ],
-                ),
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.95),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.4),
+                width: 1.5,
               ),
-            );
-          }
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 20,
+                  offset: const Offset(0, -5),
+                ),
+              ],
+            ),
+            child: SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 44,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: AppColors.divider.withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(2.5),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'LAMPIRKAN BERKAS',
+                    style: AppTextStyles.labelSmall.copyWith(
+                      color: AppColors.navy900,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _buildAttachmentGridItem(
+                        icon: Icons.image_rounded,
+                        label: 'Galeri Foto',
+                        gradientColors: [AppColors.emerald, const Color(0xFF34D399)],
+                        onTap: () {
+                          Navigator.pop(context);
+                          _pickImage(ImageSource.gallery);
+                        },
+                      ),
+                      _buildAttachmentGridItem(
+                        icon: Icons.camera_alt_rounded,
+                        label: 'Kamera',
+                        gradientColors: [AppColors.gold, const Color(0xFFFBBF24)],
+                        onTap: () {
+                          Navigator.pop(context);
+                          _pickImage(ImageSource.camera);
+                        },
+                      ),
+                      _buildAttachmentGridItem(
+                        icon: Icons.picture_as_pdf_rounded,
+                        label: 'Berkas PDF',
+                        gradientColors: [AppColors.burgundy500, const Color(0xFFF87171)],
+                        onTap: () {
+                          Navigator.pop(context);
+                          _pickPDF();
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                ],
+              ),
+            ),
+          ),
         );
       },
     );
   }
 
-  Widget _buildModalModelItem({
-    required String id,
-    required String title,
-    required String subtitle,
-    required bool isSelected,
+  Widget _buildAttachmentGridItem({
+    required IconData icon,
+    required String label,
+    required List<Color> gradientColors,
     required VoidCallback onTap,
   }) {
-    return ListTile(
-      title: Text(title, style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
-      subtitle: Text(subtitle, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary, fontSize: 11)),
-      trailing: isSelected ? const Icon(Icons.check_circle_rounded, color: AppColors.emerald) : null,
+    return GestureDetector(
       onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: gradientColors,
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: gradientColors[0].withValues(alpha: 0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Icon(
+              icon,
+              color: Colors.white,
+              size: 28,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            label,
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.navy900,
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildAttachmentPreview() {
-    final isPdf = _attachedFilePath!.endsWith('.pdf');
+
+
+  Widget _buildModelSelectorBarInline() {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8, left: 8, right: 8),
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        child: Row(
+          children: [
+            _buildModelBarItemInline('google/gemini-2.5-flash', '⚡ Gemini-Flash'),
+            _buildModelBarItemInline('google/gemini-2.5-pro', '💎 Gemini-Pro'),
+            _buildModelBarItemInline('deepseek/deepseek-chat', '🤖 DeepSeek'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildModelBarItemInline(String modelId, String label) {
+    final isSelected = _selectedModel == modelId;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedModel = modelId;
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        margin: const EdgeInsets.symmetric(horizontal: 3),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.navy700 : AppColors.navy50.withValues(alpha: 0.6),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Text(
+          label,
+          style: AppTextStyles.labelSmall.copyWith(
+            color: isSelected ? Colors.white : AppColors.textSecondary,
+            fontWeight: FontWeight.bold,
+            fontSize: 10.5,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAttachmentPreviewInline() {
+    final isPdf = _attachedFilePath!.endsWith('.pdf');
+    final filename = _attachedFilePath!.split('/').last;
+    return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: AppColors.navy50,
@@ -767,9 +1007,16 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
             size: 20,
           ),
           const SizedBox(width: 8),
-          Text(
-            _attachedFilePath!,
-            style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
+          Flexible(
+            child: Text(
+              filename,
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.bold,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
           const SizedBox(width: 8),
           GestureDetector(
@@ -786,12 +1033,6 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
     );
   }
 
-  void _startVoiceInput() {
-    setState(() {
-      _isVoiceRecording = true;
-    });
-  }
-
   Widget _buildInputComposer(bool isStreaming) {
     return Padding(
       padding: EdgeInsets.only(
@@ -802,28 +1043,17 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
             ? MediaQuery.of(context).padding.bottom + 8.0
             : 18.0,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (_attachedFilePath != null) _buildAttachmentPreview(),
-          _isVoiceRecording
-              ? _buildVoiceRecordingComposer()
-              : _buildNormalInputComposer(isStreaming),
-        ],
-      ),
+      child: _isVoiceRecording
+          ? _buildVoiceRecordingComposer()
+          : _buildNormalInputComposer(isStreaming),
     );
   }
 
   Widget _buildVoiceRecordingComposer() {
     return Row(
       children: [
-        // Cancel recording button
         GestureDetector(
-          onTap: () {
-            setState(() {
-              _isVoiceRecording = false;
-            });
-          },
+          onTap: _cancelVoiceInput,
           child: Container(
             width: 44,
             height: 44,
@@ -843,10 +1073,10 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
           ),
         ),
         const SizedBox(width: 10),
-        // Waveform area
         Expanded(
           child: Container(
             height: 44,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(22),
@@ -855,19 +1085,22 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
                 width: 1.5,
               ),
             ),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            child: Row(
               children: [
-                Icon(Icons.mic_rounded, color: AppColors.navy600, size: 16),
-                SizedBox(width: 8),
-                VoiceWaveformIndicator(),
-                SizedBox(width: 8),
-                Text(
-                  'Mendengarkan...',
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
+                const Icon(Icons.mic_rounded, color: AppColors.navy600, size: 16),
+                const SizedBox(width: 8),
+                const VoiceWaveformIndicator(),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _lastWords.isEmpty ? 'Mendengarkan...' : _lastWords,
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
@@ -875,15 +1108,8 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
           ),
         ),
         const SizedBox(width: 10),
-        // Done recording button
         GestureDetector(
-          onTap: () {
-            setState(() {
-              _isVoiceRecording = false;
-              _textController.text = 'Laporkan tumpukan sampah plastik di dekat jalan Diponegoro';
-              _isTyping = true;
-            });
-          },
+          onTap: () => _stopVoiceInput(send: false),
           child: Container(
             width: 44,
             height: 44,
@@ -947,45 +1173,63 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
               ],
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(32.0),
+              borderRadius: BorderRadius.circular(24.0),
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.9),
-                    borderRadius: BorderRadius.circular(32.0),
+                    borderRadius: BorderRadius.circular(24.0),
                     border: Border.all(
                       color: Colors.white.withValues(alpha: 0.5),
                       width: 1.5,
                     ),
                   ),
-                  child: Row(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Icon(
-                        Icons.language_rounded,
-                        color: AppColors.textSecondary,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: TextField(
-                          controller: _textController,
-                          style: AppTextStyles.bodyMedium.copyWith(color: AppColors.navy900),
-                          keyboardType: TextInputType.multiline,
-                          minLines: 1,
-                          maxLines: 5,
-                          textInputAction: TextInputAction.newline,
-                          decoration: InputDecoration(
-                            hintText: isStreaming ? 'Geni sedang mengetik...' : 'Tanya Geni sesuatu...',
-                            hintStyle: AppTextStyles.bodyMedium.copyWith(color: AppColors.textDisabled),
-                            contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                            border: InputBorder.none,
-                            enabledBorder: InputBorder.none,
-                            focusedBorder: InputBorder.none,
-                            filled: false,
+                      // Model selector inside the box
+                      _buildModelSelectorBarInline(),
+                      
+                      const SizedBox(height: 6),
+                      
+                      // Attachment preview inside the box (above text input field)
+                      if (_attachedFilePath != null) ...[
+                        _buildAttachmentPreviewInline(),
+                        const SizedBox(height: 6),
+                      ],
+                      
+                      // Text input row
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.language_rounded,
+                            color: AppColors.textSecondary,
+                            size: 20,
                           ),
-                        ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: TextField(
+                              controller: _textController,
+                              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.navy900),
+                              keyboardType: TextInputType.multiline,
+                              minLines: 1,
+                              maxLines: 5,
+                              textInputAction: TextInputAction.newline,
+                              decoration: InputDecoration(
+                                hintText: isStreaming ? 'Geni sedang mengetik...' : 'Tanya Geni sesuatu...',
+                                hintStyle: AppTextStyles.bodyMedium.copyWith(color: AppColors.textDisabled),
+                                contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                                border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                filled: false,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -1033,6 +1277,127 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _MarkdownStreamRenderer extends StatefulWidget {
+  final String data;
+  final bool isStreaming;
+
+  const _MarkdownStreamRenderer({
+    required this.data,
+    required this.isStreaming,
+  });
+
+  @override
+  State<_MarkdownStreamRenderer> createState() => _MarkdownStreamRendererState();
+}
+
+class _MarkdownStreamRendererState extends State<_MarkdownStreamRenderer> with SingleTickerProviderStateMixin {
+  late AnimationController _blinkController;
+  bool _showCursor = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _blinkController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    )..addStatusListener((status) {
+        if (status == AnimationStatus.completed) {
+          if (mounted) {
+            setState(() {
+              _showCursor = !_showCursor;
+            });
+            _blinkController.forward(from: 0.0);
+          }
+        }
+      });
+    if (widget.isStreaming) {
+      _blinkController.forward();
+    }
+  }
+
+  @override
+  void didUpdateWidget(_MarkdownStreamRenderer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isStreaming && !_blinkController.isAnimating) {
+      _blinkController.forward();
+    } else if (!widget.isStreaming && _blinkController.isAnimating) {
+      _blinkController.stop();
+      if (mounted) {
+        setState(() {
+          _showCursor = false;
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _blinkController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final text = widget.isStreaming && _showCursor ? '${widget.data} █' : widget.data;
+
+    return MarkdownBody(
+      data: text,
+      selectable: true,
+      styleSheet: MarkdownStyleSheet(
+        p: AppTextStyles.bodyMedium.copyWith(
+          color: AppColors.textPrimary,
+          height: 1.55,
+        ),
+        h1: AppTextStyles.headlineSmall.copyWith(
+          color: AppColors.navy900,
+          fontWeight: FontWeight.bold,
+          height: 1.4,
+        ),
+        h2: AppTextStyles.titleLarge.copyWith(
+          color: AppColors.navy900,
+          fontWeight: FontWeight.bold,
+          height: 1.4,
+        ),
+        h3: AppTextStyles.titleMedium.copyWith(
+          color: AppColors.navy900,
+          fontWeight: FontWeight.bold,
+          height: 1.4,
+        ),
+        listBullet: AppTextStyles.bodyMedium.copyWith(
+          color: AppColors.navy600,
+          fontWeight: FontWeight.bold,
+        ),
+        tableBorder: TableBorder.all(
+          color: AppColors.divider,
+          width: 1,
+        ),
+        tableHead: AppTextStyles.bodyMedium.copyWith(
+          color: AppColors.navy900,
+          fontWeight: FontWeight.bold,
+          fontSize: 13,
+        ),
+        tableBody: AppTextStyles.bodyMedium.copyWith(
+          color: AppColors.textPrimary,
+          fontSize: 13,
+        ),
+        tableCellsPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        code: AppTextStyles.bodySmall.copyWith(
+          color: AppColors.burgundy500,
+          backgroundColor: AppColors.burgundy50,
+          fontFamily: 'monospace',
+          fontSize: 12,
+        ),
+        codeblockPadding: const EdgeInsets.all(12),
+        codeblockDecoration: BoxDecoration(
+          color: AppColors.navy50,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: AppColors.divider),
+        ),
+      ),
     );
   }
 }

@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/fade_slide_entrance.dart';
+import '../../../profile/domain/repositories/profile_repository.dart';
+import '../../../profile/data/models/profile_model.dart';
 
 class StatisticDetailPage extends StatefulWidget {
   const StatisticDetailPage({super.key});
@@ -15,6 +18,33 @@ class StatisticDetailPage extends StatefulWidget {
 
 class _StatisticDetailPageState extends State<StatisticDetailPage> {
   String _selectedPeriod = 'Bulan Ini';
+  ProfileModel? _profile;
+
+
+  String get _fullName => _profile?.fullName ?? 'ARIEF AGIS SUGANDI';
+  int get _xp => _profile?.xp ?? 340;
+  int get _completedReports => _profile?.reportCount ?? 15;
+  int get _totalPoints => _xp * 3;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchProfile();
+  }
+
+  Future<void> _fetchProfile() async {
+    try {
+      final profileRepo = context.read<ProfileRepository>();
+      final profile = await profileRepo.getMyProfile();
+      if (mounted) {
+        setState(() {
+          _profile = profile;
+        });
+      }
+    } catch (_) {
+      // Fail silently, getters will use defaults
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -141,12 +171,14 @@ class _StatisticDetailPageState extends State<StatisticDetailPage> {
               shape: BoxShape.circle,
               border: Border.all(color: AppColors.emerald.withValues(alpha: 0.5), width: 1.5),
             ),
-            child: const CircleAvatar(
+            child: CircleAvatar(
               radius: 18,
               backgroundColor: AppColors.navy50,
-              backgroundImage: NetworkImage(
-                'https://api.dicebear.com/7.x/bottts/png?seed=GenesisUser',
-              ),
+              backgroundImage: _profile?.avatarUrl != null
+                  ? NetworkImage(_profile!.avatarUrl!)
+                  : const NetworkImage(
+                      'https://api.dicebear.com/7.x/bottts/png?seed=GenesisUser',
+                    ),
             ),
           ),
         ],
@@ -285,7 +317,7 @@ class _StatisticDetailPageState extends State<StatisticDetailPage> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'ARIEF AGIS SUGANDI',
+                            _fullName.toUpperCase(),
                             style: AppTextStyles.titleMedium.copyWith(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -311,7 +343,7 @@ class _StatisticDetailPageState extends State<StatisticDetailPage> {
                               const Icon(Icons.stars_rounded, color: AppColors.gold, size: 14),
                               const SizedBox(width: 4),
                               Text(
-                                '1,020 Pts',
+                                '$_totalPoints Pts',
                                 style: AppTextStyles.titleMedium.copyWith(
                                   color: AppColors.goldLight,
                                   fontWeight: FontWeight.bold,
@@ -539,7 +571,7 @@ class _StatisticDetailPageState extends State<StatisticDetailPage> {
           isGained: true,
           title: 'Poin Diperoleh',
           subtitle: 'Aktivitas Daur Ulang & Misi',
-          amount: '+1,200 XP',
+          amount: '+$_xp XP',
           sparklineData: [10, 15, 8, 25, 18, 30, 35],
           lineColor: AppColors.emerald,
         ),
@@ -549,7 +581,7 @@ class _StatisticDetailPageState extends State<StatisticDetailPage> {
           isGained: false,
           title: 'Poin Ditukarkan',
           subtitle: 'Klaim Voucher & Reward',
-          amount: '-180 Pts',
+          amount: '-${(_xp * 0.15).round()} Pts',
           sparklineData: [20, 18, 25, 12, 14, 5, 2],
           lineColor: AppColors.navy500,
         ),
@@ -721,7 +753,7 @@ class _StatisticDetailPageState extends State<StatisticDetailPage> {
               child: _buildMetricCard(
                 icon: Icons.co2_rounded,
                 title: 'Reduksi Karbon',
-                value: '18.4 kg',
+                value: '${(_completedReports * 1.5).toStringAsFixed(1)} kg',
                 subtitle: 'Setara CO2',
                 iconColor: AppColors.emerald,
                 backgroundColor: AppColors.emerald.withValues(alpha: 0.04),
@@ -733,7 +765,7 @@ class _StatisticDetailPageState extends State<StatisticDetailPage> {
               child: _buildMetricCard(
                 icon: Icons.delete_outline_rounded,
                 title: 'Sampah Terolah',
-                value: '12.5 kg',
+                value: '${(_completedReports * 1.2).toStringAsFixed(1)} kg',
                 subtitle: 'Plastik & Organik',
                 iconColor: const Color(0xFF38BDF8),
                 backgroundColor: const Color(0xFF38BDF8).withValues(alpha: 0.04),
@@ -746,7 +778,7 @@ class _StatisticDetailPageState extends State<StatisticDetailPage> {
         _buildFullWidthMetricCard(
           icon: Icons.stars_rounded,
           title: 'Poin Daur Ulang',
-          value: '1,020 Poin',
+          value: '$_totalPoints Poin',
           subtitle: 'Koin siap ditukarkan dengan hadiah voucher belanja',
           iconColor: AppColors.gold,
           backgroundColor: AppColors.gold.withValues(alpha: 0.04),

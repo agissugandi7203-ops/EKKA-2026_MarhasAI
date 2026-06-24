@@ -17,6 +17,7 @@ dependencies:
   smooth_page_indicator: ^1.2.0+3
   shimmer: ^3.0.0
   lottie: ^3.3.1
+  flutter_markdown: ^0.7.3
 
   # ── Auth & Backend ──
   supabase_flutter: ^2.15.0
@@ -41,6 +42,11 @@ dependencies:
   # ── Forms ──
   pin_code_fields: ^8.0.1
   camera: ^0.12.0+1
+  image_picker: ^1.2.2
+  file_picker: ^11.0.2
+  speech_to_text: ^7.4.0
+  record: ^6.2.1
+  path_provider: ^2.1.5
 
 dev_dependencies:
   flutter_test:

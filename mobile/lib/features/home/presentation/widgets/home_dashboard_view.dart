@@ -183,47 +183,52 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
 
         // ── 2. Scrollable Body via CustomScrollView ──
         Positioned.fill(
-          child: CustomScrollView(
-            controller: _scrollController,
-            physics: const BouncingScrollPhysics(),
-            slivers: [
-              // Sticky profile header profile
-              SliverPersistentHeader(
-                pinned: true,
-                delegate: _StickyHeaderProfileDelegate(
-                  profile: _profile,
-                  displayName: displayName,
-                  location: location,
-                  level: level,
-                  onNavigateToProfile: widget.onNavigateToProfile,
+          child: RefreshIndicator(
+            onRefresh: _fetchRealProfileData,
+            color: AppColors.navy900,
+            backgroundColor: Colors.white,
+            child: CustomScrollView(
+              controller: _scrollController,
+              physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+              slivers: [
+                // Sticky profile header profile
+                SliverPersistentHeader(
+                  pinned: true,
+                  delegate: _StickyHeaderProfileDelegate(
+                    profile: _profile,
+                    displayName: displayName,
+                    location: location,
+                    level: level,
+                    onNavigateToProfile: widget.onNavigateToProfile,
+                  ),
                 ),
-              ),
 
-              SliverPadding(
-                padding: const EdgeInsets.only(left: 20, right: 20, bottom: 110),
-                sliver: SliverList(
-                  delegate: SliverChildListDelegate([
-                    const SizedBox(height: 16),
-                    // Quick Action Menu (Not sticky anymore, scrolls normally)
-                    _buildQuickActions(),
-                    const SizedBox(height: 20),
-                    // Level Progress Card
-                    _buildLevelCard(progressPercent, level, activeStreak, completedReports),
-                    const SizedBox(height: 20),
-                    // Compact Activity Statistics Ring
-                    _buildDataStatisticsCard(completedReports, activeStreak),
-                    const SizedBox(height: 20),
-                    // Bento Grid Card Timbul & Variatif
-                    _buildBentoMetrics(activeStreak, completedReports),
-                    const SizedBox(height: 28),
-                    // Tantangan Harian Quests
-                    _buildDailyQuestsHeader(),
-                    const SizedBox(height: 16),
-                    _buildDailyQuestsList(),
-                  ]),
+                SliverPadding(
+                  padding: const EdgeInsets.only(left: 20, right: 20, bottom: 110),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate([
+                      const SizedBox(height: 16),
+                      // Quick Action Menu (Not sticky anymore, scrolls normally)
+                      _buildQuickActions(),
+                      const SizedBox(height: 20),
+                      // Level Progress Card
+                      _buildLevelCard(progressPercent, level, activeStreak, completedReports),
+                      const SizedBox(height: 20),
+                      // Compact Activity Statistics Ring
+                      _buildDataStatisticsCard(completedReports, activeStreak),
+                      const SizedBox(height: 20),
+                      // Bento Grid Card Timbul & Variatif
+                      _buildBentoMetrics(activeStreak, completedReports),
+                      const SizedBox(height: 28),
+                      // Tantangan Harian Quests
+                      _buildDailyQuestsHeader(),
+                      const SizedBox(height: 16),
+                      _buildDailyQuestsList(),
+                    ]),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ],
@@ -459,46 +464,66 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                // Cek Leaderboard Button
                 GestureDetector(
                   onTap: widget.onNavigateToLeaderboard,
-                  child: Row(
-                    children: [
-                      const Icon(Icons.emoji_events_outlined, color: AppColors.gold, size: 14),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Cek Leaderboard',
-                        style: AppTextStyles.labelSmall.copyWith(
-                          color: Colors.white.withValues(alpha: 0.9),
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: AppColors.gold.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: AppColors.gold.withValues(alpha: 0.5),
+                        width: 1.2,
                       ),
-                    ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.emoji_events_outlined, color: AppColors.gold, size: 14),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Leaderboard',
+                          style: AppTextStyles.labelSmall.copyWith(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
+                // Tukar Poin Button
                 GestureDetector(
                   onTap: () {
-                    ScaffoldMessenger.of(context).clearSnackBars();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('🎁 Fitur Tukar Poin sedang dipersiapkan untuk perilisan berikutnya!'),
-                        backgroundColor: AppColors.navy800,
-                      ),
-                    );
+                    context.pushNamed(Routes.tukarPoinName);
                   },
-                  child: Row(
-                    children: [
-                      const Icon(Icons.card_giftcard_rounded, color: AppColors.navy200, size: 14),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Tukar Poin',
-                        style: AppTextStyles.labelSmall.copyWith(
-                          color: Colors.white.withValues(alpha: 0.9),
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: AppColors.emerald.withValues(alpha: 0.25),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: AppColors.emerald.withValues(alpha: 0.6),
+                        width: 1.2,
                       ),
-                    ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.card_giftcard_rounded, color: AppColors.emeraldLight, size: 14),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Tukar Poin',
+                          style: AppTextStyles.labelSmall.copyWith(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
