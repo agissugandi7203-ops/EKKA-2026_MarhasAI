@@ -125,3 +125,9 @@ Seluruh fitur inti dan integrasi multimedia canggih pada **Genesis.id** telah di
 ### D. Toko Rewards & Penukaran Poin Sembako Gamifikasi - [SELESAI]
 *   **Tukar Poin Sembako**: Menyediakan menu penukaran Poin Sembako claymorphic (Minyak Goreng, Beras Premium, Gula Kristal, Paket Sembako, Voucher Indomaret) yang memvalidasi perolehan koin emas (`xp * 3`) warga dari database secara dinamis.
 *   **Podium & List Staggered Bouncy**: Podium papan peringkat 3 besar dan baris ranking meluncur masuk secara staggered menggunakan kurva elastis bouncy `Curves.easeOutBack` untuk nuansa visual premium.
+
+### E. Onboarding Setup, Indikator Loading Global & Lottie Animation Integration - [SELESAI]
+*   **12 Lottie Animations Premium**: Seluruh visualisasi statis/mockup atau CircularProgressIndicator/CupertinoActivityIndicator digantikan oleh Lottie: `global_loading.json` (loading spinner global & tombol), `ai_thinking.json` (AI thinking bubbles), `Congratulations.json` (dialog pendaftaran selesai), `list_set_up.json` (wizard welcome), `location_permission.json` (izin lokasi), `notification_permission.json` (izin notifikasi), `lengkapi_profil.json` (formulir profil), `Welcome.json` (dialog welcome beranda), `level_up.json` (dialog naik level), `strike_fire.json` (kartu streak), `badge.json` (kartu koin/EXP), dan `ai_home.json` (chat Geni AI home).
+*   **Redirection Sesi Tanpa Kedip**: Alur deteksi sesi masuk di splash screen diperbarui untuk mendengarkan status otentikasi BLoC secara langsung, mengeliminasi kedipan halaman login saat sesi lama dipulihkan.
+*   **Validasi Onboarding Ketat**: Mencegah bypass onboarding dengan validasi tiga kolom profil wajib (`username`, `province`, dan `cityOrDistrict`).
+*   **Kejelasan Loading Tombol**: Memperbaiki kontras tombol M3 sehingga tidak menjadi abu-abu pudar saat loading dan memperlihatkan indikator loading Lottie dengan sangat jelas.
