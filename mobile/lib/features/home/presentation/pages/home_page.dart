@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:lottie/lottie.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -28,7 +27,6 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
   DateTime? _lastPressedAt;
-  bool _hasShownWelcomeDialog = false;
   
   // Spotlight Tour state: null = inactive, 1 = AI Chat, 2 = Camera, 3 = Peringkat
   int? _spotlightStep;
@@ -49,12 +47,6 @@ class _HomePageState extends State<HomePage> {
           setState(() {
             _spotlightStep = 1;
           });
-        }
-      });
-    } else {
-      Future.delayed(const Duration(milliseconds: 800), () {
-        if (mounted) {
-          _showWelcomeDialog();
         }
       });
     }
@@ -82,93 +74,7 @@ class _HomePageState extends State<HomePage> {
       setState(() {
         _spotlightStep = null;
       });
-      Future.delayed(const Duration(milliseconds: 500), () {
-        if (mounted) {
-          _showWelcomeDialog();
-        }
-      });
     }
-  }
-
-  void _showWelcomeDialog() {
-    if (_hasShownWelcomeDialog) return;
-    _hasShownWelcomeDialog = true;
-
-    showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-        backgroundColor: Colors.transparent,
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(28),
-            border: Border.all(color: AppColors.emerald.withValues(alpha: 0.5), width: 2),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.emerald.withValues(alpha: 0.3),
-                blurRadius: 24,
-                spreadRadius: 2,
-              )
-            ]
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(
-                width: 160,
-                height: 160,
-                child: Lottie.asset(
-                  'assets/animations/onboarding/Welcome.json',
-                  repeat: true,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Selamat Datang! 🌿',
-                style: AppTextStyles.headlineMedium.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Terima kasih telah bergabung menjadi pahlawan lingkungan. Mari bersama menjaga bumi kita!',
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: Colors.white70,
-                  height: 1.4,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.emerald,
-                    foregroundColor: Colors.white,
-                    shape: const StadiumBorder(),
-                  ),
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text(
-                    'Mulai Eksplorasi',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 
   @override

@@ -108,8 +108,13 @@ class _AuthListenerWrapperState extends State<AuthListenerWrapper> {
         context.goNamed(Routes.setupWelcomeName);
       }
     } else {
-      if (currentPath != Routes.home) {
-        context.goNamed(Routes.homeName);
+      final bool isInMainApp = currentPath == Routes.home ||
+          currentPath == Routes.statistics ||
+          currentPath == Routes.tukarPoin ||
+          currentPath == Routes.notifications;
+
+      if (!isInMainApp && currentPath != Routes.welcome) {
+        context.goNamed(Routes.welcomeName);
       }
     }
   }
@@ -127,7 +132,8 @@ class _AuthListenerWrapperState extends State<AuthListenerWrapper> {
     if (currentPath == null) return;
 
     final bool isProtectedRoute = currentPath.startsWith('/setup') ||
-        currentPath.startsWith('/home');
+        currentPath.startsWith('/home') ||
+        currentPath == Routes.welcome;
     if (isProtectedRoute) {
       if (currentPath != Routes.login) {
         context.goNamed(Routes.loginName);

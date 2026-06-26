@@ -19,6 +19,7 @@ import '../../features/setup/presentation/pages/setup_location_page.dart';
 import '../../features/setup/presentation/pages/setup_notification_page.dart';
 import '../../features/setup/presentation/pages/setup_profile_page.dart';
 import '../../features/setup/presentation/pages/setup_welcome_page.dart';
+import '../../features/setup/presentation/pages/welcome_page.dart';
 import '../../features/home/presentation/pages/statistic_detail_page.dart';
 import '../../features/profile/presentation/pages/tukar_poin_page.dart';
 import '../../features/home/presentation/pages/notification_center_page.dart';
@@ -192,6 +193,15 @@ class AppRouter {
         ],
       ),
 
+      GoRoute(
+        path: Routes.welcome,
+        name: Routes.welcomeName,
+        pageBuilder: (context, state) => _fadeTransitionPage(
+          state: state,
+          child: const WelcomePage(),
+        ),
+      ),
+
       // ── Main App ──
       GoRoute(
         path: Routes.home,
@@ -240,6 +250,7 @@ class AppRouter {
     Routes.setupLocation,
     Routes.setupNotification,
     Routes.setupProfile,
+    Routes.welcome,
     Routes.home,
   };
 
@@ -275,7 +286,7 @@ class AppRouter {
         final bool needsOnboarding = authState is Authenticated
             ? authState.needsOnboarding
             : (authState as PasswordResetSuccess).needsOnboarding;
-        return needsOnboarding ? Routes.setupWelcome : Routes.home;
+        return needsOnboarding ? Routes.setupWelcome : Routes.welcome;
       }
     }
 
@@ -353,6 +364,10 @@ abstract final class Routes {
 
   static const String setupProfile = '/setup/profile';
   static const String setupProfileName = 'setupProfile';
+
+  // ── Welcome Animation ──
+  static const String welcome = '/welcome';
+  static const String welcomeName = 'welcome';
 
   // ── Main App ──
   static const String home = '/home';

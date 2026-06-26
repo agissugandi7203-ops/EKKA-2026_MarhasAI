@@ -37,6 +37,7 @@ class _SetupProfilePageState extends State<SetupProfilePage> {
   final _usernameController = TextEditingController();
   final _fullNameController = TextEditingController();
   bool _isSubmitting = false;
+  bool _showCongrats = false;
 
   @override
   void dispose() {
@@ -45,73 +46,12 @@ class _SetupProfilePageState extends State<SetupProfilePage> {
     super.dispose();
   }
 
-  Future<void> _showCongratulationsDialog() async {
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        Future.delayed(const Duration(seconds: 3), () {
-          if (context.mounted) {
-            Navigator.of(context).pop();
-          }
-        });
-        
-        return Dialog.fullscreen(
-          backgroundColor: const Color(0xFF0F172A).withValues(alpha: 0.95),
-          child: PopScope(
-            canPop: false,
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    width: 260,
-                    height: 260,
-                    child: Lottie.asset(
-                      'assets/animations/global/Congratulations.json',
-                      repeat: false,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Pendaftaran Selesai! 🎉',
-                    style: AppTextStyles.headlineMedium.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Selamat datang di Genesis.id',
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: Colors.white70,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   Future<void> _onSubmit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _isSubmitting = true);
-
-    // Tampilkan full-screen loading dialog dulu
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const PopScope(
-        canPop: false,
-        child: Center(
-          child: GenesisLoading(message: 'Menyimpan profil Anda...'),
-        ),
-      ),
-    );
+    setState(() {
+      _isSubmitting = true;
+    });
 
     try {
       final setupState = context.read<SetupCubit>().state;
@@ -126,13 +66,13 @@ class _SetupProfilePageState extends State<SetupProfilePage> {
 
       if (!mounted) return;
 
-      // Dismiss loading dialog
-      Navigator.of(context).pop();
-
-      setState(() => _isSubmitting = false);
+      setState(() {
+        _isSubmitting = false;
+        _showCongrats = true;
+      });
 
       // Tampilkan popup Congratulations selama 3 detik sebelum masuk ke Home
-      await _showCongratulationsDialog();
+      await Future.delayed(const Duration(seconds: 3));
 
       if (!mounted) return;
       
@@ -140,9 +80,9 @@ class _SetupProfilePageState extends State<SetupProfilePage> {
       context.read<AuthBloc>().add(AuthCheckRequested());
     } catch (e) {
       if (!mounted) return;
-      // Dismiss loading dialog jika terbuka
-      Navigator.of(context).pop();
-      setState(() => _isSubmitting = false);
+      setState(() {
+        _isSubmitting = false;
+      });
       final appError = ErrorHandler.handle(e);
       context.showErrorSnackBar('Gagal menyimpan profil: ${appError.message}');
     }
@@ -150,6 +90,50 @@ class _SetupProfilePageState extends State<SetupProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    if (_showCongrats) {
+      return Scaffold(
+        backgroundColor: const Color(0xFF0F172A),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: 260,
+                height: 260,
+                child: Lottie.asset(
+                  'assets/animations/global/Congratulations.json',
+                  repeat: false,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'Pendaftaran Selesai! 🎉',
+                style: AppTextStyles.headlineMedium.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Selamat datang di Genesis.id',
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: Colors.white70,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_isSubmitting) {
+      return const Scaffold(
+        body: Center(
+          child: GenesisLoading(message: 'Menyimpan profil Anda...'),
+        ),
+      );
+    }
+
     return BlocBuilder<SetupCubit, SetupState>(
       builder: (context, setupState) {
         return Scaffold(
