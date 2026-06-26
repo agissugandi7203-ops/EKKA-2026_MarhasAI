@@ -30,7 +30,7 @@ class ReportsPage extends StatefulWidget {
   State<ReportsPage> createState() => _ReportsPageState();
 }
 
-class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStateMixin {
+class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late TabController _tabController;
 
   // Real Camera variables
@@ -53,6 +53,7 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    WidgetsBinding.instance.addObserver(this);
     
     // Fetch reports history on start
     context.read<ReportsBloc>().add(FetchReportsRequested());
@@ -68,7 +69,9 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
     super.didUpdateWidget(oldWidget);
     if (widget.isActive != oldWidget.isActive) {
       if (widget.isActive) {
-        _initializeCamera();
+        if (!_isCaptured) {
+          _initializeCamera();
+        }
       } else {
         _disposeCamera();
       }
@@ -77,9 +80,21 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _disposeCamera();
     _tabController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.inactive || state == AppLifecycleState.paused) {
+      _disposeCamera();
+    } else if (state == AppLifecycleState.resumed) {
+      if (widget.isActive && !_isCaptured) {
+        _initializeCamera();
+      }
+    }
   }
 
   void _disposeCamera() {
@@ -157,6 +172,10 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
     try {
       final XFile file = await _cameraController!.takePicture();
       if (!mounted) return;
+      
+      // Matikan kamera hardware setelah berhasil capture untuk hemat daya & privasi
+      _disposeCamera();
+
       setState(() {
         _isCaptured = true;
         _capturedImagePath = file.path;
@@ -165,6 +184,7 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
       context.showSuccessSnackBar('📸 Foto terambil! Analisis dengan AI Scan atau Kirim Laporan.');
     } catch (e) {
       debugPrint('Error capturing photo: $e');
+      _disposeCamera();
       setState(() {
         _isCapturing = false;
       });
@@ -594,6 +614,7 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
                                 _isCaptured = false;
                                 _capturedImagePath = null;
                               });
+                              _initializeCamera();
                             },
                             icon: const Icon(Icons.replay_rounded, size: 16, color: AppColors.textPrimary),
                             label: Text(
