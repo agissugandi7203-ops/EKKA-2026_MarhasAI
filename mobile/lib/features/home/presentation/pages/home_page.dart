@@ -192,7 +192,7 @@ class _HomePageState extends State<HomePage> {
         behavior: HitTestBehavior.opaque,
         onTap: _nextTourStep,
         child: Container(
-          color: Colors.black.withValues(alpha: 0.85),
+          color: Colors.black.withValues(alpha: 0.65),
           child: Stack(
             children: [
               // Popover Card in the Center
@@ -203,16 +203,20 @@ class _HomePageState extends State<HomePage> {
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+                        colors: [Colors.white, Color(0xFFF1FDF7)],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
                       ),
                       borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.12), width: 1.5),
+                      border: Border.all(
+                        color: AppColors.emerald.withValues(alpha: 0.2),
+                        width: 1.5,
+                      ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.5),
-                          blurRadius: 20,
+                          color: Colors.black.withValues(alpha: 0.15),
+                          blurRadius: 24,
+                          spreadRadius: 2,
                           offset: const Offset(0, 8),
                         ),
                       ],
@@ -222,17 +226,19 @@ class _HomePageState extends State<HomePage> {
                       children: [
                         // Steps counter
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            color: AppColors.navy500.withValues(alpha: 0.15),
+                            color: AppColors.emeraldLight,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppColors.navy500.withValues(alpha: 0.3)),
+                            border: Border.all(
+                              color: AppColors.emerald.withValues(alpha: 0.15),
+                            ),
                           ),
                           child: Text(
                             'Tutorial $_spotlightStep / 3',
                             style: AppTextStyles.labelSmall.copyWith(
-                              color: AppColors.navy200,
-                              fontSize: 10,
+                              color: AppColors.emerald,
+                              fontSize: 11,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -241,7 +247,7 @@ class _HomePageState extends State<HomePage> {
                         Text(
                           title,
                           style: AppTextStyles.titleMedium.copyWith(
-                            color: Colors.white,
+                            color: AppColors.textPrimary,
                             fontWeight: FontWeight.bold,
                             fontSize: 18,
                           ),
@@ -251,9 +257,9 @@ class _HomePageState extends State<HomePage> {
                         Text(
                           description,
                           style: AppTextStyles.bodySmall.copyWith(
-                            color: Colors.white70,
-                            height: 1.45,
-                            fontSize: 12,
+                            color: AppColors.textSecondary,
+                            height: 1.5,
+                            fontSize: 13,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -266,16 +272,18 @@ class _HomePageState extends State<HomePage> {
                               child: Text(
                                 'Lewati',
                                 style: AppTextStyles.labelSmall.copyWith(
-                                  color: Colors.white38,
-                                  fontSize: 11,
+                                  color: AppColors.textSecondary.withValues(alpha: 0.6),
+                                  fontSize: 12,
                                 ),
                               ),
                             ),
                             ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.navy500,
+                                backgroundColor: AppColors.emerald,
                                 foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                elevation: 2,
+                                shadowColor: AppColors.emerald.withValues(alpha: 0.3),
+                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16),
                                 ),
@@ -307,18 +315,18 @@ class _HomePageState extends State<HomePage> {
                       height: 48,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.navy500, width: 2),
+                        border: Border.all(color: AppColors.emerald, width: 2.5),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.navy500.withValues(alpha: 0.4),
-                            blurRadius: 12,
-                            spreadRadius: 2,
+                            color: AppColors.emerald.withValues(alpha: 0.5),
+                            blurRadius: 16,
+                            spreadRadius: 3,
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Icon(Icons.arrow_downward_rounded, color: AppColors.navy500, size: 24),
+                    const Icon(Icons.arrow_downward_rounded, color: AppColors.emerald, size: 24),
                   ],
                 ),
               ),
