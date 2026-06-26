@@ -62,50 +62,43 @@ class _SetupIllustrationState extends State<SetupIllustration>
         );
       },
       child: Center(
-        child: Container(
-          width: 220,
-          height: 220,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.white,
-            border: Border.all(
-              color: widget.color.withValues(alpha: 0.15),
-              width: 6,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: widget.color.withValues(alpha: 0.08),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(4.0),
-            child: Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: widget.color.withValues(alpha: 0.05),
-                border: Border.all(
-                  color: widget.color.withValues(alpha: 0.1),
-                  width: 1.5,
+        child: widget.lottieAsset != null
+            ? SizedBox(
+                width: 280,
+                height: 280,
+                child: Lottie.asset(
+                  widget.lottieAsset!,
+                  fit: BoxFit.contain,
                 ),
-              ),
-              child: widget.lottieAsset != null
-                  ? Lottie.asset(
-                      widget.lottieAsset!,
-                      fit: BoxFit.contain,
-                    )
-                  : widget.icon != null
-                      ? Icon(
-                          widget.icon,
-                          size: 76,
-                          color: widget.color,
-                        )
-                      : const SizedBox.shrink(),
-            ),
-          ),
-        ),
+              )
+            : widget.icon != null
+                ? Container(
+                    width: 150,
+                    height: 150,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white,
+                      border: Border.all(
+                        color: widget.color.withValues(alpha: 0.15),
+                        width: 6,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: widget.color.withValues(alpha: 0.08),
+                          blurRadius: 20,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Icon(
+                        widget.icon,
+                        size: 76,
+                        color: widget.color,
+                      ),
+                    ),
+                  )
+                : const SizedBox.shrink(),
       ),
     );
   }
