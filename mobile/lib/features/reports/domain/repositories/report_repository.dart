@@ -11,4 +11,6 @@ abstract class ReportRepository {
   });
 
   Future<List<ReportModel>> getReports();
+
+  Future<void> deleteReport(String reportId);
 }

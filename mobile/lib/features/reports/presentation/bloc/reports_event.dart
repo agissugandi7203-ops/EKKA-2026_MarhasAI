@@ -26,3 +26,12 @@ class UploadReportRequested extends ReportsEvent {
   @override
   List<Object?> get props => [imageFile, latitude, longitude, description];
 }
+
+class DeleteReportRequested extends ReportsEvent {
+  final String reportId;
+
+  const DeleteReportRequested(this.reportId);
+
+  @override
+  List<Object?> get props => [reportId];
+}

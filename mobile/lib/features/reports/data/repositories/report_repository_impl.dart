@@ -37,4 +37,13 @@ class ReportRepositoryImpl implements ReportRepository {
       throw ErrorHandler.handle(e, stack);
     }
   }
+
+  @override
+  Future<void> deleteReport(String reportId) async {
+    try {
+      await _remoteDataSource.deleteReport(reportId);
+    } catch (e, stack) {
+      throw ErrorHandler.handle(e, stack);
+    }
+  }
 }

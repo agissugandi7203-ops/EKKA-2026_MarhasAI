@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 
 import '../../../../core/theme/app_colors.dart';
 
 /// Ilustrasi premium untuk halaman setup dengan animasi melayang lembut.
 ///
-/// Menampilkan ikon di dalam container lingkaran dengan double-border dan soft shadow.
+/// Menampilkan ikon atau Lottie animation di dalam container lingkaran dengan double-border dan soft shadow.
 class SetupIllustration extends StatefulWidget {
-  final IconData icon;
+  final IconData? icon;
+  final String? lottieAsset;
   final Color color;
 
   const SetupIllustration({
     super.key,
-    required this.icon,
+    this.icon,
+    this.lottieAsset,
     this.color = AppColors.navy700,
   });
 
@@ -60,8 +63,8 @@ class _SetupIllustrationState extends State<SetupIllustration>
       },
       child: Center(
         child: Container(
-          width: 150,
-          height: 150,
+          width: 220,
+          height: 220,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: Colors.white,
@@ -88,11 +91,18 @@ class _SetupIllustrationState extends State<SetupIllustration>
                   width: 1.5,
                 ),
               ),
-              child: Icon(
-                widget.icon,
-                size: 56,
-                color: widget.color,
-              ),
+              child: widget.lottieAsset != null
+                  ? Lottie.asset(
+                      widget.lottieAsset!,
+                      fit: BoxFit.contain,
+                    )
+                  : widget.icon != null
+                      ? Icon(
+                          widget.icon,
+                          size: 76,
+                          color: widget.color,
+                        )
+                      : const SizedBox.shrink(),
             ),
           ),
         ),

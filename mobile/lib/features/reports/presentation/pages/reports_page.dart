@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:lottie/lottie.dart';
 import '../../../../core/network/dio_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -21,8 +22,9 @@ import '../bloc/reports_state.dart';
 
 class ReportsPage extends StatefulWidget {
   final VoidCallback? onClose;
+  final bool isActive;
 
-  const ReportsPage({super.key, this.onClose});
+  const ReportsPage({super.key, this.onClose, this.isActive = false});
 
   @override
   State<ReportsPage> createState() => _ReportsPageState();
@@ -40,10 +42,12 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
   bool _isGridOn = true;
 
   // Scanner/UI States
-  String _scanStatus = 'MEMUAT KAMERA...';
-  double _scanAccuracy = 0.0;
   bool _isCaptured = false;
   String? _capturedImagePath;
+
+  // Throttle states
+  bool _isCapturing = false;
+  bool _isSubmitting = false;
 
   @override
   void initState() {
@@ -53,15 +57,35 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
     // Fetch reports history on start
     context.read<ReportsBloc>().add(FetchReportsRequested());
     
-    // Initialize Camera Feed
-    _initializeCamera();
+    // Initialize Camera Feed only if page is active
+    if (widget.isActive) {
+      _initializeCamera();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant ReportsPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isActive != oldWidget.isActive) {
+      if (widget.isActive) {
+        _initializeCamera();
+      } else {
+        _disposeCamera();
+      }
+    }
   }
 
   @override
   void dispose() {
-    _cameraController?.dispose();
+    _disposeCamera();
     _tabController.dispose();
     super.dispose();
+  }
+
+  void _disposeCamera() {
+    _cameraController?.dispose();
+    _cameraController = null;
+    _isCameraInitialized = false;
   }
 
   Future<void> _initializeCamera() async {
@@ -71,7 +95,6 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
     if (status.isGranted) {
       setState(() {
         _isCameraPermissionGranted = true;
-        _scanStatus = 'MENCARI SASARAN...';
       });
 
       try {
@@ -89,34 +112,18 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
             setState(() {
               _isCameraInitialized = true;
             });
-            _startScanningSimulation();
           }
         } else {
-          setState(() {
-            _scanStatus = 'KAMERA TIDAK DITEMUKAN';
-          });
+          debugPrint('Kamera tidak ditemukan');
         }
       } catch (e) {
         debugPrint('Error initializing camera: $e');
-        setState(() {
-          _scanStatus = 'GAGAL MENYALAKAN KAMERA';
-        });
       }
     } else {
       setState(() {
         _isCameraPermissionGranted = false;
-        _scanStatus = 'IZIN KAMERA DITOLAK';
       });
     }
-  }
-
-  void _startScanningSimulation() async {
-    await Future.delayed(const Duration(seconds: 2));
-    if (!mounted || _isCaptured) return;
-    setState(() {
-      _scanStatus = 'SASARAN TERDETEKSI: Tumpukan Sampah';
-      _scanAccuracy = 92.4;
-    });
   }
 
   void _toggleFlash() async {
@@ -136,11 +143,16 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
   }
 
   void _capturePhoto() async {
+    if (_isCapturing) return;
     if (_cameraController == null || !_isCameraInitialized) {
       // Fallback to mock capture if camera package fails (e.g. Emulator)
       _captureMockPhoto();
       return;
     }
+
+    setState(() {
+      _isCapturing = true;
+    });
 
     try {
       final XFile file = await _cameraController!.takePicture();
@@ -148,10 +160,14 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
       setState(() {
         _isCaptured = true;
         _capturedImagePath = file.path;
+        _isCapturing = false;
       });
       context.showSuccessSnackBar('📸 Foto terambil! Analisis dengan AI Scan atau Kirim Laporan.');
     } catch (e) {
       debugPrint('Error capturing photo: $e');
+      setState(() {
+        _isCapturing = false;
+      });
       _captureMockPhoto();
     }
   }
@@ -160,6 +176,7 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
     setState(() {
       _isCaptured = true;
       _capturedImagePath = 'https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?auto=format&fit=crop&q=80&w=1000';
+      _isCapturing = false;
     });
     context.showSuccessSnackBar('📸 Foto simulator terambil!');
   }
@@ -183,19 +200,19 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
 
   void _submitReport() async {
     if (_capturedImagePath == null) return;
+    if (_isSubmitting) return;
 
-    // Show loading spinner dialog
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(color: AppColors.emerald),
-      ),
-    );
+    setState(() {
+      _isSubmitting = true;
+    });
 
     final position = await _getCurrentLocation();
-    if (!mounted) return;
-    Navigator.pop(context); // Close loading spinner
+    if (!mounted) {
+      setState(() {
+        _isSubmitting = false;
+      });
+      return;
+    }
 
     final double lat = position?.latitude ?? -6.2088;
     final double lng = position?.longitude ?? 106.8451;
@@ -258,10 +275,15 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
           setState(() {
             _isCaptured = false;
             _capturedImagePath = null;
-            _scanStatus = 'MENCARI SASARAN...';
-            _scanAccuracy = 0.0;
+            _isSubmitting = false;
           });
-          _initializeCamera(); // Re-initialize camera feed
+          
+          if (widget.isActive) {
+            _initializeCamera(); // Re-initialize camera feed only if active
+          }
+
+          // Trigger daily quest challenge completion
+          DioClient.completeChallenge('report_1_waste');
           
           // Refresh list & switch tab
           context.read<ReportsBloc>().add(FetchReportsRequested());
@@ -293,6 +315,9 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
             ),
           );
         } else if (state is ReportsFailure) {
+          setState(() {
+            _isSubmitting = false;
+          });
           context.showErrorSnackBar('Gagal mengirim laporan: ${state.message}');
         }
       },
@@ -395,8 +420,15 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
                 ? _buildImagePreview(_capturedImagePath!)
                 : (_isCameraInitialized && _cameraController != null
                     ? CameraPreview(_cameraController!)
-                    : const Center(
-                        child: CircularProgressIndicator(color: AppColors.emerald),
+                    : Center(
+                        child: SizedBox(
+                          width: 60,
+                          height: 60,
+                          child: Lottie.asset(
+                            'assets/animations/global/global_loading.json',
+                            fit: BoxFit.contain,
+                          ),
+                        ),
                       )),
           ),
         ),
@@ -417,9 +449,7 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
               height: MediaQuery.of(context).size.width * 0.8,
               decoration: BoxDecoration(
                 border: Border.all(
-                  color: _scanAccuracy > 0
-                      ? AppColors.emerald.withValues(alpha: 0.8)
-                      : AppColors.gold.withValues(alpha: 0.5),
+                  color: AppColors.emerald.withValues(alpha: 0.5),
                   width: 2,
                 ),
                 borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
@@ -432,42 +462,28 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
                   _buildCorner(bottom: 0, right: 0, isTop: false, isLeft: false),
 
                   Align(
-                    alignment: Alignment.center,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppConstants.spacing12,
-                            vertical: AppConstants.spacing8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.black87,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            _scanStatus,
-                            style: AppTextStyles.labelSmall.copyWith(
-                              color: _scanAccuracy > 0
-                                  ? AppColors.emeraldLight
-                                  : AppColors.gold,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
+                    alignment: Alignment.bottomCenter,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppConstants.spacing12,
+                          vertical: AppConstants.spacing8,
                         ),
-                        if (_scanAccuracy > 0) ...[
-                          const SizedBox(height: 8),
-                          Text(
-                            'AKURASI DETEKSI: $_scanAccuracy%',
-                            style: AppTextStyles.labelSmall.copyWith(
-                              color: AppColors.emerald,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
+                        decoration: BoxDecoration(
+                          color: Colors.black54,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          'Posisikan sampah di dalam bingkai',
+                          style: AppTextStyles.labelSmall.copyWith(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
                           ),
-                        ],
-                      ],
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -565,51 +581,125 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
                     children: [
                       // Photo retake
                       Expanded(
-                        child: OutlinedButton(
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: AppColors.divider, width: 1.5),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _isCaptured = false;
-                              _capturedImagePath = null;
-                            });
-                          },
-                          child: Text(
-                            'Foto Ulang',
-                            style: AppTextStyles.labelSmall.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
+                        child: SizedBox(
+                          height: 46,
+                          child: OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: AppColors.divider, width: 1.5),
+                              shape: const StadiumBorder(),
+                              padding: EdgeInsets.zero,
+                            ),
+                            onPressed: _isSubmitting ? null : () {
+                              setState(() {
+                                _isCaptured = false;
+                                _capturedImagePath = null;
+                              });
+                            },
+                            icon: const Icon(Icons.replay_rounded, size: 16, color: AppColors.textPrimary),
+                            label: Text(
+                              'Foto Ulang',
+                              style: AppTextStyles.labelSmall.copyWith(
+                                color: AppColors.textPrimary,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 11,
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 8),
                       // AI Scan
                       Expanded(
-                        child: ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.gold,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        child: Container(
+                          height: 46,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFFBBF24), Color(0xFFD97706)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(23),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFFBBF24).withValues(alpha: 0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
                           ),
-                          onPressed: _openAIScanBottomSheet,
-                          icon: const Icon(Icons.insights_rounded, size: 18),
-                          label: const Text('AI Scan', style: TextStyle(fontWeight: FontWeight.bold)),
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              shadowColor: Colors.transparent,
+                              shape: const StadiumBorder(),
+                              padding: EdgeInsets.zero,
+                            ),
+                            onPressed: _isSubmitting ? null : _openAIScanBottomSheet,
+                            icon: const Icon(Icons.auto_awesome_rounded, size: 16, color: Colors.white),
+                            label: const Text(
+                              'AI Scan',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 8),
                       // Submit
                       Expanded(
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.emerald,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        child: Container(
+                          height: 46,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF34D399), Color(0xFF059669)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(23),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF34D399).withValues(alpha: 0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
                           ),
-                          onPressed: _submitReport,
-                          child: const Text('Kirim Lapor', style: TextStyle(fontWeight: FontWeight.bold)),
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              shadowColor: Colors.transparent,
+                              shape: const StadiumBorder(),
+                              padding: EdgeInsets.zero,
+                            ),
+                            onPressed: _isSubmitting ? null : _submitReport,
+                            child: _isSubmitting
+                                ? SizedBox(
+                                    width: 22,
+                                    height: 22,
+                                    child: Lottie.asset(
+                                      'assets/animations/global/global_loading.json',
+                                      fit: BoxFit.contain,
+                                    ),
+                                  )
+                                : Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: const [
+                                      Icon(Icons.send_rounded, size: 14, color: Colors.white),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        'Kirim Lapor',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 11,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                          ),
                         ),
                       ),
                     ],
@@ -774,23 +864,58 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
-                                      // Status Badge
-                                      Container(
-                                        margin: const EdgeInsets.only(right: 12),
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                        decoration: BoxDecoration(
-                                          color: statusColor.withValues(alpha: 0.1),
-                                          borderRadius: BorderRadius.circular(8),
-                                          border: Border.all(color: statusColor.withValues(alpha: 0.4), width: 1),
-                                        ),
-                                        child: Text(
-                                          statusLabel,
-                                          style: AppTextStyles.bodySmall.copyWith(
-                                            color: statusColor,
-                                            fontSize: 8,
-                                            fontWeight: FontWeight.bold,
+                                      // Status Badge & Delete option
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Container(
+                                            margin: const EdgeInsets.only(right: 12),
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                            decoration: BoxDecoration(
+                                              color: statusColor.withValues(alpha: 0.1),
+                                              borderRadius: BorderRadius.circular(8),
+                                              border: Border.all(color: statusColor.withValues(alpha: 0.4), width: 1),
+                                            ),
+                                            child: Text(
+                                              statusLabel,
+                                              style: AppTextStyles.bodySmall.copyWith(
+                                                color: statusColor,
+                                                fontSize: 8,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
                                           ),
-                                        ),
+                                          if (report.status.toLowerCase() == 'rejected')
+                                            IconButton(
+                                              icon: const Icon(Icons.delete_outline_rounded, color: AppColors.error, size: 20),
+                                              onPressed: () {
+                                                showDialog(
+                                                  context: context,
+                                                  builder: (context) => AlertDialog(
+                                                    backgroundColor: AppColors.cardBackground,
+                                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                                                    title: const Text('Hapus Laporan?', style: TextStyle(fontWeight: FontWeight.bold)),
+                                                    content: const Text('Apakah Anda yakin ingin menghapus laporan yang ditolak ini?'),
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed: () => Navigator.pop(context),
+                                                        child: const Text('Batal', style: TextStyle(color: AppColors.textSecondary)),
+                                                      ),
+                                                      TextButton(
+                                                        onPressed: () {
+                                                          Navigator.pop(context);
+                                                          context.read<ReportsBloc>().add(DeleteReportRequested(report.id));
+                                                        },
+                                                        child: const Text('Hapus', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.bold)),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                );
+                                              },
+                                              padding: EdgeInsets.zero,
+                                              constraints: const BoxConstraints(),
+                                            ),
+                                        ],
                                       ),
                                     ],
                                   ),
@@ -958,6 +1083,30 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
     }
   }
 
+  void _typewriterEffect(String fullText) async {
+    setState(() {
+      _isTyping = false;
+      _messages.add({
+        'sender': 'ai',
+        'text': '',
+      });
+    });
+
+    final int index = _messages.length - 1;
+    String displayed = '';
+    const delay = Duration(milliseconds: 6);
+
+    for (int i = 0; i < fullText.length; i++) {
+      if (!mounted) return;
+      displayed += fullText[i];
+      setState(() {
+        _messages[index]['text'] = displayed;
+      });
+      _scrollToBottom();
+      await Future.delayed(delay);
+    }
+  }
+
   void _simulateInitialAIScan() async {
     setState(() => _isTyping = true);
     try {
@@ -985,13 +1134,7 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
       if (!mounted) return;
       
       final analysisText = response.data['analysis'] as String? ?? 'Gagal menganalisis gambar.';
-      setState(() {
-        _messages.add({
-          'sender': 'ai',
-          'text': analysisText,
-        });
-        _isTyping = false;
-      });
+      _typewriterEffect(analysisText);
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -1018,27 +1161,34 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
     });
     _scrollToBottom();
 
+    // Trigger daily quest challenge completion
+    DioClient.completeChallenge('chat_ai');
+
     try {
       final dio = DioClient().dio;
       final file = File(widget.imagePath);
       final bytes = await file.readAsBytes();
       final base64Image = base64Encode(bytes);
 
+      // Build history payload from current messages
+      final historyPayload = _messages.map((m) => {
+        'sender': m['sender'] == 'user' ? 'user' : 'assistant',
+        'message': m['text'] ?? '',
+      }).toList();
+
       final response = await dio.post(
         '/chat',
         data: {
           'message': query,
           'image': base64Image,
+          'history': historyPayload,
         },
       );
 
       if (!mounted) return;
 
       final reply = response.data['reply'] as String? ?? 'Geni AI tidak merespons.';
-      setState(() {
-        _messages.add({'sender': 'ai', 'text': reply});
-        _isTyping = false;
-      });
+      _typewriterEffect(reply);
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -1227,27 +1377,13 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: AppColors.divider),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: List.generate(3, (index) {
-            return TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0.3, end: 1.0),
-              duration: Duration(milliseconds: 300 + (index * 100)),
-              curve: Curves.easeInOut,
-              builder: (context, value, child) => Opacity(
-                opacity: value,
-                child: Container(
-                  width: 6,
-                  height: 6,
-                  margin: const EdgeInsets.symmetric(horizontal: 2),
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AppColors.navy600,
-                  ),
-                ),
-              ),
-            );
-          }),
+        child: SizedBox(
+          width: 50,
+          height: 30,
+          child: Lottie.asset(
+            'assets/animations/global/ai_thinking.json',
+            fit: BoxFit.contain,
+          ),
         ),
       ),
     );

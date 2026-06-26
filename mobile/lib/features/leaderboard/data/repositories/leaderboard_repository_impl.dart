@@ -10,9 +10,9 @@ class LeaderboardRepositoryImpl implements LeaderboardRepository {
   LeaderboardRepositoryImpl(this._remoteDataSource);
 
   @override
-  Future<List<UserLeaderboardModel>> getGlobalLeaderboard({int limit = 100}) async {
+  Future<List<UserLeaderboardModel>> getGlobalLeaderboard({int limit = 100, String? city, String? province}) async {
     try {
-      return await _remoteDataSource.getGlobalLeaderboard(limit: limit);
+      return await _remoteDataSource.getGlobalLeaderboard(limit: limit, city: city, province: province);
     } catch (e, stack) {
       throw ErrorHandler.handle(e, stack);
     }

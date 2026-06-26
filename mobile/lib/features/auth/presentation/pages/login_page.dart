@@ -14,7 +14,9 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/auth_listener_wrapper.dart';
 import '../../../../core/widgets/ios_button.dart';
 import '../bloc/auth_bloc.dart';
+import '../bloc/auth_state.dart';
 import '../bloc/auth_event.dart';
+import '../../../../core/widgets/genesis_loading.dart';
 import '../widgets/auth_header.dart';
 
 /// Halaman login masuk utama (Social Login Hub) — Redesain Final.
@@ -183,115 +185,144 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return AuthListenerWrapper(
-      child: Scaffold(
-        resizeToAvoidBottomInset: false,
-        backgroundColor: AppColors.surface,
-        body: SafeArea(
-          child: Column(
-            children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppConstants.pagePaddingH,
-                  ),
+      child: BlocBuilder<AuthBloc, AuthState>(
+        builder: (context, state) {
+          final bool isLoading = state is AuthLoading;
+
+          return Scaffold(
+            resizeToAvoidBottomInset: false,
+            backgroundColor: AppColors.surface,
+            body: Stack(
+              children: [
+                SafeArea(
                   child: Column(
                     children: [
-                      const SizedBox(height: AppConstants.spacing32),
-
-                      // ── Header branding (Selamat Datang) ──
-                      const AuthHeader(
-                        title: 'Welcome to Genesis.id',
-                        subtitle: 'Pilih metode masuk untuk melanjutkan aksi lingkunganmu',
-                      ),
-                      const SizedBox(height: AppConstants.spacing40),
-
-                      // ── Google Sign-In (Edge-to-Edge dengan SVG Asli) ──
-                      IosButton(
-                        text: 'Login with Google',
-                        backgroundColor: Colors.white,
-                        textColor: Colors.black,
-                        icon: SvgPicture.string(
-                          AppSvgs.googleLogo,
-                          width: 24,
-                          height: 24,
-                        ),
-                        onPressed: _onGoogleLogin,
-                      ),
-                      const SizedBox(height: AppConstants.spacing12),
-
-                      // ── Facebook Sign-In (Edge-to-Edge dengan SVG Asli) ──
-                      IosButton(
-                        text: 'Login with Facebook',
-                        backgroundColor: const Color(0xFF1877F2),
-                        textColor: Colors.white,
-                        icon: SvgPicture.string(
-                          AppSvgs.facebookLogo,
-                          width: 24,
-                          height: 24,
-                        ),
-                        onPressed: () => context.read<AuthBloc>().add(FacebookSignInRequested()),
-                      ),
-                      const SizedBox(height: AppConstants.spacing12),
-
-                      // ── GitHub Sign-In (Edge-to-Edge dengan SVG Asli) ──
-                      IosButton(
-                        text: 'Login with GitHub',
-                        backgroundColor: const Color(0xFF24292F),
-                        textColor: Colors.white,
-                        icon: SvgPicture.string(
-                          AppSvgs.githubLogo,
-                          width: 24,
-                          height: 24,
-                        ),
-                        onPressed: () => context.read<AuthBloc>().add(GithubSignInRequested()),
-                      ),
-                      const SizedBox(height: AppConstants.spacing12),
-
-                      // ── Magic Link Sign-In (Edge-to-Edge dengan SVG Asli) ──
-                      IosButton(
-                        text: 'Login with Magic Link',
-                        backgroundColor: AppColors.navy700,
-                        textColor: Colors.white,
-                        icon: SvgPicture.string(
-                          AppSvgs.magicLinkLogo,
-                          width: 24,
-                          height: 24,
-                        ),
-                        onPressed: _showMagicLinkDialog,
-                      ),
-                      const SizedBox(height: AppConstants.spacing32),
-
-                      // ── OR Log in to my account divider/button ──
-                      Row(
-                        children: [
-                          const Expanded(child: Divider()),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: Text(
-                              'atau',
-                              style: AppTextStyles.labelMedium.copyWith(color: AppColors.textSecondary),
-                            ),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppConstants.pagePaddingH,
                           ),
-                          const Expanded(child: Divider()),
-                        ],
-                      ),
-                      const SizedBox(height: AppConstants.spacing24),
+                          child: Column(
+                            children: [
+                              const SizedBox(height: AppConstants.spacing32),
 
-                      IosButton(
-                        text: 'Log in to my account',
-                        isFilled: false,
-                        backgroundColor: AppColors.navy600,
-                        textColor: AppColors.navy700,
-                        onPressed: () => context.pushNamed(Routes.simpleSignInName),
+                              // ── Header branding (Selamat Datang) ──
+                              const AuthHeader(
+                                title: 'Welcome to Genesis.id',
+                                subtitle: 'Pilih metode masuk untuk melanjutkan aksi lingkunganmu',
+                              ),
+                              const SizedBox(height: AppConstants.spacing40),
+
+                              // ── Google Sign-In (Edge-to-Edge dengan SVG Asli) ──
+                              IosButton(
+                                text: 'Login with Google',
+                                backgroundColor: Colors.white,
+                                textColor: Colors.black,
+                                icon: SvgPicture.string(
+                                  AppSvgs.googleLogo,
+                                  width: 24,
+                                  height: 24,
+                                ),
+                                onPressed: isLoading ? null : _onGoogleLogin,
+                              ),
+                              const SizedBox(height: AppConstants.spacing12),
+
+                              // ── Facebook Sign-In (Edge-to-Edge dengan SVG Asli) ──
+                              IosButton(
+                                text: 'Login with Facebook',
+                                backgroundColor: const Color(0xFF1877F2),
+                                textColor: Colors.white,
+                                icon: SvgPicture.string(
+                                  AppSvgs.facebookLogo,
+                                  width: 24,
+                                  height: 24,
+                                ),
+                                onPressed: isLoading
+                                    ? null
+                                    : () => context.read<AuthBloc>().add(FacebookSignInRequested()),
+                              ),
+                              const SizedBox(height: AppConstants.spacing12),
+
+                              // ── GitHub Sign-In (Edge-to-Edge dengan SVG Asli) ──
+                              IosButton(
+                                text: 'Login with GitHub',
+                                backgroundColor: const Color(0xFF24292F),
+                                textColor: Colors.white,
+                                icon: SvgPicture.string(
+                                  AppSvgs.githubLogo,
+                                  width: 24,
+                                  height: 24,
+                                ),
+                                onPressed: isLoading
+                                    ? null
+                                    : () => context.read<AuthBloc>().add(GithubSignInRequested()),
+                              ),
+                              const SizedBox(height: AppConstants.spacing12),
+
+                              // ── Magic Link Sign-In (Edge-to-Edge dengan SVG Asli) ──
+                              IosButton(
+                                text: 'Login with Magic Link',
+                                backgroundColor: AppColors.navy700,
+                                textColor: Colors.white,
+                                icon: SvgPicture.string(
+                                  AppSvgs.magicLinkLogo,
+                                  width: 24,
+                                  height: 24,
+                                ),
+                                onPressed: isLoading ? null : _showMagicLinkDialog,
+                              ),
+                              const SizedBox(height: AppConstants.spacing32),
+
+                              // ── OR Log in to my account divider/button ──
+                              Row(
+                                children: [
+                                  const Expanded(child: Divider()),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                                    child: Text(
+                                      'atau',
+                                      style: AppTextStyles.labelMedium.copyWith(color: AppColors.textSecondary),
+                                    ),
+                                  ),
+                                  const Expanded(child: Divider()),
+                                ],
+                              ),
+                              const SizedBox(height: AppConstants.spacing24),
+
+                              IosButton(
+                                text: 'Log in to my account',
+                                isFilled: false,
+                                backgroundColor: AppColors.navy600,
+                                textColor: AppColors.navy700,
+                                onPressed: isLoading
+                                    ? null
+                                    : () => context.pushNamed(Routes.simpleSignInName),
+                              ),
+                              const SizedBox(height: AppConstants.spacing32),
+                            ],
+                          ),
+                        ),
                       ),
-                      const SizedBox(height: AppConstants.spacing32),
                     ],
                   ),
                 ),
-              ),
-            ],
-          ),
-        ),
+
+                // Fullscreen Loading Overlay
+                if (isLoading)
+                  Positioned.fill(
+                    child: Container(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      child: const Center(
+                        child: GenesisLoading(
+                          message: 'Menghubungkan ke akun Anda...',
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

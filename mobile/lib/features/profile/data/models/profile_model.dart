@@ -16,6 +16,7 @@ class ProfileModel {
   final String createdAt;
   final String updatedAt;
   final List<BadgeModel> badges;
+  final int rank;
 
   ProfileModel({
     required this.id,
@@ -33,6 +34,7 @@ class ProfileModel {
     required this.createdAt,
     required this.updatedAt,
     required this.badges,
+    required this.rank,
   });
 
   factory ProfileModel.fromJson(Map<String, dynamic> json) {
@@ -55,6 +57,7 @@ class ProfileModel {
       createdAt: json['created_at'] as String? ?? '',
       updatedAt: json['updated_at'] as String? ?? '',
       badges: parsedBadges,
+      rank: json['rank'] as int? ?? 1,
     );
   }
 
@@ -75,6 +78,7 @@ class ProfileModel {
       'created_at': createdAt,
       'updated_at': updatedAt,
       'badges': badges.map((b) => b.toJson()).toList(),
+      'rank': rank,
     };
   }
 }

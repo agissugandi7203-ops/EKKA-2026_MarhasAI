@@ -220,7 +220,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         try {
           final profile = await _profileRepository.getMyProfile();
           final bool needsOnboarding =
-              profile.cityOrDistrict == null || profile.cityOrDistrict!.isEmpty;
+              profile.cityOrDistrict == null ||
+              profile.cityOrDistrict!.isEmpty ||
+              profile.cityOrDistrict == 'Belum diatur' ||
+              profile.province == null ||
+              profile.province!.isEmpty ||
+              profile.province == 'Belum diatur' ||
+              profile.username == null ||
+              profile.username!.isEmpty;
           emit(PasswordResetSuccess(needsOnboarding: needsOnboarding));
         } catch (_) {
           emit(const PasswordResetSuccess(needsOnboarding: true));
@@ -325,7 +332,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       final profile = await _profileRepository.getMyProfile();
       final bool needsOnboarding =
-          profile.cityOrDistrict == null || profile.cityOrDistrict!.isEmpty;
+          profile.cityOrDistrict == null ||
+          profile.cityOrDistrict!.isEmpty ||
+          profile.cityOrDistrict == 'Belum diatur' ||
+          profile.province == null ||
+          profile.province!.isEmpty ||
+          profile.province == 'Belum diatur' ||
+          profile.username == null ||
+          profile.username!.isEmpty;
       return Authenticated(user: user, needsOnboarding: needsOnboarding);
     } catch (e, stack) {
       debugPrint('=== [AuthBloc] _checkOnboardingStatus error: $e');

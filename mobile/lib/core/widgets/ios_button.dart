@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 
 /// Tombol utama kustom bergaya iOS (stadium shape).
 ///
@@ -37,19 +38,33 @@ class IosButton extends StatelessWidget {
       child: CupertinoButton(
         padding: EdgeInsets.zero,
         color: isFilled ? themeColor : null,
-        disabledColor: isFilled ? Colors.grey.shade300 : Colors.transparent,
+        disabledColor: isFilled 
+            ? (isLoading ? themeColor : Colors.grey.shade300) 
+            : Colors.transparent,
         borderRadius: BorderRadius.circular(26),
         onPressed: isDisabled ? null : onPressed,
         child: Container(
           decoration: !isFilled
               ? BoxDecoration(
-                  border: Border.all(color: themeColor.withValues(alpha: 0.5), width: 1.5),
+                  border: Border.all(
+                    color: isLoading 
+                        ? themeColor 
+                        : themeColor.withValues(alpha: 0.5), 
+                    width: 1.5,
+                  ),
                   borderRadius: BorderRadius.circular(26),
                 )
               : null,
           alignment: Alignment.center,
           child: isLoading
-              ? const CupertinoActivityIndicator(color: Colors.white)
+              ? SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: Lottie.asset(
+                    'assets/animations/global/global_loading.json',
+                    fit: BoxFit.contain,
+                  ),
+                )
               : Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -62,7 +77,9 @@ class IosButton extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: isDisabled && isFilled ? Colors.grey.shade600 : textThemeColor,
+                        color: (isDisabled && !isLoading) && isFilled 
+                            ? Colors.grey.shade600 
+                            : textThemeColor,
                         fontFamily: '.SF Pro Text',
                       ),
                     ),

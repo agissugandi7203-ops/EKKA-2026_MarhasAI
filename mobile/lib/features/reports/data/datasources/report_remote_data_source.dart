@@ -13,6 +13,8 @@ abstract class ReportRemoteDataSource {
   });
 
   Future<List<ReportModel>> getReports();
+
+  Future<void> deleteReport(String reportId);
 }
 
 class ReportRemoteDataSourceImpl implements ReportRemoteDataSource {
@@ -57,5 +59,10 @@ class ReportRemoteDataSourceImpl implements ReportRemoteDataSource {
     final response = await _dioClient.dio.get('/reports');
     final list = response.data as List? ?? [];
     return list.map((item) => ReportModel.fromJson(item as Map<String, dynamic>)).toList();
+  }
+
+  @override
+  Future<void> deleteReport(String reportId) async {
+    await _dioClient.dio.delete('/reports/$reportId');
   }
 }

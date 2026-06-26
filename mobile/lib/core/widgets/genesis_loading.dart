@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 
-import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 
 /// Loading indicator bermerek Genesis.id.
@@ -23,7 +23,7 @@ class GenesisLoading extends StatelessWidget {
   const GenesisLoading({
     super.key,
     this.message,
-    this.size = 40,
+    this.size = 80,
   });
 
   @override
@@ -35,9 +35,9 @@ class GenesisLoading extends StatelessWidget {
           SizedBox(
             width: size,
             height: size,
-            child: const CircularProgressIndicator(
-              strokeWidth: 3,
-              color: AppColors.navy700,
+            child: Lottie.asset(
+              'assets/animations/global/global_loading.json',
+              fit: BoxFit.contain,
             ),
           ),
           if (message != null) ...[

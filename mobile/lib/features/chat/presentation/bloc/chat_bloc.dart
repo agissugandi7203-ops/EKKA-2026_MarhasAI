@@ -93,6 +93,9 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     SendMessageRequested event,
     Emitter<ChatState> emit,
   ) async {
+    // Extract history (previous messages in conversation) before updating
+    final history = List<ChatMessageModel>.from(state.messages);
+
     // 1. Tambahkan pesan user ke daftar chat dan set status isStreaming ke true
     final updatedMessages = List<ChatMessageModel>.from(state.messages)..add(event.message);
     
@@ -115,7 +118,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     await _streamSubscription?.cancel();
 
     // 3. Mulai request stream ke backend
-    _streamSubscription = _chatRemoteDataSource.sendMessageStream(event.message, event.model).listen(
+    _streamSubscription = _chatRemoteDataSource.sendMessageStream(event.message, event.model, history).listen(
       (chunk) {
         add(_StreamChunkReceived(chunk));
       },

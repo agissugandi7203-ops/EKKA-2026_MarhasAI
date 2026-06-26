@@ -71,3 +71,6 @@ flutter:
     - assets/animations/mascot/
     - assets/animations/achievements/
     - assets/animations/transitions/
+    - assets/animations/artificial/
+    - assets/animations/global/
+    - assets/animations/onboarding/

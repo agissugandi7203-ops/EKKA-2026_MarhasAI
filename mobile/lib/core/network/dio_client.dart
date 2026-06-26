@@ -73,4 +73,17 @@ class DioClient {
   }
 
   Dio get dio => _dio;
+
+  /// Melaporkan penyelesaian tantangan harian warga ke backend
+  static Future<void> completeChallenge(String code) async {
+    try {
+      await DioClient().dio.post(
+        '/gamification/challenges/complete',
+        data: {'code': code},
+      );
+      debugPrint('[DioClient] Berhasil menyelesaikan tantangan: $code');
+    } catch (e) {
+      debugPrint('[DioClient] Gagal menyelesaikan tantangan $code: $e');
+    }
+  }
 }

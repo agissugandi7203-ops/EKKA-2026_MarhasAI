@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:lottie/lottie.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/constants/app_svgs.dart';
@@ -10,6 +12,8 @@ import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/fade_slide_entrance.dart';
+import '../../../../core/widgets/genesis_loading.dart';
+import '../../../../core/network/dio_client.dart';
 import '../../../profile/domain/repositories/profile_repository.dart';
 import '../../../profile/data/models/profile_model.dart';
 
@@ -36,41 +40,263 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
   bool _isLoadingProfile = true;
   final ScrollController _scrollController = ScrollController();
 
-  // Local state for quest simulation to show off interactive gamification!
-  final List<Map<String, dynamic>> _quests = [
-    {
-      'id': 1,
-      'title': 'Ambil foto sampah plastik di jalan',
-      'xp': '+50 XP',
-      'pts': '+10 Poin',
-      'isCompleted': false,
-    },
-    {
-      'id': 2,
-      'title': 'Laporkan selokan tersumbat terdekat',
-      'xp': '+100 XP',
-      'pts': '+25 Poin',
-      'isCompleted': false,
-    },
-    {
-      'id': 3,
-      'title': 'Cek papan peringkat wilayah hari ini',
-      'xp': '+10 XP',
-      'pts': '+5 Poin',
-      'isCompleted': true, // Pre-completed
-    },
-  ];
+  // Dynamic challenges state from backend
+  List<Map<String, dynamic>> _challenges = [];
+  bool _isLoadingChallenges = true;
+
+  Timer? _pollTimer;
 
   @override
   void initState() {
     super.initState();
     _fetchRealProfileData();
+    _fetchDailyChallenges();
+    // 15-second polling loop
+    _pollTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+      _pollProfileDataSilently();
+    });
   }
 
   @override
   void dispose() {
+    _pollTimer?.cancel();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  Future<void> _fetchDailyChallenges() async {
+    try {
+      final dio = DioClient().dio;
+      final response = await dio.get('/gamification/challenges');
+      final list = response.data as List? ?? [];
+      if (mounted) {
+        setState(() {
+          _challenges = list.map((c) => {
+            'id': c['id'],
+            'code': c['code'],
+            'title': c['title'],
+            'xp': '+${c['xp']} XP',
+            'pts': '+${c['points']} Poin',
+            'isCompleted': c['isCompleted'] as bool? ?? false,
+          }).toList();
+          _isLoadingChallenges = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching daily challenges: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingChallenges = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _pollProfileDataSilently() async {
+    try {
+      final profileRepo = context.read<ProfileRepository>();
+      final profile = await profileRepo.getMyProfile();
+      if (!mounted) return;
+      if (_profile != null) {
+        // Level Up popup check
+        if (profile.level > _profile!.level) {
+          _showLevelUpDialog(profile.level);
+        }
+        // New Badge popup check
+        if (profile.badges.length > _profile!.badges.length) {
+          final oldBadgeIds = _profile!.badges.map((b) => b.id).toSet();
+          final newBadges = profile.badges.where((b) => !oldBadgeIds.contains(b.id)).toList();
+          for (final b in newBadges) {
+            _showBadgeUnlockedDialog(b.name, b.description ?? '');
+          }
+        }
+      }
+      setState(() {
+        _profile = profile;
+      });
+      _fetchDailyChallenges();
+    } catch (e) {
+      debugPrint('Error polling profile: $e');
+    }
+  }
+
+  void _showLevelUpDialog(int newLevel) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: AppColors.gold.withValues(alpha: 0.5), width: 2),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.gold.withValues(alpha: 0.3),
+                blurRadius: 24,
+                spreadRadius: 2,
+              )
+            ]
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                '🎉 LEVEL UP! 🎉',
+                style: TextStyle(
+                  color: AppColors.gold,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.5,
+                ),
+              ),
+              SizedBox(
+                width: 150,
+                height: 150,
+                child: Lottie.asset(
+                  'assets/animations/achievements/level_up.json',
+                  repeat: true,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Selamat! Level Anda meningkat menjadi',
+                style: AppTextStyles.bodyMedium.copyWith(color: Colors.white70),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Level $newLevel',
+                style: AppTextStyles.headlineMedium.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 28,
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.gold,
+                    foregroundColor: AppColors.navy900,
+                    shape: const StadiumBorder(),
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text(
+                    'Luar Biasa!',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              )
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showBadgeUnlockedDialog(String badgeName, String description) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: AppColors.emerald.withValues(alpha: 0.5), width: 2),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.emerald.withValues(alpha: 0.3),
+                blurRadius: 24,
+                spreadRadius: 2,
+              )
+            ]
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                '🏆 LENCANA BARU! 🏆',
+                style: TextStyle(
+                  color: AppColors.emerald,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.2,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.emerald.withValues(alpha: 0.1),
+                  border: Border.all(color: AppColors.emerald, width: 2),
+                ),
+                child: const Center(
+                  child: Icon(Icons.workspace_premium_rounded, color: AppColors.emerald, size: 48),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Anda telah membuka Lencana Baru:',
+                style: AppTextStyles.bodySmall.copyWith(color: Colors.white70),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                badgeName,
+                style: AppTextStyles.titleMedium.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                description,
+                style: AppTextStyles.bodySmall.copyWith(color: Colors.white60),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.emerald,
+                    foregroundColor: Colors.white,
+                    shape: const StadiumBorder(),
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text(
+                    'Klaim Lencana',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              )
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _fetchRealProfileData() async {
@@ -90,37 +316,6 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
         });
       }
     }
-  }
-
-  void _toggleQuest(int id) {
-    setState(() {
-      final index = _quests.indexWhere((q) => q['id'] == id);
-      if (index != -1) {
-        final isCompleted = _quests[index]['isCompleted'];
-        _quests[index]['isCompleted'] = !isCompleted;
-
-        if (!isCompleted) {
-          ScaffoldMessenger.of(context).clearSnackBars();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  const Text('🎉 ', style: TextStyle(fontSize: 20)),
-                  Expanded(
-                    child: Text(
-                      'Tantangan Selesai! Kamu mendapatkan ${_quests[index]['xp']} & ${_quests[index]['pts']}!',
-                      style: AppTextStyles.labelSmall.copyWith(color: Colors.white),
-                    ),
-                  ),
-                ],
-              ),
-              backgroundColor: AppColors.navy900,
-              duration: const Duration(seconds: 2),
-            ),
-          );
-        }
-      }
-    });
   }
 
   @override
@@ -448,9 +643,15 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
                       const SizedBox(height: 10),
                       Row(
                         children: [
-                          _buildLevelStatBadgeSvg(AppSvgs.miniFire, '$activeStreak Hari'),
+                          _buildLevelStatBadge(
+                            lottiePath: 'assets/animations/achievements/strike_fire.json',
+                            text: '$activeStreak Hari',
+                          ),
                           const SizedBox(width: 8),
-                          _buildLevelStatBadgeSvg(AppSvgs.miniCamera, '$completedReports Lapor'),
+                          _buildLevelStatBadge(
+                            svgContent: AppSvgs.miniCamera,
+                            text: '$completedReports Lapor',
+                          ),
                         ],
                       ),
                     ],
@@ -534,7 +735,11 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
     );
   }
 
-  Widget _buildLevelStatBadgeSvg(String svgContent, String text) {
+  Widget _buildLevelStatBadge({
+    String? svgContent,
+    String? lottiePath,
+    required String text,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -545,7 +750,14 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          SvgPicture.string(svgContent, width: 11, height: 11),
+          if (lottiePath != null)
+            SizedBox(
+              width: 14,
+              height: 14,
+              child: Lottie.asset(lottiePath, repeat: true),
+            )
+          else if (svgContent != null)
+            SvgPicture.string(svgContent, width: 11, height: 11),
           const SizedBox(width: 4),
           Text(
             text,
@@ -563,7 +775,8 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
   Widget _buildDataStatisticsCard(int completedReports, int activeStreak) {
     final double reportsRatio = (completedReports / 20.0).clamp(0.1, 1.0);
     final double streakRatio = (activeStreak / 7.0).clamp(0.15, 1.0);
-    const double badgesRatio = 0.40;
+    final int badgeCount = _profile?.badges.length ?? 0;
+    final double badgesRatio = (badgeCount / 5.0).clamp(0.1, 1.0);
 
     return FadeSlideEntrance(
       delay: const Duration(milliseconds: 150),
@@ -652,7 +865,7 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
                       _buildLegendItem(
                         color: const Color(0xFF93C5FD),
                         title: 'Lencana Didapat',
-                        value: '40% (4/10 Terbuka)',
+                        value: '${(badgesRatio * 100).toInt()}% ($badgeCount/5 Terbuka)',
                       ),
                     ],
                   ),
@@ -707,6 +920,8 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
   }
 
   Widget _buildBentoMetrics(int activeStreak, int completedReports) {
+    final String rankLabel = _profile?.rank != null ? '#${_profile!.rank}' : '#1';
+
     return FadeSlideEntrance(
       delay: const Duration(milliseconds: 200),
       child: Row(
@@ -719,6 +934,7 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
               iconColor: const Color(0xFFF97316),
               textColor: const Color(0xFFC2410C),
               gradientColors: [const Color(0xFFFFF7ED), const Color(0xFFFFEDD5)],
+              lottieAsset: 'assets/animations/achievements/strike_fire.json',
             ),
           ),
           const SizedBox(width: 12),
@@ -739,7 +955,7 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
               child: _buildBentoCard(
                 icon: Icons.emoji_events_rounded,
                 title: 'Peringkat',
-                value: '#5 Wilayah',
+                value: '$rankLabel Wilayah',
                 iconColor: const Color(0xFF10B981),
                 textColor: const Color(0xFF047857),
                 gradientColors: [const Color(0xFFECFDF5), const Color(0xFFD1FAE5)],
@@ -758,6 +974,7 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
     required Color iconColor,
     required Color textColor,
     required List<Color> gradientColors,
+    String? lottieAsset,
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 16),
@@ -783,7 +1000,14 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: iconColor, size: 24),
+          if (lottieAsset != null)
+            SizedBox(
+              width: 24,
+              height: 24,
+              child: Lottie.asset(lottieAsset, repeat: true),
+            )
+          else
+            Icon(icon, color: iconColor, size: 24),
           const SizedBox(height: 12),
           Text(
             value,
@@ -830,25 +1054,53 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
   }
 
   Widget _buildDailyQuestsList() {
+    if (_isLoadingChallenges) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 20),
+          child: GenesisLoading(size: 50),
+        ),
+      );
+    }
+
+    if (_challenges.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: AppColors.divider, width: 1.5),
+        ),
+        child: Center(
+          child: Text(
+            'Tidak ada tantangan aktif hari ini.',
+            style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+          ),
+        ),
+      );
+    }
+
     // Find the first uncompleted quest to highlight
-    final int firstUncompletedId = _quests.firstWhere(
+    final firstUncompleted = _challenges.firstWhere(
       (q) => q['isCompleted'] == false,
-      orElse: () => _quests.first,
-    )['id'];
+      orElse: () => _challenges.first,
+    );
+    final String firstUncompletedId = firstUncompleted['id'] as String;
 
     return FadeSlideEntrance(
       delay: const Duration(milliseconds: 300),
       child: Column(
-        children: List.generate(_quests.length, (index) {
-          final quest = _quests[index];
-          final bool isDone = quest['isCompleted'];
+        children: List.generate(_challenges.length, (index) {
+          final quest = _challenges[index];
+          final bool isDone = quest['isCompleted'] as bool;
           final bool isHighlighted = quest['id'] == firstUncompletedId;
 
           Widget leadingIcon;
-          if (quest['id'] == 1) {
+          final String code = quest['code'] as String? ?? '';
+          if (code == 'report_1_waste') {
             leadingIcon = const Icon(Icons.camera_alt_rounded, size: 18);
-          } else if (quest['id'] == 2) {
-            leadingIcon = const Icon(Icons.warning_amber_rounded, size: 18);
+          } else if (code == 'chat_ai') {
+            leadingIcon = const Icon(Icons.forum_rounded, size: 18);
           } else {
             leadingIcon = const Icon(Icons.emoji_events_rounded, size: 18);
           }
@@ -914,7 +1166,7 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
                         children: [
                           Expanded(
                             child: Text(
-                              quest['title'],
+                              quest['title'] as String? ?? '',
                               style: AppTextStyles.bodyMedium.copyWith(
                                 color: isDone ? AppColors.textDisabled : AppColors.navy900,
                                 decoration: isDone ? TextDecoration.lineThrough : null,
@@ -959,7 +1211,7 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
                                 const Icon(Icons.flash_on_rounded, color: AppColors.navy700, size: 10),
                                 const SizedBox(width: 4),
                                 Text(
-                                  quest['xp'],
+                                  quest['xp'] as String? ?? '',
                                   style: AppTextStyles.labelSmall.copyWith(
                                     color: AppColors.navy700,
                                     fontSize: 9,
@@ -982,7 +1234,7 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
                                 const Icon(Icons.stars_rounded, color: AppColors.navy600, size: 10),
                                 const SizedBox(width: 4),
                                 Text(
-                                  quest['pts'],
+                                  quest['pts'] as String? ?? '',
                                   style: AppTextStyles.labelSmall.copyWith(
                                     color: AppColors.navy600,
                                     fontSize: 9,
@@ -998,30 +1250,25 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                // Custom checkbox
-                GestureDetector(
-                  onTap: () => _toggleQuest(quest['id']),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 250),
-                    curve: Curves.easeOutBack,
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isDone ? AppColors.navy700 : Colors.transparent,
-                      border: Border.all(
-                        color: isDone ? AppColors.navy700 : AppColors.textDisabled,
-                        width: 2.0,
-                      ),
+                // Read-only dynamic checkbox based on isCompleted
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isDone ? AppColors.navy700 : Colors.transparent,
+                    border: Border.all(
+                      color: isDone ? AppColors.navy700 : AppColors.textDisabled,
+                      width: 2.0,
                     ),
-                    child: isDone
-                        ? const Icon(
-                            Icons.check_rounded,
-                            color: Colors.white,
-                            size: 16,
-                          )
-                        : null,
                   ),
+                  child: isDone
+                      ? const Icon(
+                          Icons.check_rounded,
+                          color: Colors.white,
+                          size: 16,
+                        )
+                      : null,
                 ),
               ],
             ),
@@ -1236,15 +1483,8 @@ class _StickyHeaderProfileDelegate extends SliverPersistentHeaderDelegate {
                   ),
                 ],
               ),
-              padding: EdgeInsets.zero,
               onPressed: () {
-                ScaffoldMessenger.of(context).clearSnackBars();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('💡 Belum ada notifikasi baru hari ini. Tetap jaga lingkunganmu!'),
-                    backgroundColor: AppColors.navy800,
-                  ),
-                );
+                context.pushNamed(Routes.notificationsName);
               },
             ),
           ),

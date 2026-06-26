@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/constants/app_svgs.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/fade_slide_entrance.dart';
+import '../../../../core/network/dio_client.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../auth/presentation/bloc/auth_state.dart';
+import '../../domain/repositories/leaderboard_repository.dart';
+import '../../data/models/user_leaderboard_model.dart';
 
 class LeaderboardPage extends StatefulWidget {
   const LeaderboardPage({super.key});
@@ -18,6 +25,10 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
   int _selectedFilter = 0; // 0 = Kabupaten, 1 = Provinsi, 2 = Nasional
   String _selectedKabupaten = 'Kota Bandung';
   String _selectedProvinsi = 'Jawa Barat';
+
+  List<UserLeaderboardModel> _leaderboardList = [];
+  bool _isLoading = true;
+  String? _errorMessage;
 
   final List<String> _kabupatenList = [
     'Kota Bandung',
@@ -33,530 +44,393 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
     'Jawa Timur'
   ];
 
-  Map<String, dynamic> get _currentPodium {
-    if (_selectedFilter == 0) {
-      if (_selectedKabupaten == 'Kota Bandung') {
-        return {
-          'first': {'name': 'Siti K.', 'xp': '1,850 XP', 'initial': 'S'},
-          'second': {'name': 'Rian E.', 'xp': '1,420 XP', 'initial': 'R'},
-          'third': {'name': 'Budi W.', 'xp': '1,200 XP', 'initial': 'B'},
-        };
-      } else if (_selectedKabupaten == 'Kab. Bandung Barat') {
-        return {
-          'first': {'name': 'Yusuf A.', 'xp': '2,100 XP', 'initial': 'Y'},
-          'second': {'name': 'Amanda T.', 'xp': '1,950 XP', 'initial': 'A'},
-          'third': {'name': 'Budi W.', 'xp': '1,400 XP', 'initial': 'B'},
-        };
-      } else if (_selectedKabupaten == 'Kota Cimahi') {
-        return {
-          'first': {'name': 'Doni Pratama', 'xp': '1,650 XP', 'initial': 'D'},
-          'second': {'name': 'Anisa Putri', 'xp': '1,500 XP', 'initial': 'A'},
-          'third': {'name': 'Reza Fauzi', 'xp': '1,120 XP', 'initial': 'R'},
-        };
-      } else {
-        return {
-          'first': {'name': 'Eka Lestari', 'xp': '1,320 XP', 'initial': 'E'},
-          'second': {'name': 'Siti K.', 'xp': '1,250 XP', 'initial': 'S'},
-          'third': {'name': 'Rian E.', 'xp': '1,100 XP', 'initial': 'R'},
-        };
-      }
-    } else if (_selectedFilter == 1) {
-      if (_selectedProvinsi == 'Jawa Barat') {
-        return {
-          'first': {'name': 'Amanda T.', 'xp': '2,450 XP', 'initial': 'A'},
-          'second': {'name': 'Siti K.', 'xp': '1,850 XP', 'initial': 'S'},
-          'third': {'name': 'Yusuf A.', 'xp': '1,700 XP', 'initial': 'Y'},
-        };
-      } else if (_selectedProvinsi == 'DKI Jakarta') {
-        return {
-          'first': {'name': 'Farhan H.', 'xp': '3,100 XP', 'initial': 'F'},
-          'second': {'name': 'Doni Pratama', 'xp': '2,800 XP', 'initial': 'D'},
-          'third': {'name': 'Amanda T.', 'xp': '2,450 XP', 'initial': 'A'},
-        };
-      } else if (_selectedProvinsi == 'Jawa Tengah') {
-        return {
-          'first': {'name': 'Rian E.', 'xp': '2,200 XP', 'initial': 'R'},
-          'second': {'name': 'Hendra W.', 'xp': '2,010 XP', 'initial': 'H'},
-          'third': {'name': 'Siti K.', 'xp': '1,850 XP', 'initial': 'S'},
-        };
-      } else {
-        return {
-          'first': {'name': 'Budi W.', 'xp': '2,050 XP', 'initial': 'B'},
-          'second': {'name': 'Yusuf A.', 'xp': '1,950 XP', 'initial': 'Y'},
-          'third': {'name': 'Anisa Putri', 'xp': '1,800 XP', 'initial': 'A'},
-        };
-      }
-    } else {
-      return {
-        'first': {'name': 'Farhan H.', 'xp': '4,850 XP', 'initial': 'F'},
-        'second': {'name': 'Amanda T.', 'xp': '2,450 XP', 'initial': 'A'},
-        'third': {'name': 'Siti K.', 'xp': '1,850 XP', 'initial': 'S'},
-      };
-    }
+  @override
+  void initState() {
+    super.initState();
+    _fetchLeaderboard();
   }
 
-  Map<String, dynamic> get _currentUserStanding {
-    if (_selectedFilter == 0) {
-      if (_selectedKabupaten == 'Kota Bandung') {
-        return {
-          'rank': '#5',
-          'motivational': 'Kumpulkan 240 XP lagi untuk geser Budi W.!',
-          'xp': '960 XP',
-        };
-      } else if (_selectedKabupaten == 'Kab. Bandung Barat') {
-        return {
-          'rank': '#8',
-          'motivational': 'Hebat! Masuk 10 besar Kabupaten. Naikkan 120 XP lagi!',
-          'xp': '960 XP',
-        };
-      } else if (_selectedKabupaten == 'Kota Cimahi') {
-        return {
-          'rank': '#4',
-          'motivational': 'Tinggal sedikit lagi! 160 XP untuk masuk podium #3!',
-          'xp': '960 XP',
-        };
-      } else {
-        return {
-          'rank': '#14',
-          'motivational': 'Ayo! Kumpulkan 80 XP lagi untuk tembus 10 besar!',
-          'xp': '960 XP',
-        };
-      }
-    } else if (_selectedFilter == 1) {
-      if (_selectedProvinsi == 'Jawa Barat') {
-        return {
-          'rank': '#12',
-          'motivational': 'Kumpulkan 80 XP lagi untuk masuk Top 10 Provinsi! 🚀',
-          'xp': '960 XP',
-        };
-      } else if (_selectedProvinsi == 'DKI Jakarta') {
-        return {
-          'rank': '#19',
-          'motivational': 'Luar biasa! 150 XP lagi untuk tembus Top 15 DKI Jakarta! ⚡',
-          'xp': '960 XP',
-        };
-      } else if (_selectedProvinsi == 'Jawa Tengah') {
-        return {
-          'rank': '#25',
-          'motivational': 'Kerja bagus! 100 XP lagi untuk geser peringkat #24 Jawa Tengah!',
-          'xp': '960 XP',
-        };
-      } else {
-        return {
-          'rank': '#41',
-          'motivational': 'Mantap! 200 XP lagi untuk naik ke peringkat 35 Jawa Timur!',
-          'xp': '960 XP',
-        };
-      }
-    } else {
-      return {
-        'rank': '#142',
-        'motivational': 'Kumpulkan 40 XP lagi untuk naik peringkat Nasional! ⚡',
-        'xp': '960 XP',
-      };
-    }
-  }
+  Future<void> _fetchLeaderboard() async {
+    if (!mounted) return;
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
 
-  List<Map<String, dynamic>> get _currentRankList {
-    if (_selectedFilter == 0) {
-      if (_selectedKabupaten == 'Kota Bandung') {
-        return [
-          {'rank': 4, 'name': 'Doni Pratama', 'xp': '1,150 XP', 'avatar': '🧑'},
-          {'rank': 5, 'name': 'Kamu (EcoWarrior)', 'xp': '960 XP', 'avatar': '🌱', 'isSelf': true},
-          {'rank': 6, 'name': 'Anisa Putri', 'xp': '820 XP', 'avatar': '👩'},
-          {'rank': 7, 'name': 'Reza Fauzi', 'xp': '750 XP', 'avatar': '👨'},
-          {'rank': 8, 'name': 'Eka Lestari', 'xp': '680 XP', 'avatar': '👧'},
-        ];
-      } else if (_selectedKabupaten == 'Kab. Bandung Barat') {
-        return [
-          {'rank': 6, 'name': 'Doni Pratama', 'xp': '1,150 XP', 'avatar': '🧑'},
-          {'rank': 7, 'name': 'Anisa Putri', 'xp': '1,080 XP', 'avatar': '👩'},
-          {'rank': 8, 'name': 'Kamu (EcoWarrior)', 'xp': '960 XP', 'avatar': '🌱', 'isSelf': true},
-          {'rank': 9, 'name': 'Reza Fauzi', 'xp': '890 XP', 'avatar': '👨'},
-          {'rank': 10, 'name': 'Eka Lestari', 'xp': '790 XP', 'avatar': '👧'},
-        ];
-      } else if (_selectedKabupaten == 'Kota Cimahi') {
-        return [
-          {'rank': 3, 'name': 'Reza Fauzi', 'xp': '1,120 XP', 'avatar': '👨'},
-          {'rank': 4, 'name': 'Kamu (EcoWarrior)', 'xp': '960 XP', 'avatar': '🌱', 'isSelf': true},
-          {'rank': 5, 'name': 'Eka Lestari', 'xp': '920 XP', 'avatar': '👧'},
-          {'rank': 6, 'name': 'Doni Pratama', 'xp': '890 XP', 'avatar': '🧑'},
-          {'rank': 7, 'name': 'Anisa Putri', 'xp': '820 XP', 'avatar': '👩'},
-        ];
+    // Trigger daily quest challenge completion (viewing leaderboard)
+    DioClient.completeChallenge('check_leaderboard');
+
+    try {
+      final repo = context.read<LeaderboardRepository>();
+      List<UserLeaderboardModel> list;
+      if (_selectedFilter == 0) {
+        list = await repo.getGlobalLeaderboard(city: _selectedKabupaten);
+      } else if (_selectedFilter == 1) {
+        list = await repo.getGlobalLeaderboard(province: _selectedProvinsi);
       } else {
-        return [
-          {'rank': 12, 'name': 'Doni Pratama', 'xp': '1,150 XP', 'avatar': '🧑'},
-          {'rank': 13, 'name': 'Anisa Putri', 'xp': '1,020 XP', 'avatar': '👩'},
-          {'rank': 14, 'name': 'Kamu (EcoWarrior)', 'xp': '960 XP', 'avatar': '🌱', 'isSelf': true},
-          {'rank': 15, 'name': 'Reza Fauzi', 'xp': '910 XP', 'avatar': '👨'},
-          {'rank': 16, 'name': 'Eka Lestari', 'xp': '880 XP', 'avatar': '👧'},
-        ];
+        list = await repo.getGlobalLeaderboard();
       }
-    } else if (_selectedFilter == 1) {
-      if (_selectedProvinsi == 'Jawa Barat') {
-        return [
-          {'rank': 10, 'name': 'Rian E.', 'xp': '1,420 XP', 'avatar': '🧑'},
-          {'rank': 11, 'name': 'Budi W.', 'xp': '1,200 XP', 'avatar': '🧑'},
-          {'rank': 12, 'name': 'Kamu (EcoWarrior)', 'xp': '960 XP', 'avatar': '🌱', 'isSelf': true},
-          {'rank': 13, 'name': 'Doni Pratama', 'xp': '850 XP', 'avatar': '🧑'},
-          {'rank': 14, 'name': 'Anisa Putri', 'xp': '820 XP', 'avatar': '👩'},
-        ];
-      } else if (_selectedProvinsi == 'DKI Jakarta') {
-        return [
-          {'rank': 17, 'name': 'Rian E.', 'xp': '1,120 XP', 'avatar': '🧑'},
-          {'rank': 18, 'name': 'Budi W.', 'xp': '1,020 XP', 'avatar': '🧑'},
-          {'rank': 19, 'name': 'Kamu (EcoWarrior)', 'xp': '960 XP', 'avatar': '🌱', 'isSelf': true},
-          {'rank': 20, 'name': 'Reza Fauzi', 'xp': '910 XP', 'avatar': '👨'},
-          {'rank': 21, 'name': 'Eka Lestari', 'xp': '890 XP', 'avatar': '👧'},
-        ];
-      } else if (_selectedProvinsi == 'Jawa Tengah') {
-        return [
-          {'rank': 23, 'name': 'Doni Pratama', 'xp': '1,150 XP', 'avatar': '🧑'},
-          {'rank': 24, 'name': 'Anisa Putri', 'xp': '1,020 XP', 'avatar': '👩'},
-          {'rank': 25, 'name': 'Kamu (EcoWarrior)', 'xp': '960 XP', 'avatar': '🌱', 'isSelf': true},
-          {'rank': 26, 'name': 'Reza Fauzi', 'xp': '910 XP', 'avatar': '👨'},
-          {'rank': 27, 'name': 'Eka Lestari', 'xp': '880 XP', 'avatar': '👧'},
-        ];
-      } else {
-        return [
-          {'rank': 39, 'name': 'Rian E.', 'xp': '1,050 XP', 'avatar': '🧑'},
-          {'rank': 40, 'name': 'Budi W.', 'xp': '1,010 XP', 'avatar': '🧑'},
-          {'rank': 41, 'name': 'Kamu (EcoWarrior)', 'xp': '960 XP', 'avatar': '🌱', 'isSelf': true},
-          {'rank': 42, 'name': 'Doni Pratama', 'xp': '890 XP', 'avatar': '🧑'},
-          {'rank': 43, 'name': 'Anisa Putri', 'xp': '820 XP', 'avatar': '👩'},
-        ];
+
+      if (mounted) {
+        setState(() {
+          _leaderboardList = list;
+          _isLoading = false;
+        });
       }
-    } else {
-      return [
-        {'rank': 140, 'name': 'Yusuf A.', 'xp': '1,050 XP', 'avatar': '🧑'},
-        {'rank': 141, 'name': 'Rian E.', 'xp': '1,010 XP', 'avatar': '🧑'},
-        {'rank': 142, 'name': 'Kamu (EcoWarrior)', 'xp': '960 XP', 'avatar': '🌱', 'isSelf': true},
-        {'rank': 143, 'name': 'Budi W.', 'xp': '920 XP', 'avatar': '🧑'},
-        {'rank': 144, 'name': 'Doni Pratama', 'xp': '850 XP', 'avatar': '🧑'},
-      ];
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = e.toString();
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final currentPodium = _currentPodium;
-    final currentUser = _currentUserStanding;
-    final currentList = _currentRankList;
+    // Determine active user ID
+    final authState = context.watch<AuthBloc>().state;
+    String? currentUserId;
+    if (authState is Authenticated) {
+      currentUserId = authState.user.id;
+    }
+
+    // Find current user standing
+    UserLeaderboardModel? currentUserEntry;
+    int currentUserIndex = -1;
+    if (currentUserId != null) {
+      for (int i = 0; i < _leaderboardList.length; i++) {
+        if (_leaderboardList[i].id == currentUserId) {
+          currentUserEntry = _leaderboardList[i];
+          currentUserIndex = i;
+          break;
+        }
+      }
+    }
+
+    // Split top 3 and the rest
+    final firstUser = _leaderboardList.isNotEmpty ? _leaderboardList[0] : null;
+    final secondUser = _leaderboardList.length > 1 ? _leaderboardList[1] : null;
+    final thirdUser = _leaderboardList.length > 2 ? _leaderboardList[2] : null;
+
+    final listEntries = _leaderboardList.length > 3 ? _leaderboardList.sublist(3) : <UserLeaderboardModel>[];
 
     return Scaffold(
       backgroundColor: AppColors.surface,
       body: RefreshIndicator(
-        onRefresh: () async {
-          await Future.delayed(const Duration(milliseconds: 1000));
-          if (mounted) {
-            setState(() {});
-          }
-        },
+        onRefresh: _fetchLeaderboard,
         color: AppColors.navy900,
         backgroundColor: Colors.white,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
           child: Stack(
             children: [
-            // Curved Dark Navy Header Banner
-            Container(
-              height: 430,
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    AppColors.navy900,
-                    Color(0xFF0F2042), // Pure Dark Navy
-                  ],
-                ),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(36),
-                  bottomRight: Radius.circular(36),
-                ),
-              ),
-            ),
-
-            // Decorative background glowing ring
-            Positioned(
-              top: -40,
-              left: -40,
-              child: Container(
-                width: 150,
-                height: 150,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.navy600.withValues(alpha: 0.12),
+              // Curved Dark Navy Header Banner
+              Container(
+                height: 440,
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppColors.navy900,
+                      Color(0xFF0F2042),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(36),
+                    bottomRight: Radius.circular(36),
+                  ),
                 ),
               ),
-            ),
-            Positioned(
-              top: 80,
-              right: -50,
-              child: Container(
-                width: 130,
-                height: 130,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.navy500.withValues(alpha: 0.08),
+
+              // Glowing decorative rings
+              Positioned(
+                top: -40,
+                left: -40,
+                child: Container(
+                  width: 150,
+                  height: 150,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.navy600.withValues(alpha: 0.15),
+                  ),
                 ),
               ),
-            ),
 
-            // Content Column
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const SizedBox(height: 52), // Space for status bar
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: 52),
 
-                // Custom AppBar inside Stack (Delay 50ms)
-                FadeSlideEntrance(
-                  delay: const Duration(milliseconds: 50),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const SizedBox(width: 48), // Spacer to balance info button
-                        Text(
-                          'Papan Peringkat',
-                          style: AppTextStyles.headlineSmall.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
+                  // Custom AppBar
+                  FadeSlideEntrance(
+                    delay: const Duration(milliseconds: 50),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const SizedBox(width: 48),
+                          Text(
+                            'Papan Peringkat',
+                            style: AppTextStyles.headlineSmall.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.info_outline_rounded, color: Colors.white70),
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).clearSnackBars();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  '🏆 XP didapatkan dari penyelesaian pelaporan dan tantangan harian di wilayahmu.',
-                                  style: AppTextStyles.labelSmall.copyWith(color: Colors.white),
+                          IconButton(
+                            icon: const Icon(Icons.info_outline_rounded, color: Colors.white70),
+                            onPressed: () {
+                              ScaffoldMessenger.of(context).clearSnackBars();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    '🏆 XP didapatkan dari penyelesaian pelaporan dan tantangan harian di wilayahmu.',
+                                    style: AppTextStyles.labelSmall.copyWith(color: Colors.white),
+                                  ),
+                                  backgroundColor: AppColors.navy800,
                                 ),
-                                backgroundColor: AppColors.navy800,
-                              ),
-                            );
-                          },
-                        ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Location filters
+                  FadeSlideEntrance(
+                    delay: const Duration(milliseconds: 100),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildLocationFilter(),
+                        const SizedBox(height: 8),
+                        _buildLocationSelectorTag(),
                       ],
                     ),
                   ),
-                ),
-                const SizedBox(height: 8),
+                  const SizedBox(height: 14),
 
-                // Segmented Location Filter & Location Selector (Delay 100ms)
-                FadeSlideEntrance(
-                  delay: const Duration(milliseconds: 100),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _buildLocationFilter(),
-                      const SizedBox(height: 8),
-                      _buildLocationSelectorTag(),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 14),
-
-                // Top 3 Podium Columns (Delay 150ms) - Unified Podium Deck Card
-                FadeSlideEntrance(
-                  delay: const Duration(milliseconds: 150),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: AppConstants.pagePaddingH),
-                    child: Container(
-                      padding: const EdgeInsets.fromLTRB(12, 20, 12, 16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1E293B).withValues(alpha: 0.65), // Cohesive glass deck
-                        borderRadius: BorderRadius.circular(28),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1.5),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.25),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
+                  if (_isLoading)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: _buildPodiumShimmer(),
+                    )
+                  else if (_errorMessage != null)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+                      child: Center(
+                        child: Text(
+                          'Gagal memuat leaderboard: $_errorMessage',
+                          style: const TextStyle(color: Colors.white70),
+                          textAlign: TextAlign.center,
+                        ),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          // Rank 2 (Left)
-                          FadeSlideEntrance(
-                            delay: const Duration(milliseconds: 250),
-                            curve: Curves.easeOutBack,
-                            child: _buildPodiumPosition(
-                              name: currentPodium['second']!['name']!,
-                              xp: currentPodium['second']!['xp']!,
-                              rank: 2,
-                              badge: '🥈',
-                              color: const Color(0xFFC0C0C0),
-                              avatarInitial: currentPodium['second']!['initial']!,
-                              height: 72,
-                            ),
+                    )
+                  else ...[
+                    // Podium UI
+                    FadeSlideEntrance(
+                      delay: const Duration(milliseconds: 150),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: AppConstants.pagePaddingH),
+                        child: Container(
+                          padding: const EdgeInsets.fromLTRB(12, 20, 12, 16),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1E293B).withValues(alpha: 0.65),
+                            borderRadius: BorderRadius.circular(28),
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1.5),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.25),
+                                blurRadius: 20,
+                                offset: const Offset(0, 10),
+                              ),
+                            ],
                           ),
-                          // Rank 1 (Center)
-                          FadeSlideEntrance(
-                            delay: const Duration(milliseconds: 400),
-                            curve: Curves.easeOutBack,
-                            child: _buildPodiumPosition(
-                              name: currentPodium['first']!['name']!,
-                              xp: currentPodium['first']!['xp']!,
-                              rank: 1,
-                              badge: '👑',
-                              color: AppColors.gold,
-                              avatarInitial: currentPodium['first']!['initial']!,
-                              height: 104,
-                              isGold: true,
-                            ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              // Rank 2 (Left)
+                              Expanded(
+                                child: _buildPodiumPosition(
+                                  user: secondUser,
+                                  fallbackName: 'Peringkat 2',
+                                  rank: 2,
+                                  badge: '🥈',
+                                  color: const Color(0xFFC0C0C0),
+                                  height: 72,
+                                ),
+                              ),
+                              // Rank 1 (Center)
+                              Expanded(
+                                child: _buildPodiumPosition(
+                                  user: firstUser,
+                                  fallbackName: 'Peringkat 1',
+                                  rank: 1,
+                                  badge: '👑',
+                                  color: AppColors.gold,
+                                  height: 104,
+                                  isGold: true,
+                                ),
+                              ),
+                              // Rank 3 (Right)
+                              Expanded(
+                                child: _buildPodiumPosition(
+                                  user: thirdUser,
+                                  fallbackName: 'Peringkat 3',
+                                  rank: 3,
+                                  badge: '🥉',
+                                  color: const Color(0xFFCD7F32),
+                                  height: 56,
+                                ),
+                              ),
+                            ],
                           ),
-                          // Rank 3 (Right)
-                          FadeSlideEntrance(
-                            delay: const Duration(milliseconds: 550),
-                            curve: Curves.easeOutBack,
-                            child: _buildPodiumPosition(
-                              name: currentPodium['third']!['name']!,
-                              xp: currentPodium['third']!['xp']!,
-                              rank: 3,
-                              badge: '🥉',
-                              color: const Color(0xFFCD7F32),
-                              avatarInitial: currentPodium['third']!['initial']!,
-                              height: 56,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 24),
+                    const SizedBox(height: 24),
 
-                // Floating User Status Card (Delay 200ms)
-                FadeSlideEntrance(
-                  delay: const Duration(milliseconds: 200),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: AppConstants.pagePaddingH),
-                    child: Container(
-                      padding: const EdgeInsets.all(18),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [AppColors.gold50, Color(0xFFFDFDFB)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(
-                          color: AppColors.gold.withValues(alpha: 0.35),
-                          width: 1.5,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.navy900.withValues(alpha: 0.08),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          // Current user's avatar representation SVG
-                          Container(
-                            width: 44,
-                            height: 44,
+                    // Current User standing card
+                    if (currentUserEntry != null)
+                      FadeSlideEntrance(
+                        delay: const Duration(milliseconds: 200),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: AppConstants.pagePaddingH),
+                          child: Container(
+                            padding: const EdgeInsets.all(18),
                             decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(color: AppColors.gold, width: 2),
-                            ),
-                            child: ClipOval(
-                              child: SvgPicture.string(
-                                AppSvgs.defaultAvatar,
-                                width: 44,
-                                height: 44,
+                              gradient: const LinearGradient(
+                                colors: [AppColors.gold50, Color(0xFFFDFDFB)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
                               ),
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(
+                                color: AppColors.gold.withValues(alpha: 0.35),
+                                width: 1.5,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.navy900.withValues(alpha: 0.08),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 10),
+                                ),
+                              ],
                             ),
-                          ),
-                          const SizedBox(width: 14),
-                          // Rank Standing Text
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            child: Row(
                               children: [
-                                Text(
-                                  'Peringkat Kamu: ${currentUser['rank']}',
-                                  style: AppTextStyles.labelMedium.copyWith(
-                                    color: AppColors.gold,
-                                    fontWeight: FontWeight.bold,
+                                Container(
+                                  width: 44,
+                                  height: 44,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: AppColors.gold, width: 2),
+                                  ),
+                                  child: ClipOval(
+                                    child: currentUserEntry.avatarUrl != null
+                                        ? Image.network(currentUserEntry.avatarUrl!, fit: BoxFit.cover)
+                                        : SvgPicture.string(
+                                            AppSvgs.defaultAvatar,
+                                            width: 44,
+                                            height: 44,
+                                          ),
                                   ),
                                 ),
-                                const SizedBox(height: 3),
-                                Text(
-                                  currentUser['motivational']!,
-                                  style: AppTextStyles.bodySmall.copyWith(
-                                    color: AppColors.textPrimary,
-                                    fontWeight: FontWeight.w500,
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Peringkat Kamu: #${currentUserEntry.rank}',
+                                        style: AppTextStyles.labelMedium.copyWith(
+                                          color: AppColors.gold,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 3),
+                                      Text(
+                                        currentUserIndex == 0
+                                            ? 'Luar biasa! Kamu memimpin papan peringkat saat ini! 👑'
+                                            : 'Kumpulkan ${_leaderboardList[currentUserIndex - 1].xp - currentUserEntry.xp} XP lagi untuk geser ${_leaderboardList[currentUserIndex - 1].fullName}!',
+                                        style: AppTextStyles.bodySmall.copyWith(
+                                          color: AppColors.textPrimary,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.gold.withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(color: AppColors.gold.withValues(alpha: 0.2), width: 1),
+                                  ),
+                                  child: Text(
+                                    '${currentUserEntry.xp} XP',
+                                    style: AppTextStyles.labelSmall.copyWith(
+                                      color: AppColors.gold,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                          // Current Points Pill
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: AppColors.gold.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: AppColors.gold.withValues(alpha: 0.2), width: 1),
-                            ),
-                            child: Text(
-                              currentUser['xp']!,
-                              style: AppTextStyles.labelSmall.copyWith(
-                                color: AppColors.gold,
-                                fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    const SizedBox(height: 20),
+
+                    // Rank List
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: AppConstants.pagePaddingH),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          if (listEntries.isEmpty)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 24),
+                              child: Center(
+                                child: Text(
+                                  'Tidak ada data peringkat lain.',
+                                  style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+                                ),
                               ),
-                            ),
-                          ),
+                            )
+                          else
+                            ...listEntries.asMap().entries.map((entry) {
+                              final idx = entry.key;
+                              final item = entry.value;
+                              return FadeSlideEntrance(
+                                delay: Duration(milliseconds: 250 + idx * 80),
+                                curve: Curves.easeOutBack,
+                                child: _buildRankRow(
+                                  user: item,
+                                  isSelf: item.id == currentUserId,
+                                ),
+                              );
+                            }),
+                          const SizedBox(height: 120),
                         ],
                       ),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // Rank List Rows (Delay 250ms)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppConstants.pagePaddingH),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      ...currentList.asMap().entries.map((entry) {
-                        final index = entry.key;
-                        final item = entry.value;
-                        return FadeSlideEntrance(
-                          delay: Duration(milliseconds: 250 + index * 80),
-                          curve: Curves.easeOutBack,
-                          child: _buildRankRow(
-                            rank: item['rank'] as int,
-                            name: item['name'] as String,
-                            xp: item['xp'] as String,
-                            avatarChar: item['avatar'] as String,
-                            isSelf: item['isSelf'] == true,
-                          ),
-                        );
-                      }),
-                      const SizedBox(height: 120), // Bottom spacer to avoid bottom navbar overlapping
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ],
+                  ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   void _showLocationSelectorBottomSheet(BuildContext context) {
     final bool isKabupaten = _selectedFilter == 0;
@@ -621,6 +495,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                         }
                       });
                       Navigator.pop(context);
+                      _fetchLeaderboard();
                     },
                   ),
                 );
@@ -634,7 +509,6 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
 
   Widget _buildLocationSelectorTag() {
     if (_selectedFilter == 2) {
-      // Nasional
       return Container(
         margin: const EdgeInsets.symmetric(vertical: 4),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -729,6 +603,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
           setState(() {
             _selectedFilter = index;
           });
+          _fetchLeaderboard();
         },
         child: MouseRegion(
           cursor: SystemMouseCursors.click,
@@ -765,22 +640,23 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
   }
 
   Widget _buildPodiumPosition({
-    required String name,
-    required String xp,
+    required UserLeaderboardModel? user,
+    required String fallbackName,
     required int rank,
     required String badge,
     required Color color,
-    required String avatarInitial,
     required double height,
     bool isGold = false,
   }) {
+    final name = user?.fullName ?? fallbackName;
+    final xp = user != null ? '${user.xp} XP' : '- XP';
+    final initial = user != null ? user.fullName.substring(0, 1).toUpperCase() : '?';
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Medal/Crown Badge
         Text(badge, style: const TextStyle(fontSize: 22)),
         const SizedBox(height: 6),
-        // Avatar circle
         Container(
           width: isGold ? 48 : 38,
           height: isGold ? 48 : 38,
@@ -802,14 +678,16 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                 : null,
           ),
           child: Center(
-            child: Text(
-              avatarInitial,
-              style: TextStyle(
-                color: isGold ? AppColors.gold : color,
-                fontWeight: FontWeight.bold,
-                fontSize: isGold ? 16 : 14,
-              ),
-            ),
+            child: user?.avatarUrl != null
+                ? ClipOval(child: Image.network(user!.avatarUrl!, width: double.infinity, height: double.infinity, fit: BoxFit.cover))
+                : Text(
+                    initial,
+                    style: TextStyle(
+                      color: isGold ? AppColors.gold : color,
+                      fontWeight: FontWeight.bold,
+                      fontSize: isGold ? 16 : 14,
+                    ),
+                  ),
           ),
         ),
         const SizedBox(height: 6),
@@ -820,6 +698,9 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
             fontWeight: FontWeight.bold,
             color: Colors.white,
           ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
         ),
         Text(
           xp,
@@ -830,7 +711,6 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
           ),
         ),
         const SizedBox(height: 10),
-        // Podium Column - Redesigned as a 3D Cylinder
         Container(
           width: isGold ? 72 : 62,
           height: height,
@@ -838,9 +718,9 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
             gradient: LinearGradient(
               colors: isGold
                   ? [
-                      const Color(0xFFD97706), // Rich dark gold
+                      const Color(0xFFD97706),
                       AppColors.gold,
-                      const Color(0xFFFBBF24), // Shiny bright gold
+                      const Color(0xFFFBBF24),
                     ]
                   : [
                       color.withValues(alpha: 0.7),
@@ -881,12 +761,11 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
   }
 
   Widget _buildRankRow({
-    required int rank,
-    required String name,
-    required String xp,
-    required String avatarChar,
+    required UserLeaderboardModel user,
     bool isSelf = false,
   }) {
+    final initial = user.fullName.isNotEmpty ? user.fullName.substring(0, 1).toUpperCase() : '?';
+
     return Container(
       margin: const EdgeInsets.only(bottom: AppConstants.spacing12),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -905,7 +784,6 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
             blurRadius: 14,
             offset: const Offset(0, 6),
           ),
-          // Subtle top-left highlight for claymorphic puffy feel
           if (!isSelf)
             const BoxShadow(
               color: Colors.white,
@@ -916,11 +794,10 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
       ),
       child: Row(
         children: [
-          // Rank Number
           SizedBox(
             width: 32,
             child: Text(
-              '#$rank',
+              '#${user.rank}',
               style: AppTextStyles.headlineSmall.copyWith(
                 color: isSelf ? AppColors.gold : AppColors.textSecondary,
                 fontWeight: FontWeight.bold,
@@ -928,8 +805,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
               ),
             ),
           ),
-          // User Avatar representation (SVG or CircleAvatar)
-          isSelf
+          user.avatarUrl != null
               ? Container(
                   width: 36,
                   height: 36,
@@ -937,23 +813,18 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                     shape: BoxShape.circle,
                   ),
                   child: ClipOval(
-                    child: SvgPicture.string(
-                      AppSvgs.defaultAvatar,
-                      width: 36,
-                      height: 36,
-                    ),
+                    child: Image.network(user.avatarUrl!, fit: BoxFit.cover),
                   ),
                 )
               : CircleAvatar(
                   radius: 18,
                   backgroundColor: AppColors.navy50,
-                  child: Text(avatarChar, style: const TextStyle(fontSize: 16)),
+                  child: Text(initial, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.navy700)),
                 ),
           const SizedBox(width: 16),
-          // User Name
           Expanded(
             child: Text(
-              name,
+              isSelf ? '${user.fullName} (Kamu)' : user.fullName,
               style: AppTextStyles.titleMedium.copyWith(
                 fontWeight: isSelf ? FontWeight.bold : FontWeight.w600,
                 color: AppColors.navy900,
@@ -961,7 +832,6 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
               ),
             ),
           ),
-          // Points/XP Badge
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
@@ -975,7 +845,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
               ),
             ),
             child: Text(
-              xp,
+              '${user.xp} XP',
               style: AppTextStyles.labelSmall.copyWith(
                 color: isSelf ? AppColors.gold : AppColors.navy700,
                 fontWeight: FontWeight.bold,
@@ -984,6 +854,20 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPodiumShimmer() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: Container(
+        height: 200,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(28),
+        ),
       ),
     );
   }

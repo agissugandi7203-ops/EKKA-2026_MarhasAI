@@ -9,8 +9,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:lottie/lottie.dart';
 
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/network/dio_client.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/fade_slide_entrance.dart';
@@ -37,7 +39,6 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
   final ScrollController _scrollController = ScrollController();
   
   late AnimationController _orbAnimationController;
-  late AnimationController _orbRotationController;
   late Animation<double> _orbScaleAnimation;
 
   String _selectedModel = 'google/gemini-2.5-flash';
@@ -63,12 +64,6 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
     _orbScaleAnimation = Tween<double>(begin: 0.95, end: 1.04).animate(
       CurvedAnimation(parent: _orbAnimationController, curve: Curves.easeInOutSine),
     );
-
-    // Animation controller for rotating SweepGradient on the voice orb (GPU-accelerated)
-    _orbRotationController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 8),
-    )..repeat();
   }
 
   @override
@@ -77,7 +72,6 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
     _textController.dispose();
     _scrollController.dispose();
     _orbAnimationController.dispose();
-    _orbRotationController.dispose();
     _audioRecorder.dispose();
     super.dispose();
   }
@@ -148,6 +142,9 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
     if (mounted) {
       context.read<ChatBloc>().add(SendMessageRequested(userMsg, _selectedModel));
       
+      // Trigger daily quest challenge completion
+      DioClient.completeChallenge('chat_ai');
+
       setState(() {
         _attachedFilePath = null;
         _isTyping = false;
@@ -285,80 +282,18 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const SizedBox(height: 16),
-            // Siri/Gemini voice orb (3D-like glowing breathing gradient sphere)
-            RepaintBoundary(
-              child: ScaleTransition(
-                scale: _orbScaleAnimation,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    // Outer soft glow layer (static)
-                    Container(
-                      width: 155,
-                      height: 155,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: RadialGradient(
-                          colors: [
-                            Color(0x44C084FC), // Lavender glow
-                            Color(0x22F472B6), // Pink glow
-                            Color(0x0038BDF8), // Transparent
-                          ],
-                          radius: 0.8,
-                        ),
-                      ),
-                    ),
-                    // Rotating SweepGradient core
-                    RotationTransition(
-                      turns: _orbRotationController,
-                      child: Container(
-                        width: 120,
-                        height: 120,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: const SweepGradient(
-                            colors: [
-                              Color(0xFFC084FC), // Lavender
-                              Color(0xFFF472B6), // Pink
-                              Color(0xFF38BDF8), // Cyan
-                              Color(0xFF818CF8), // Indigo
-                              Color(0xFFC084FC), // Lavender wrap
-                            ],
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFFA855F7).withValues(alpha: 0.3),
-                              blurRadius: 32,
-                              spreadRadius: 2,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    // Inner frosted glass overlay (static reflection highlight)
-                    Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.white.withValues(alpha: 0.45),
-                            Colors.white.withValues(alpha: 0.05),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.5),
-                          width: 1.5,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+             // Premium AI Home Lottie Animation with breathing effect
+             ScaleTransition(
+               scale: _orbScaleAnimation,
+               child: SizedBox(
+                 width: 160,
+                 height: 160,
+                 child: Lottie.asset(
+                   'assets/animations/artificial/ai_home.json',
+                   repeat: true,
+                 ),
+               ),
+             ),
             const SizedBox(height: 36),
             FadeSlideEntrance(
               delay: const Duration(milliseconds: 120),
@@ -593,14 +528,13 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
         Padding(
           padding: const EdgeInsets.only(left: 36.0, right: 8.0, bottom: 12.0),
           child: msg.message.isEmpty
-              ? Row(
-                  children: [
-                    _buildPulseDot(0),
-                    const SizedBox(width: 4),
-                    _buildPulseDot(1),
-                    const SizedBox(width: 4),
-                    _buildPulseDot(2),
-                  ],
+              ? SizedBox(
+                  width: 50,
+                  height: 30,
+                  child: Lottie.asset(
+                    'assets/animations/global/ai_thinking.json',
+                    fit: BoxFit.contain,
+                  ),
                 )
               : _MarkdownStreamRenderer(
                   data: msg.message,
@@ -615,26 +549,6 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildPulseDot(int delayIndex) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0.3, end: 1.0),
-      duration: const Duration(milliseconds: 600),
-      curve: Curves.easeInOut,
-      builder: (context, value, child) {
-        return Opacity(
-          opacity: value,
-          child: Container(
-            width: 7,
-            height: 7,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.navy600,
-            ),
-          ),
-        );
-      },
-    );
-  }
 
   Widget _buildTranscribingIndicator() {
     return Align(
@@ -649,12 +563,12 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
                 color: AppColors.navy100,
                 shape: BoxShape.circle,
               ),
-              child: const SizedBox(
-                width: 14,
-                height: 14,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.navy700),
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: Lottie.asset(
+                  'assets/animations/global/global_loading.json',
+                  fit: BoxFit.contain,
                 ),
               ),
             ),

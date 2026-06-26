@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -6,14 +8,14 @@ import '../../../../core/constants/app_constants.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import 'package:mobile/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:mobile/features/auth/presentation/bloc/auth_state.dart';
 import '../widgets/splash_logo.dart';
 
 /// Splash screen Genesis.id.
 ///
-/// Menampilkan logo animasi + tagline selama [AppConstants.splashDuration],
-/// kemudian auto-navigate berdasarkan:
-/// - Pertama kali buka → Introduction
-/// - Sudah pernah buka → Login
+/// Tagline selama [AppConstants.splashDuration],
+/// kemudian auto-navigate berdasarkan status autentikasi & onboarding.
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
 
@@ -27,6 +29,7 @@ class _SplashPageState extends State<SplashPage>
   late final Animation<double> _fadeAnimation;
   late final Animation<Offset> _slideAnimation;
   bool _startLoading = false;
+  StreamSubscription? _authSubscription;
 
   @override
   void initState() {
@@ -56,12 +59,12 @@ class _SplashPageState extends State<SplashPage>
     );
 
     _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.15), // Lebih halus & soft (bukan 0.3)
+      begin: const Offset(0, 0.15),
       end: Offset.zero,
     ).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: const Interval(0.3, 0.9, curve: Curves.easeOutQuint), // Transisi eksponensial premium
+        curve: const Interval(0.3, 0.9, curve: Curves.easeOutQuint),
       ),
     );
 
@@ -77,15 +80,44 @@ class _SplashPageState extends State<SplashPage>
 
     if (!mounted) return;
 
-    if (hasSeenIntro) {
-      context.goNamed(Routes.loginName);
+    final authBloc = context.read<AuthBloc>();
+    final state = authBloc.state;
+
+    void redirect(AuthState s) {
+      if (s is Authenticated) {
+        if (s.needsOnboarding) {
+          context.goNamed(Routes.setupWelcomeName);
+        } else {
+          context.goNamed(Routes.homeName);
+        }
+      } else {
+        if (hasSeenIntro) {
+          context.goNamed(Routes.loginName);
+        } else {
+          context.goNamed(Routes.preOnboardingName);
+        }
+      }
+    }
+
+    if (state is Authenticated || state is Unauthenticated || state is AuthFailure) {
+      redirect(state);
     } else {
-      context.goNamed(Routes.preOnboardingName);
+      // Jika session status masih loading/initial, dengarkan stream sampai selesai memuat
+      _authSubscription = authBloc.stream.listen((newState) {
+        if (newState is Authenticated || newState is Unauthenticated || newState is AuthFailure) {
+          _authSubscription?.cancel();
+          _authSubscription = null;
+          if (mounted) {
+            redirect(newState);
+          }
+        }
+      });
     }
   }
 
   @override
   void dispose() {
+    _authSubscription?.cancel();
     _controller.dispose();
     super.dispose();
   }

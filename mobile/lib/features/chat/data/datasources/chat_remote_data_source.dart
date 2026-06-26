@@ -11,9 +11,13 @@ class ChatRemoteDataSource {
   ChatRemoteDataSource(this._dioClient);
 
   /// Mengirim pesan secara instan (mengembalikan respons lengkap langsung)
-  Future<String> sendMessageInstant(ChatMessageModel message, String model) async {
+  Future<String> sendMessageInstant(ChatMessageModel message, String model, List<ChatMessageModel> history) async {
     final Map<String, dynamic> data = message.toJson();
     data['model'] = model;
+    data['history'] = history.map((m) => {
+      'sender': m.sender == 'user' ? 'user' : 'assistant',
+      'message': m.message,
+    }).toList();
 
     final response = await _dioClient.dio.post(
       '/chat',
@@ -45,10 +49,10 @@ class ChatRemoteDataSource {
   }
 
   /// Mengirim pesan dengan streaming (mengembalikan Stream token kata demi kata)
-  Stream<String> sendMessageStream(ChatMessageModel message, String model) {
+  Stream<String> sendMessageStream(ChatMessageModel message, String model, List<ChatMessageModel> history) {
     final controller = StreamController<String>();
 
-    _executeStreamRequest(message, model, controller);
+    _executeStreamRequest(message, model, history, controller);
 
     return controller.stream;
   }
@@ -57,11 +61,16 @@ class ChatRemoteDataSource {
   void _executeStreamRequest(
     ChatMessageModel message,
     String model,
+    List<ChatMessageModel> history,
     StreamController<String> controller,
   ) async {
     try {
       final Map<String, dynamic> data = message.toJson();
       data['model'] = model;
+      data['history'] = history.map((m) => {
+        'sender': m.sender == 'user' ? 'user' : 'assistant',
+        'message': m.message,
+      }).toList();
 
       final response = await _dioClient.dio.post<ResponseBody>(
         '/chat/stream',

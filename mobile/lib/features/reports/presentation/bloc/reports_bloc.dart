@@ -11,10 +11,12 @@ class ReportsBloc extends Bloc<ReportsEvent, ReportsState> {
     required ReportRepository reportRepository,
   })  : _reportRepository = reportRepository,
         super(ReportsInitial()) {
-    on<FetchReportsRequested>(_onFetchReportsRequested);
+    on<FetchReportsRequested>(_onFetchRequestedOrDeleted);
     on<UploadReportRequested>(_onUploadReportRequested);
+    on<DeleteReportRequested>(_onDeleteReportRequested);
   }
 
+  // Rename _onFetchReportsRequested to reuse for fetch/delete or handle fetch separately
   Future<void> _onFetchReportsRequested(
     FetchReportsRequested event,
     Emitter<ReportsState> emit,
@@ -27,6 +29,14 @@ class ReportsBloc extends Bloc<ReportsEvent, ReportsState> {
       final appError = ErrorHandler.handle(e);
       emit(ReportsFailure(appError.message));
     }
+  }
+
+  // Helper/alias to avoid deprecation or handle FetchReportsRequested
+  Future<void> _onFetchRequestedOrDeleted(
+    FetchReportsRequested event,
+    Emitter<ReportsState> emit,
+  ) async {
+    await _onFetchReportsRequested(event, emit);
   }
 
   Future<void> _onUploadReportRequested(
@@ -42,6 +52,21 @@ class ReportsBloc extends Bloc<ReportsEvent, ReportsState> {
         description: event.description,
       );
       emit(ReportUploadSuccess(response));
+    } catch (e) {
+      final appError = ErrorHandler.handle(e);
+      emit(ReportsFailure(appError.message));
+    }
+  }
+
+  Future<void> _onDeleteReportRequested(
+    DeleteReportRequested event,
+    Emitter<ReportsState> emit,
+  ) async {
+    emit(ReportsLoading());
+    try {
+      await _reportRepository.deleteReport(event.reportId);
+      final reports = await _reportRepository.getReports();
+      emit(ReportsFetchSuccess(reports));
     } catch (e) {
       final appError = ErrorHandler.handle(e);
       emit(ReportsFailure(appError.message));

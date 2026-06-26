@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 
 import '../constants/app_constants.dart';
 import '../theme/app_colors.dart';
@@ -61,6 +62,10 @@ class GenesisButton extends StatelessWidget {
   Widget _buildPrimary(bool isDisabled) {
     return ElevatedButton(
       onPressed: isDisabled ? null : onPressed,
+      style: ElevatedButton.styleFrom(
+        disabledBackgroundColor: isLoading ? AppColors.navy700 : AppColors.disabled,
+        disabledForegroundColor: isLoading ? AppColors.textOnDark : AppColors.textDisabled,
+      ),
       child: _buildChild(AppColors.textOnDark),
     );
   }
@@ -68,6 +73,15 @@ class GenesisButton extends StatelessWidget {
   Widget _buildSecondary(bool isDisabled) {
     return OutlinedButton(
       onPressed: isDisabled ? null : onPressed,
+      style: OutlinedButton.styleFrom(
+        disabledForegroundColor: isLoading ? AppColors.navy700 : AppColors.textDisabled,
+        side: BorderSide(
+          color: isLoading
+              ? AppColors.navy700
+              : (isDisabled ? AppColors.disabled : AppColors.navy200),
+          width: 1.5,
+        ),
+      ),
       child: _buildChild(AppColors.navy700),
     );
   }
@@ -75,6 +89,9 @@ class GenesisButton extends StatelessWidget {
   Widget _buildText(bool isDisabled) {
     return TextButton(
       onPressed: isDisabled ? null : onPressed,
+      style: TextButton.styleFrom(
+        disabledForegroundColor: isLoading ? AppColors.navy600 : AppColors.textDisabled,
+      ),
       child: _buildChild(AppColors.navy600),
     );
   }
@@ -84,9 +101,9 @@ class GenesisButton extends StatelessWidget {
       return SizedBox(
         width: 22,
         height: 22,
-        child: CircularProgressIndicator(
-          strokeWidth: 2.5,
-          color: contentColor,
+        child: Lottie.asset(
+          'assets/animations/global/global_loading.json',
+          fit: BoxFit.contain,
         ),
       );
     }

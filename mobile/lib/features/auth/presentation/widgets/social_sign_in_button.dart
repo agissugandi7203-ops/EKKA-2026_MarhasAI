@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -26,18 +27,22 @@ class SocialSignInButton extends StatelessWidget {
       child: OutlinedButton(
         onPressed: isLoading ? null : onPressed,
         style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: AppColors.divider, width: 1.5),
+          side: BorderSide(
+            color: isLoading ? AppColors.navy600 : AppColors.divider, 
+            width: 1.5,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
           ),
+          disabledForegroundColor: isLoading ? AppColors.textSecondary : AppColors.textDisabled,
         ),
         child: isLoading
-            ? const SizedBox(
+            ? SizedBox(
                 width: 22,
                 height: 22,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.5,
-                  color: AppColors.textSecondary,
+                child: Lottie.asset(
+                  'assets/animations/global/global_loading.json',
+                  fit: BoxFit.contain,
                 ),
               )
             : Row(

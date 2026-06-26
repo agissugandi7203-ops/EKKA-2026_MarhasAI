@@ -26,6 +26,9 @@ import 'features/reports/data/datasources/report_remote_data_source.dart';
 import 'features/reports/data/repositories/report_repository_impl.dart';
 import 'features/reports/domain/repositories/report_repository.dart';
 import 'features/reports/presentation/bloc/reports_bloc.dart';
+import 'features/leaderboard/data/datasources/leaderboard_remote_data_source.dart';
+import 'features/leaderboard/data/repositories/leaderboard_repository_impl.dart';
+import 'features/leaderboard/domain/repositories/leaderboard_repository.dart';
 
 /// Entry point aplikasi Genesis.id.
 ///
@@ -123,11 +126,13 @@ class _GenesisAppState extends State<GenesisApp> {
   late final ProfileRemoteDataSource _profileDataSource;
   late final ChatRemoteDataSource _chatDataSource;
   late final ReportRemoteDataSource _reportDataSource;
+  late final LeaderboardRemoteDataSource _leaderboardDataSource;
 
   /// Repositories.
   late final AuthRepository _authRepository;
   late final ProfileRepository _profileRepository;
   late final ReportRepository _reportRepository;
+  late final LeaderboardRepository _leaderboardRepository;
 
   /// BLoCs.
   late final AuthBloc _authBloc;
@@ -153,11 +158,13 @@ class _GenesisAppState extends State<GenesisApp> {
     _profileDataSource = ProfileRemoteDataSourceImpl(_dioClient);
     _chatDataSource = ChatRemoteDataSource(_dioClient);
     _reportDataSource = ReportRemoteDataSourceImpl(_dioClient);
+    _leaderboardDataSource = LeaderboardRemoteDataSourceImpl(_dioClient);
 
     // ── Repositories ──
     _authRepository = AuthRepositoryImpl(_authDataSource);
     _profileRepository = ProfileRepositoryImpl(_profileDataSource);
     _reportRepository = ReportRepositoryImpl(_reportDataSource);
+    _leaderboardRepository = LeaderboardRepositoryImpl(_leaderboardDataSource);
 
     // ── BLoCs ──
     _authBloc = AuthBloc(
@@ -186,6 +193,7 @@ class _GenesisAppState extends State<GenesisApp> {
         RepositoryProvider<AuthRepository>.value(value: _authRepository),
         RepositoryProvider<ProfileRepository>.value(value: _profileRepository),
         RepositoryProvider<ReportRepository>.value(value: _reportRepository),
+        RepositoryProvider<LeaderboardRepository>.value(value: _leaderboardRepository),
         RepositoryProvider<ChatRemoteDataSource>.value(value: _chatDataSource),
       ],
       child: MultiBlocProvider(

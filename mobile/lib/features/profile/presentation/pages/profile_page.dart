@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:lottie/lottie.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/constants/app_svgs.dart';
@@ -52,8 +53,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
   bool _hasBadge(String code) {
     if (_profile == null) {
-      // Mock defaults: 1st 4 are unlocked, last 4 are locked
-      return code == 'pioneer' || code == 'spotter' || code == 'enthusiast' || code == 'river_hero';
+      // Mock defaults: 1st 2 are unlocked
+      return code == 'first_report' || code == 'streak_3';
     }
     return _profile!.badges.any((b) => b.code.toLowerCase() == code.toLowerCase());
   }
@@ -77,7 +78,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     // Count unlocked badges
     int unlockedCount = 0;
-    final badgeCodes = ['pioneer', 'spotter', 'enthusiast', 'river_hero', 'forester', 'cleanup', 'fauna_guard', 'activist'];
+    final badgeCodes = ['first_report', 'streak_3', 'streak_7', 'toxic_buster', 'green_hero'];
     for (var code in badgeCodes) {
       if (_hasBadge(code)) unlockedCount++;
     }
@@ -327,6 +328,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           value: '${xp * 3}',
                           icon: Icons.monetization_on_rounded,
                           color: AppColors.gold,
+                          lottieAsset: 'assets/animations/achievements/badge.json',
                         ),
                       ),
                       const SizedBox(width: AppConstants.spacing12),
@@ -336,6 +338,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           value: '$activeStreak Hari',
                           icon: Icons.local_fire_department_rounded,
                           color: AppColors.error,
+                          lottieAsset: 'assets/animations/achievements/strike_fire.json',
                         ),
                       ),
                     ],
@@ -355,7 +358,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Lencana Tersimpan ($unlockedCount/8)',
+                        'Lencana Tersimpan ($unlockedCount/5)',
                         style: AppTextStyles.headlineSmall.copyWith(
                           fontWeight: FontWeight.bold,
                           color: AppColors.navy900,
@@ -378,14 +381,11 @@ class _ProfilePageState extends State<ProfilePage> {
                     mainAxisSpacing: AppConstants.spacing16,
                     crossAxisSpacing: AppConstants.spacing16,
                     children: [
-                      _buildBadgeItem(AppSvgs.badgePioneer, 'Pioneer', _hasBadge('pioneer')),
-                      _buildBadgeItem(AppSvgs.badgeSpotter, 'Spotter', _hasBadge('spotter')),
-                      _buildBadgeItem(AppSvgs.badgeEnthusiast, 'Enthusiast', _hasBadge('enthusiast')),
-                      _buildBadgeItem(AppSvgs.badgeRiverHero, 'River Hero', _hasBadge('river_hero')),
-                      _buildBadgeItem(AppSvgs.badgeForester, 'Forester', _hasBadge('forester')),
-                      _buildBadgeItem(AppSvgs.badgeCleanup, 'Clean-Up', _hasBadge('cleanup')),
-                      _buildBadgeItem(AppSvgs.badgeFaunaGuard, 'Fauna Guard', _hasBadge('fauna_guard')),
-                      _buildBadgeItem(AppSvgs.badgeActivist, 'Activist', _hasBadge('activist')),
+                      _buildBadgeItem(AppSvgs.badgePioneer, 'Perintis', _hasBadge('first_report')),
+                      _buildBadgeItem(AppSvgs.badgeEnthusiast, 'Pecinta', _hasBadge('streak_3')),
+                      _buildBadgeItem(AppSvgs.badgeRiverHero, 'Eco Warrior', _hasBadge('streak_7')),
+                      _buildBadgeItem(AppSvgs.badgeCleanup, 'Anti Limbah', _hasBadge('toxic_buster')),
+                      _buildBadgeItem(AppSvgs.badgeActivist, 'Hero Genesis', _hasBadge('green_hero')),
                     ],
                   ),
                 ],
@@ -403,6 +403,7 @@ class _ProfilePageState extends State<ProfilePage> {
     required String value,
     required IconData icon,
     required Color color,
+    String? lottieAsset,
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 16),
@@ -429,7 +430,14 @@ class _ProfilePageState extends State<ProfilePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: color, size: 24),
+          if (lottieAsset != null)
+            SizedBox(
+              width: 28,
+              height: 28,
+              child: Lottie.asset(lottieAsset, repeat: true),
+            )
+          else
+            Icon(icon, color: color, size: 24),
           const SizedBox(height: AppConstants.spacing12),
           Text(
             value,
