@@ -27,18 +27,17 @@ class _WelcomePageState extends State<WelcomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A), // Deep Slate
+      backgroundColor: const Color(0xFFFAFAF8),
       body: Container(
         width: double.infinity,
         height: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
             colors: [
-              Color(0xFF090D16), // Ultra dark slate
-              Color(0xFF0F172A), // Deep slate
-              Color(0xFF064E3B), // Very dark emerald for premium feel
+              Color(0xFFEAF6F0), // Soft mint green
+              Color(0xFFFAFAF8), // Warm white
             ],
           ),
         ),

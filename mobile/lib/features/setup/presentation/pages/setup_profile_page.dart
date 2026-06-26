@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lottie/lottie.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/router/app_router.dart';
@@ -37,7 +36,6 @@ class _SetupProfilePageState extends State<SetupProfilePage> {
   final _usernameController = TextEditingController();
   final _fullNameController = TextEditingController();
   bool _isSubmitting = false;
-  bool _showCongrats = false;
 
   @override
   void dispose() {
@@ -68,14 +66,8 @@ class _SetupProfilePageState extends State<SetupProfilePage> {
 
       setState(() {
         _isSubmitting = false;
-        _showCongrats = true;
       });
 
-      // Tampilkan popup Congratulations selama 3 detik sebelum masuk ke Home
-      await Future.delayed(const Duration(seconds: 3));
-
-      if (!mounted) return;
-      
       // Memicu pengecekan ulang status autentikasi/onboarding di AuthBloc agar tersinkronisasi.
       context.read<AuthBloc>().add(AuthCheckRequested());
     } catch (e) {
@@ -90,42 +82,6 @@ class _SetupProfilePageState extends State<SetupProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    if (_showCongrats) {
-      return Scaffold(
-        backgroundColor: const Color(0xFF0F172A),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              SizedBox(
-                width: 260,
-                height: 260,
-                child: Lottie.asset(
-                  'assets/animations/global/Congratulations.json',
-                  repeat: false,
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Pendaftaran Selesai! 🎉',
-                style: AppTextStyles.headlineMedium.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Selamat datang di Genesis.id',
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: Colors.white70,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
     if (_isSubmitting) {
       return const Scaffold(
         body: Center(
