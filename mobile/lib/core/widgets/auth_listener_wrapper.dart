@@ -81,28 +81,30 @@ class _AuthListenerWrapperState extends State<AuthListenerWrapper> {
       if (handled) return;
     }
 
-    String? currentGlobalPath;
+    String? currentPath;
     try {
-      currentGlobalPath = GoRouter.of(context).routerDelegate.currentConfiguration.uri.path;
-    } catch (_) {}
+      currentPath = GoRouterState.of(context).matchedLocation;
+    } catch (_) {
+      try {
+        currentPath = GoRouter.of(context).routerDelegate.currentConfiguration.uri.path;
+      } catch (_) {}
+    }
 
-    final bool isResetFlow = currentGlobalPath == Routes.otpVerification ||
-        currentGlobalPath == Routes.resetPassword;
+    if (currentPath == null) return;
+
+    final bool isResetFlow = currentPath == Routes.otpVerification ||
+        currentPath == Routes.resetPassword ||
+        currentPath == Routes.forgotPassword;
 
     if (isResetFlow) {
       // Lewati pengalihan otomatis jika berada di alur reset password
       return;
     }
 
-    String? currentPath;
-    try {
-      currentPath = GoRouterState.of(context).matchedLocation;
-    } catch (_) {
-      // Di luar GoRouterState context (seperti pada fallback errorBuilder)
-    }
+    final bool isInSetupFlow = currentPath.startsWith('/setup');
 
     if (state.needsOnboarding) {
-      if (currentPath != Routes.setupWelcome) {
+      if (!isInSetupFlow && currentPath != Routes.setupWelcome) {
         context.goNamed(Routes.setupWelcomeName);
       }
     } else {
@@ -117,11 +119,15 @@ class _AuthListenerWrapperState extends State<AuthListenerWrapper> {
     try {
       currentPath = GoRouterState.of(context).matchedLocation;
     } catch (_) {
-      // Di luar GoRouterState context
+      try {
+        currentPath = GoRouter.of(context).routerDelegate.currentConfiguration.uri.path;
+      } catch (_) {}
     }
 
-    final bool isProtectedRoute = currentPath != null &&
-        (currentPath.startsWith('/setup') || currentPath.startsWith('/home'));
+    if (currentPath == null) return;
+
+    final bool isProtectedRoute = currentPath.startsWith('/setup') ||
+        currentPath.startsWith('/home');
     if (isProtectedRoute) {
       if (currentPath != Routes.login) {
         context.goNamed(Routes.loginName);
