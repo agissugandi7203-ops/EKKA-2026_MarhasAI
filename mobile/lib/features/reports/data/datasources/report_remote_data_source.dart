@@ -63,6 +63,9 @@ class ReportRemoteDataSourceImpl implements ReportRemoteDataSource {
 
   @override
   Future<void> deleteReport(String reportId) async {
-    await _dioClient.dio.delete('/reports/$reportId');
+    await _dioClient.dio.delete(
+      '/reports/$reportId',
+      data: {},
+    );
   }
 }

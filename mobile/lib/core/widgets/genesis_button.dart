@@ -104,6 +104,7 @@ class GenesisButton extends StatelessWidget {
         child: Lottie.asset(
           'assets/animations/global/global_loading.json',
           fit: BoxFit.contain,
+          frameRate: FrameRate.max,
         ),
       );
     }

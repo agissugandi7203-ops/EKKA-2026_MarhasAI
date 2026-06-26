@@ -26,6 +26,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
+  final List<bool> _activatedTabs = [true, false, false, false, false];
   DateTime? _lastPressedAt;
   
   // Spotlight Tour state: null = inactive, 1 = AI Chat, 2 = Camera, 3 = Peringkat
@@ -121,25 +122,49 @@ class _HomePageState extends State<HomePage> {
                 index: _currentIndex,
                 children: [
                   // Tab 0: Home/Dashboard
-                  HomeDashboardView(
-                    onNavigateToLeaderboard: () => setState(() => _currentIndex = 3),
-                    onNavigateToProfile: () => setState(() => _currentIndex = 4),
-                    onNavigateToCamera: () => setState(() => _currentIndex = 2),
-                    onNavigateToChat: () => setState(() => _currentIndex = 1),
-                  ),
+                  _activatedTabs[0]
+                      ? HomeDashboardView(
+                          onNavigateToLeaderboard: () => setState(() {
+                            _currentIndex = 3;
+                            _activatedTabs[3] = true;
+                          }),
+                          onNavigateToProfile: () => setState(() {
+                            _currentIndex = 4;
+                            _activatedTabs[4] = true;
+                          }),
+                          onNavigateToCamera: () => setState(() {
+                            _currentIndex = 2;
+                            _activatedTabs[2] = true;
+                          }),
+                          onNavigateToChat: () => setState(() {
+                            _currentIndex = 1;
+                            _activatedTabs[1] = true;
+                          }),
+                        )
+                      : const SizedBox.shrink(),
                   // Tab 1: Chatbot AI
-                  ChatPage(
-                    onClose: () => setState(() => _currentIndex = 0),
-                  ),
+                  _activatedTabs[1]
+                      ? ChatPage(
+                          onClose: () => setState(() {
+                            _currentIndex = 0;
+                            _activatedTabs[0] = true;
+                          }),
+                        )
+                      : const SizedBox.shrink(),
                   // Tab 2: Camera/Report Viewfinder
-                  ReportsPage(
-                    onClose: () => setState(() => _currentIndex = 0),
-                    isActive: _currentIndex == 2,
-                  ),
+                  _activatedTabs[2]
+                      ? ReportsPage(
+                          onClose: () => setState(() {
+                            _currentIndex = 0;
+                            _activatedTabs[0] = true;
+                          }),
+                          isActive: _currentIndex == 2,
+                        )
+                      : const SizedBox.shrink(),
                   // Tab 3: Leaderboard Podium
-                  const LeaderboardPage(),
+                  _activatedTabs[3] ? const LeaderboardPage() : const SizedBox.shrink(),
                   // Tab 4: Profile & Badges
-                  const ProfilePage(),
+                  _activatedTabs[4] ? const ProfilePage() : const SizedBox.shrink(),
                 ],
               ),
               
@@ -155,6 +180,7 @@ class _HomePageState extends State<HomePage> {
                   onTabSelected: (index) {
                     setState(() {
                       _currentIndex = index;
+                      _activatedTabs[index] = true;
                     });
                   },
                 ),

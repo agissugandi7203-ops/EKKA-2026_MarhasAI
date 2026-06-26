@@ -143,10 +143,10 @@ sequenceDiagram
 - **Service**: [ReportsService](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/backend/src/reports/reports.service.ts)
   - Mengoordinasikan panggilan ke DB RPC, pemrosesan sensor PII, unggahan ke GCS, dan penulisan baris baru.
   - Memicu task klasifikasi AI di latar belakang secara asinkronus setelah laporan berhasil disimpan.
-  - Memverifikasi status saat admin melakukan pembaruan laporan. Jika diubah menjadi `approved`, memicu pemberian reward gamifikasi.
+  - Memverifikasi status saat admin melakukan pembaruan laporan. Jika diubah menjadi `approved`, memicu pemberian reward gamifikasi (+100 XP) serta otomatis menyelesaikan tantangan harian (Daily Quest `report_1_waste` memberi +50 XP jika itu laporan pertama hari itu) secara backend untuk mencegah eksploitasi/cheating dari client.
 - **AI Classification**: [AiClassificationService](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/backend/src/reports/ai-classification.service.ts)
   - Berintegrasi dengan Google Gen AI SDK (`@google/genai`) untuk menganalisis gambar laporan menggunakan model `gemini-1.5-flash` / `gemini-2.5-flash` dengan luaran schema JSON.
-  - Menerapkan aturan persetujuan otomatis (Confidence Score > 85% & isValid = true) dan otomatis memberikan +100 XP, kenaikan level, streak, serta mendeteksi lencana baru.
+  - Menerapkan aturan persetujuan otomatis (Confidence Score > 85% & isValid = true) dan otomatis memicu `ProfilesService.awardReportRewards` untuk memberikan +100 XP, kenaikan level, streak, mendeteksi lencana baru, serta menyelesaikan tantangan harian `report_1_waste` (+50 XP).
   - Mengarahkan laporan dengan tingkat keyakinan rendah atau tidak valid ke status `pending_human` atau `rejected`.
 - **Privacy Redactor**: [PiiRedactionService](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/backend/src/storage/pii-redaction.service.ts)
   - Berintegrasi dengan `@google-cloud/vision` untuk mendeteksi wajah (`faceDetection`) dan teks/plat kendaraan (`textDetection`).
@@ -158,7 +158,11 @@ sequenceDiagram
   - [UploadReportResponse](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/mobile/lib/features/reports/data/models/upload_report_response.dart): Menangani properti status duplikat.
 - **Remote Data Source**: [ReportRemoteDataSourceImpl](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/mobile/lib/features/reports/data/datasources/report_remote_data_source.dart)
   - Mengonversi File gambar dan koordinat GPS menjadi `FormData` multipart sebelum dikirimkan ke Dio client.
+  - Pada request `DELETE`, menyisipkan parameter `data: {}` kosong untuk menghindari error validasi parsing kosong pada Fastify.
 - **Repository**: [ReportRepositoryImpl](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/mobile/lib/features/reports/data/repositories/report_repository_impl.dart)
   - Abstraksi interaksi data untuk presentation layer.
 - **State Management**: [ReportsBloc](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/mobile/lib/features/reports/presentation/bloc/reports_bloc.dart)
   - Mengelola event `UploadReportRequested` dan `FetchReportsRequested` serta memancarkan loading, success, atau failure state.
+- **Tampilan Halaman**: [ReportsPage](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/mobile/lib/features/reports/presentation/pages/reports_page.dart)
+  - Menampilkan antarmuka kamera viewfinder, pratinjau gambar, dan riwayat laporan.
+  - Mengatur dialog sukses setelah unggahan selesai: Jika terdeteksi laporan duplikat (`isDuplicate: true`), menampilkan informasi penggabungan laporan ("Laporan Serupa Ditemukan") dan tidak memicu tantangan harian. Jika laporan baru (unik), menampilkan dialog pemrosesan AI/Admin.

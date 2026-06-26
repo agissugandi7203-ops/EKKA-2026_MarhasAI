@@ -302,12 +302,11 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
             _initializeCamera(); // Re-initialize camera feed only if active
           }
 
-          // Trigger daily quest challenge completion
-          DioClient.completeChallenge('report_1_waste');
-          
           // Refresh list & switch tab
           context.read<ReportsBloc>().add(FetchReportsRequested());
           _tabController.animateTo(1);
+
+          final isDuplicate = state.response.isDuplicate;
 
           // Show success dialog
           showDialog(
@@ -316,11 +315,13 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
               backgroundColor: AppColors.cardBackground,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
               title: Text(
-                'Laporan Terkirim! 🎉',
+                isDuplicate ? 'Laporan Serupa Ditemukan! 📍' : 'Laporan Terkirim! 🎉',
                 style: AppTextStyles.titleMedium.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
               ),
               content: Text(
-                'Laporan Anda berhasil diajukan dan sedang diproses. Anda mendapatkan bonus +50 XP!',
+                isDuplicate
+                    ? 'Laporan serupa telah aktif di lokasi ini dalam 12 jam terakhir. Laporan Anda berhasil digabungkan demi menghindari duplikasi data.'
+                    : 'Laporan Anda berhasil diajukan dan sedang diproses oleh AI/Admin untuk verifikasi.',
                 style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
               ),
               actions: [
@@ -447,6 +448,7 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
                           child: Lottie.asset(
                             'assets/animations/global/global_loading.json',
                             fit: BoxFit.contain,
+                            frameRate: FrameRate.max,
                           ),
                         ),
                       )),
@@ -703,6 +705,7 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
                                     child: Lottie.asset(
                                       'assets/animations/global/global_loading.json',
                                       fit: BoxFit.contain,
+                                      frameRate: FrameRate.max,
                                     ),
                                   )
                                 : Row(
@@ -1404,6 +1407,7 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
           child: Lottie.asset(
             'assets/animations/global/ai_thinking.json',
             fit: BoxFit.contain,
+            frameRate: FrameRate.max,
           ),
         ),
       ),
