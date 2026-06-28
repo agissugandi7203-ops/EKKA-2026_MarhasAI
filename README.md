@@ -1,11 +1,5 @@
 <div align="center">
-  <table style="border:none; margin: 0 auto;">
-    <tr>
-      <td align="center" bgcolor="#1A1A1A" style="border-radius: 12px; padding: 16px;">
-        <img src="logo.png" alt="Genesis Logo" width="160" />
-      </td>
-    </tr>
-  </table>
+  <img src="logo_dark.png" alt="Genesis Logo" width="160" style="border-radius: 12px;" />
 </div>
 
 <h1 align="center">Genesis</h1>
