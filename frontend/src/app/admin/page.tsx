@@ -1203,22 +1203,41 @@ export default function AdminDashboard() {
   // Summary counts
   const pendingHumanCount = reports.filter(r => r.status === "pending_human").length;
 
-  // Render Loading Screen (Soft Light Neutral Spinner)
+  // Render Loading Screen
   if (loading) {
     return (
-      <div className="min-h-screen w-full bg-surface flex flex-col justify-center items-center gap-4 text-navy-900">
-        <div className="h-10 w-10 rounded-full border-4 border-navy-100 border-t-navy-900 animate-spin" />
-        <span className="text-xs font-bold tracking-widest text-navy-500 uppercase select-none">Mengotorisasi Portal Kontrol Absolut...</span>
+      <div className={`min-h-screen w-full flex flex-col justify-center items-center gap-4 ${
+        theme === "dark" ? "bg-black text-white" : "bg-surface text-navy-900"
+      }`}>
+        <div className={`h-10 w-10 rounded-full border-4 animate-spin ${
+          theme === "dark" ? "border-zinc-800 border-t-white" : "border-navy-100 border-t-navy-900"
+        }`} />
+        <span className={`text-xs font-semibold tracking-widest uppercase select-none ${
+          theme === "dark" ? "text-slate-500" : "text-navy-500"
+        }`}>Memuat dashboard...</span>
       </div>
     );
   }
 
   return (
-    <main className="min-h-screen w-full bg-surface text-navy-900 flex flex-col md:flex-row overflow-hidden relative font-sans">
+    <main className={`min-h-screen w-full flex flex-col md:flex-row overflow-hidden relative font-sans transition-colors duration-300 ${
+      theme === "dark"
+        ? "bg-black text-slate-100"
+        : "bg-[#f8f9fb] text-slate-800"
+    }`}>
       
-      {/* Decorative ambient lighting - soft light warm cream highlights */}
-      <div className="absolute top-0 right-0 h-[450px] w-[450px] rounded-full bg-gold/5 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-0 left-0 h-[450px] w-[450px] rounded-full bg-navy-500/5 blur-[120px] pointer-events-none" />
+      {/* Ambient lighting */}
+      {theme === "dark" ? (
+        <>
+          <div className="absolute top-0 right-0 h-[500px] w-[500px] rounded-full bg-zinc-800/[0.05] blur-[150px] pointer-events-none" />
+          <div className="absolute bottom-0 left-0 h-[500px] w-[500px] rounded-full bg-zinc-900/[0.04] blur-[150px] pointer-events-none" />
+        </>
+      ) : (
+        <>
+          <div className="absolute top-0 right-0 h-[450px] w-[450px] rounded-full bg-slate-200/30 blur-[120px] pointer-events-none" />
+          <div className="absolute bottom-0 left-0 h-[450px] w-[450px] rounded-full bg-slate-300/20 blur-[120px] pointer-events-none" />
+        </>
+      )}
 
       {/* --- SIDEBAR PANEL --- */}
       <Sidebar
@@ -1233,6 +1252,9 @@ export default function AdminDashboard() {
         isLive={isLive}
         pendingHumanCount={pendingHumanCount}
         handleLogout={handleLogout}
+        theme={theme}
+        onToggleTheme={handleToggleTheme}
+        onToggleMode={handleToggleMode}
       />
 
       {/* --- MAIN CONTENT CONTAINER --- */}

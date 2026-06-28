@@ -13,7 +13,11 @@ import {
   ClipboardList,
   ChevronLeft,
   ChevronRight,
-  Menu
+  Sun,
+  Moon,
+  Wifi,
+  WifiOff,
+  Dot
 } from "lucide-react";
 
 export type AdminTab = "overview" | "reports" | "profiles" | "rag" | "challenges" | "broadcast" | "audit";
@@ -27,6 +31,8 @@ interface SidebarProps {
   pendingHumanCount: number;
   handleLogout: () => void;
   theme?: "light" | "dark";
+  onToggleTheme?: () => void;
+  onToggleMode?: () => void;
 }
 
 export default function Sidebar({
@@ -37,112 +43,123 @@ export default function Sidebar({
   isLive,
   pendingHumanCount,
   handleLogout,
-  theme = "light"
+  theme = "light",
+  onToggleTheme,
+  onToggleMode
 }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const isDark = theme === "dark";
 
-  // Grouped Menu Structure
   const menuGroups = [
     {
-      title: "DASBOR & KONTROL",
+      title: "OVERVIEW",
       items: [
-        { id: "overview", label: "Ringkasan Analitik", icon: <Activity className="h-4 w-4 shrink-0" /> },
+        { id: "overview", label: "Ringkasan Analitik", icon: <Activity className="h-[18px] w-[18px] shrink-0" /> },
         {
           id: "reports",
           label: "Laporan Spasial",
-          icon: <MapPin className="h-4 w-4 shrink-0" />,
+          icon: <MapPin className="h-[18px] w-[18px] shrink-0" />,
           badge: pendingHumanCount > 0 ? pendingHumanCount : undefined
         },
-        { id: "profiles", label: "Kontrol Warga", icon: <Users className="h-4 w-4 shrink-0" /> }
+        { id: "profiles", label: "Kontrol Warga", icon: <Users className="h-[18px] w-[18px] shrink-0" /> }
       ]
     },
     {
-      title: "SIARAN & GAMIFIKASI",
+      title: "ENGAGE",
       items: [
-        { id: "challenges", label: "Pusat Tantangan", icon: <Trophy className="h-4 w-4 shrink-0" /> },
-        { id: "broadcast", label: "Pusat Siaran", icon: <Bell className="h-4 w-4 shrink-0" /> }
+        { id: "challenges", label: "Pusat Tantangan", icon: <Trophy className="h-[18px] w-[18px] shrink-0" /> },
+        { id: "broadcast", label: "Pusat Siaran", icon: <Bell className="h-[18px] w-[18px] shrink-0" /> }
       ]
     },
     {
-      title: "AI & KEAMANAN",
+      title: "SYSTEM",
       items: [
-        { id: "rag", label: "Basis Pengetahuan AI", icon: <FileText className="h-4 w-4 shrink-0" /> },
-        { id: "audit", label: "Log Audit Sistem", icon: <ClipboardList className="h-4 w-4 shrink-0" /> }
+        { id: "rag", label: "Knowledge Base AI", icon: <FileText className="h-[18px] w-[18px] shrink-0" /> },
+        { id: "audit", label: "Audit Trail", icon: <ClipboardList className="h-[18px] w-[18px] shrink-0" /> }
       ]
     }
   ];
 
   return (
     <aside
-      className={`shrink-0 border-r flex flex-col justify-between p-4 z-20 transition-all duration-300 relative ${
-        isCollapsed ? "w-20" : "w-64"
+      className={`shrink-0 flex flex-col justify-between z-20 transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)] relative select-none ${
+        isCollapsed ? "w-[72px]" : "w-[260px]"
       } h-screen ${
         isDark
-          ? "bg-[#0b0a1a]/95 border-[#1a1835] text-slate-100 shadow-[4px_0_30px_rgba(0,0,0,0.3)]"
-          : "bg-white/80 border-navy-100/80 text-navy-900 shadow-[4px_0_24px_rgba(0,0,0,0.01)]"
-      } backdrop-blur-xl`}
+          ? "bg-black text-slate-100"
+          : "bg-white text-slate-800"
+      }`}
+      style={{
+        borderRight: isDark ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgba(0,0,0,0.06)"
+      }}
     >
-      {/* Collapse/Expand Toggle Button */}
+      {/* Collapse Toggle — pill on the edge */}
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className={`absolute top-5 -right-3 h-6 w-6 rounded-full border text-white flex items-center justify-center cursor-pointer shadow-md hover:scale-105 transition-all hidden md:flex ${
-          isDark ? "bg-[#8b5cf6] border-[#a78bfa] hover:bg-[#7c3aed]" : "bg-navy-900 border-navy-850 hover:bg-navy-800"
+        className={`absolute top-7 -right-3 h-6 w-6 rounded-full flex items-center justify-center cursor-pointer z-30 transition-all duration-200 shadow-sm hover:scale-110 ${
+          isDark
+            ? "bg-zinc-900 border border-zinc-800 text-slate-400 hover:text-white"
+            : "bg-white border border-slate-200 text-slate-500 hover:text-slate-900 shadow-md"
         }`}
+        aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
       >
         {isCollapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
       </button>
 
-      <div className="flex flex-col gap-6 overflow-y-auto max-h-[calc(100vh-140px)] pr-1 scrollbar-thin">
-        {/* Brand Logo & Info */}
-        <div className="flex items-center gap-3 pl-1 select-none py-2">
-          <div className={`h-10 w-10 shrink-0 rounded-xl flex items-center justify-center border shadow-sm ${
-            isDark ? "bg-[#14122d] border-[#2c2663]" : "bg-navy-50 border-navy-100"
+      {/* Top Section */}
+      <div className={`flex flex-col gap-6 ${isCollapsed ? "px-3" : "px-4"} pt-5 overflow-y-auto flex-1 scrollbar-thin`}>
+
+        {/* Brand */}
+        <div className={`flex items-center gap-3 ${isCollapsed ? "justify-center" : ""} py-1`}>
+          <div className={`h-9 w-9 shrink-0 rounded-lg flex items-center justify-center ${
+            isDark ? "bg-zinc-800" : "bg-slate-900"
           }`}>
-            <ShieldCheck className={`h-5.5 w-5.5 ${isDark ? "text-[#a78bfa]" : "text-navy-900"}`} />
+            <ShieldCheck className={`h-[18px] w-[18px] ${isDark ? "text-white" : "text-white"}`} />
           </div>
           {!isCollapsed && (
-            <div className="flex flex-col animate-fade-in">
-              <span className={`text-base font-semibold tracking-tight leading-none ${isDark ? "text-white" : "text-navy-900"}`}>Genesis.id</span>
-              <span className="text-[10px] uppercase font-bold text-gold tracking-wider mt-1.5 leading-none">Otoritas Admin</span>
+            <div className="flex flex-col">
+              <span className={`text-[13px] font-semibold tracking-tight leading-none ${isDark ? "text-white" : "text-slate-900"}`}>Genesis.id</span>
+              <span className={`text-[10px] font-medium mt-1 leading-none ${isDark ? "text-slate-500" : "text-slate-400"}`}>Admin Console</span>
             </div>
           )}
         </div>
 
-        {/* Admin Profile Widget */}
-        <div className={`rounded-2xl p-3 border select-none flex items-center gap-3 shadow-[inset_0_1px_2px_rgba(0,0,0,0.01)] ${isCollapsed ? "justify-center" : ""} ${
-          isDark ? "border-[#1e1a44] bg-[#121028]/80" : "border-navy-100/60 bg-navy-50/50"
+        {/* Admin Profile */}
+        <div className={`rounded-xl p-2.5 flex items-center gap-2.5 ${isCollapsed ? "justify-center" : ""} ${
+          isDark ? "bg-zinc-900/50 border border-zinc-800/40" : "bg-slate-50"
         }`}>
           <div className="relative shrink-0">
-            <div className={`h-10 w-10 rounded-full flex items-center justify-center font-bold shadow-sm text-sm ${
-              isDark ? "bg-[#25215c] text-white border border-[#3e388d]" : "bg-navy-900 text-white border border-navy-800"
+            <div className={`h-8 w-8 rounded-lg flex items-center justify-center text-xs font-semibold ${
+              isDark ? "bg-zinc-800 text-white" : "bg-slate-900 text-white"
             }`}>
               {adminName.charAt(0).toUpperCase()}
             </div>
-            <div className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-emerald border-2 border-white flex items-center justify-center shadow-sm">
-              <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
-            </div>
+            <div className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 ${
+              isDark ? "border-black" : "border-white"
+            } ${isLive ? "bg-emerald-500" : "bg-amber-400"}`} />
           </div>
           {!isCollapsed && (
-            <div className="flex flex-col min-w-0 animate-fade-in">
-              <span className={`text-xs font-bold truncate leading-tight ${isDark ? "text-slate-100" : "text-navy-900"}`}>{adminName}</span>
-              <span className={`text-[10px] truncate leading-none mt-1 ${isDark ? "text-slate-400" : "text-navy-500/85"}`}>{adminEmail}</span>
+            <div className="flex flex-col min-w-0">
+              <span className={`text-[11px] font-semibold truncate leading-tight ${isDark ? "text-slate-200" : "text-slate-800"}`}>{adminName}</span>
+              <span className={`text-[10px] truncate leading-none mt-0.5 ${isDark ? "text-slate-500" : "text-slate-400"}`}>{adminEmail}</span>
             </div>
           )}
         </div>
 
-        {/* Grouped Tab Navigation Links */}
+        {/* Navigation */}
         <nav className="flex flex-col gap-5">
           {menuGroups.map((group, groupIdx) => (
-            <div key={groupIdx} className="flex flex-col gap-1.5">
+            <div key={groupIdx} className="flex flex-col gap-0.5">
               {!isCollapsed ? (
-                <span className={`text-[9px] font-bold tracking-widest pl-3 uppercase select-none ${
-                  isDark ? "text-slate-500" : "text-navy-400"
-                }`}>
+                <span className={`text-[9px] font-semibold tracking-[0.12em] uppercase mb-1.5 ${
+                  isCollapsed ? "hidden" : "block"
+                } ${isDark ? "text-slate-600" : "text-slate-400"} ${isCollapsed ? "" : "pl-3"}`}>
                   {group.title}
                 </span>
               ) : (
-                <div className={`border-t my-1 mx-2 ${isDark ? "border-[#1e1a44]/50" : "border-navy-100/40"}`} />
+                groupIdx > 0 && (
+                  <div className={`my-2 mx-2 ${isDark ? "border-t border-white/[0.04]" : "border-t border-slate-100"}`} />
+                )
               )}
 
               {group.items.map((item) => {
@@ -151,39 +168,54 @@ export default function Sidebar({
                   <div key={item.id} className="relative group">
                     <button
                       onClick={() => setActiveTab(item.id as AdminTab)}
-                      className={`w-full flex items-center gap-3 text-xs font-semibold px-4 py-3 rounded-xl transition-all duration-200 cursor-pointer ${
+                      className={`w-full flex items-center gap-2.5 text-[12px] font-medium rounded-lg transition-all duration-150 cursor-pointer relative ${
+                        isCollapsed ? "justify-center px-0 py-2.5 mx-auto w-10 h-10" : "px-3 py-2"
+                      } ${
                         isActive
                           ? isDark
-                            ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-[0_4px_15px_rgba(139,92,246,0.35)] font-bold scale-[1.01]"
-                            : "bg-navy-900 text-white shadow-[0_4px_12px_rgba(5,12,24,0.1)] font-bold scale-[1.01]"
+                            ? "bg-zinc-800 text-white"
+                            : "bg-slate-900 text-white"
                           : isDark
-                            ? "text-slate-400 hover:text-white hover:bg-[#1a173c]/60"
-                            : "text-navy-600 hover:text-navy-900 hover:bg-navy-50/70"
-                      } ${isCollapsed ? "justify-center px-0" : ""}`}
+                            ? "text-slate-500 hover:text-slate-200 hover:bg-white/[0.04]"
+                            : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
+                      }`}
                     >
-                      <span className={`${isActive ? "text-white" : isDark ? "text-slate-400 group-hover:text-slate-200" : "text-navy-500"}`}>
+                      {/* Active indicator bar */}
+                      {isActive && !isCollapsed && (
+                        <div className={`absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-4 rounded-r-full ${
+                          isDark ? "bg-white" : "bg-slate-900"
+                        }`} />
+                      )}
+
+                      <span className={`${isActive ? (isDark ? "text-white" : "text-white") : ""}`}>
                         {item.icon}
                       </span>
                       {!isCollapsed && (
                         <span className="truncate">{item.label}</span>
                       )}
 
-                      {/* Badge (Pending Count, etc) */}
+                      {/* Notification badge */}
                       {item.badge !== undefined && (
                         isCollapsed ? (
-                          <span className="absolute top-2 right-2 h-2 w-2 bg-burgundy-500 rounded-full animate-ping" />
+                          <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full" />
                         ) : (
-                          <span className="ml-auto bg-burgundy-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full animate-bounce">
+                          <span className={`ml-auto text-[10px] font-semibold px-1.5 py-0.5 rounded-md ${
+                            isDark
+                              ? "bg-red-500/15 text-red-400"
+                              : isActive
+                                ? "bg-white/20 text-white"
+                                : "bg-red-50 text-red-600"
+                          }`}>
                             {item.badge}
                           </span>
                         )
                       )}
                     </button>
 
-                    {/* Collapsed Hover Tooltip */}
+                    {/* Collapsed tooltip */}
                     {isCollapsed && (
-                      <div className={`absolute left-16 top-1/2 -translate-y-1/2 text-[10px] font-bold px-2.5 py-1.5 rounded-lg shadow-lg border opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap z-50 translate-x-2 group-hover:translate-x-0 ${
-                        isDark ? "bg-[#14122d] text-white border-[#27235a]" : "bg-navy-950 text-white border-navy-800"
+                      <div className={`absolute left-full top-1/2 -translate-y-1/2 ml-2 text-[11px] font-medium px-2.5 py-1.5 rounded-md shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150 whitespace-nowrap z-50 ${
+                        isDark ? "bg-zinc-900 text-slate-200 shadow-black/30 border border-zinc-800" : "bg-slate-800 text-white shadow-slate-200/50"
                       }`}>
                         {item.label}
                       </div>
@@ -196,30 +228,84 @@ export default function Sidebar({
         </nav>
       </div>
 
-      {/* Footer Actions inside Sidebar */}
-      <div className="flex flex-col gap-4 mt-4 shrink-0">
-        {/* Mode Status Indicator */}
-        <div className={`flex items-center gap-1.5 px-2 select-none ${isCollapsed ? "justify-center" : ""}`}>
-          <span className={`h-2 w-2 rounded-full shrink-0 ${isLive ? "bg-emerald" : "bg-gold"} animate-pulse`} />
-          {!isCollapsed && (
-            <span className={`text-[10px] font-medium truncate animate-fade-in ${isDark ? "text-slate-400" : "text-navy-500"}`}>
-              Mode: <strong className={isDark ? "text-slate-200" : "text-navy-900"}>{isLive ? "Live API" : "Simulasi"}</strong>
-            </span>
-          )}
-        </div>
+      {/* Bottom Section — Controls */}
+      <div className={`flex flex-col gap-2 ${isCollapsed ? "px-3" : "px-4"} pb-4 shrink-0`}>
 
+        {/* Separator */}
+        <div className={`${isDark ? "border-t border-white/[0.04]" : "border-t border-slate-100"} mb-1`} />
+
+        {/* Theme Toggle */}
+        {onToggleTheme && (
+          <button
+            onClick={onToggleTheme}
+            className={`flex items-center gap-2.5 text-[12px] font-medium rounded-lg transition-all duration-150 cursor-pointer ${
+              isCollapsed ? "justify-center py-2.5 mx-auto w-10 h-10" : "px-3 py-2"
+            } ${
+              isDark
+                ? "text-slate-500 hover:text-amber-300 hover:bg-amber-500/[0.06]"
+                : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"
+            }`}
+            aria-label="Toggle theme"
+          >
+            {isDark ? (
+              <>
+                <Sun className="h-[18px] w-[18px] shrink-0" />
+                {!isCollapsed && <span>Light Mode</span>}
+              </>
+            ) : (
+              <>
+                <Moon className="h-[18px] w-[18px] shrink-0" />
+                {!isCollapsed && <span>Dark Mode</span>}
+              </>
+            )}
+          </button>
+        )}
+
+        {/* Connection Mode Toggle */}
+        {onToggleMode && (
+          <button
+            onClick={onToggleMode}
+            className={`flex items-center gap-2.5 text-[12px] font-medium rounded-lg transition-all duration-150 cursor-pointer ${
+              isCollapsed ? "justify-center py-2.5 mx-auto w-10 h-10" : "px-3 py-2"
+            } ${
+              isDark
+                ? "text-slate-500 hover:text-slate-200 hover:bg-white/[0.04]"
+                : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
+            }`}
+            aria-label="Toggle connection mode"
+          >
+            {isLive ? (
+              <>
+                <Wifi className="h-[18px] w-[18px] shrink-0 text-emerald-500" />
+                {!isCollapsed && (
+                  <span className="flex items-center gap-1.5">
+                    <span>Live API</span>
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  </span>
+                )}
+              </>
+            ) : (
+              <>
+                <WifiOff className="h-[18px] w-[18px] shrink-0 text-amber-400" />
+                {!isCollapsed && <span>Simulator</span>}
+              </>
+            )}
+          </button>
+        )}
+
+        {/* Logout */}
         <button
           onClick={handleLogout}
-          className={`flex items-center gap-3 text-xs font-semibold px-4 py-3 rounded-xl border transition-all duration-200 cursor-pointer ${
-            isCollapsed ? "justify-center px-0" : ""
+          className={`flex items-center gap-2.5 text-[12px] font-medium rounded-lg transition-all duration-150 cursor-pointer ${
+            isCollapsed ? "justify-center py-2.5 mx-auto w-10 h-10" : "px-3 py-2"
           } ${
             isDark
-              ? "border-[#211e47] text-slate-400 hover:text-red-400 hover:bg-red-950/15 hover:border-red-900/30"
-              : "border-navy-100 text-navy-600 hover:text-burgundy-900 hover:bg-burgundy-50/70 hover:border-burgundy-200"
+              ? "text-slate-500 hover:text-red-400 hover:bg-red-500/[0.06]"
+              : "text-slate-500 hover:text-red-600 hover:bg-red-50"
           }`}
         >
-          <LogOut className="h-4 w-4 text-burgundy-500 shrink-0" />
-          {!isCollapsed && <span className="animate-fade-in">Logout Otoritas</span>}
+          <LogOut className="h-[18px] w-[18px] shrink-0" />
+          {!isCollapsed && <span>Logout</span>}
         </button>
       </div>
     </aside>

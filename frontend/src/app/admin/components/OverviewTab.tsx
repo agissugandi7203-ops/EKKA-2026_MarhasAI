@@ -235,15 +235,15 @@ export default function OverviewTab({
         {/* Filters Panel Row */}
         <div className="flex flex-wrap items-center gap-2.5">
           <div className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-semibold ${
-            isDark ? "bg-[#14122d]/60 border-[#221e4a] text-slate-300" : "bg-white border-navy-100 text-navy-700"
+            isDark ? "bg-zinc-900 border-zinc-800 text-slate-300" : "bg-white border-slate-100 text-slate-700"
           }`}>
             <Calendar className="h-3.5 w-3.5" />
             <span>Jun 1- Jun 30</span>
-            <span className={`text-[10px] pl-1.5 border-l ${isDark ? "border-[#221e4a] text-slate-400" : "border-navy-100 text-navy-400"}`}>Monthly</span>
+            <span className={`text-[10px] pl-1.5 border-l ${isDark ? "border-zinc-800 text-slate-400" : "border-slate-100 text-slate-400"}`}>Monthly</span>
           </div>
 
           <div className={`px-3 py-2 rounded-xl border text-xs font-semibold cursor-pointer ${
-            isDark ? "bg-[#14122d]/60 border-[#221e4a] text-slate-300" : "bg-white border-navy-100 text-navy-700"
+            isDark ? "bg-zinc-900 border-zinc-800 text-slate-300" : "bg-white border-slate-100 text-slate-700"
           }`}>
             All Segment
           </div>
@@ -252,8 +252,8 @@ export default function OverviewTab({
             onClick={fetchData}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-xs font-bold transition-all shadow-sm cursor-pointer select-none ${
               isDark 
-                ? "bg-[#1f1a56] hover:bg-[#28217a] border-[#372b9a] text-white" 
-                : "bg-white hover:bg-navy-50 border-navy-100 text-navy-700 hover:border-navy-200"
+                ? "bg-zinc-800 hover:bg-zinc-750 border-zinc-700 text-white" 
+                : "bg-white hover:bg-slate-50 border-slate-100 text-slate-700 hover:border-slate-200"
             }`}
           >
             <RefreshCw className="h-3.5 w-3.5 animate-spin-hover" />
@@ -268,15 +268,15 @@ export default function OverviewTab({
         {/* Card 1: Total Reports */}
         <div className={`rounded-2xl p-5 border shadow-sm relative overflow-hidden transition-all duration-300 hover:scale-[1.01] ${
           isDark 
-            ? "bg-[#111026]/90 border-[#1c1a3b] text-white" 
-            : "bg-white border-navy-100 text-navy-900"
+            ? "bg-zinc-950 border-zinc-900 text-white" 
+            : "bg-white border-slate-100 text-slate-800"
         }`}>
           <div className="flex items-center justify-between">
-            <span className={`text-xs font-bold uppercase tracking-wider ${isDark ? "text-slate-400" : "text-navy-400"}`}>Total Laporan</span>
-            <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${isDark ? "bg-slate-800 text-slate-300" : "bg-navy-50 text-navy-600"}`}>•••</span>
+            <span className={`text-xs font-bold uppercase tracking-wider ${isDark ? "text-slate-500" : "text-slate-400"}`}>Total Laporan</span>
+            <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${isDark ? "bg-zinc-900 text-slate-400" : "bg-slate-50 text-slate-500"}`}>•••</span>
           </div>
           <div className="text-3xl font-bold mt-4">{totalReportsCount}</div>
-          <div className={`flex items-center gap-1 text-[11px] mt-2.5 font-semibold ${isDark ? "text-emerald" : "text-emerald"}`}>
+          <div className={`flex items-center gap-1 text-[11px] mt-2.5 font-semibold ${isDark ? "text-emerald-500" : "text-emerald"}`}>
             <TrendingUp className="h-3 w-3" />
             <span>+2% from last quarter</span>
           </div>
@@ -285,15 +285,15 @@ export default function OverviewTab({
         {/* Card 2: Job Application */}
         <div className={`rounded-2xl p-5 border shadow-sm relative overflow-hidden transition-all duration-300 hover:scale-[1.01] ${
           isDark 
-            ? "bg-[#111026]/90 border-[#1c1a3b] text-white" 
-            : "bg-white border-navy-100 text-navy-900"
+            ? "bg-zinc-950 border-zinc-900 text-white" 
+            : "bg-white border-slate-100 text-slate-800"
         }`}>
           <div className="flex items-center justify-between">
-            <span className={`text-xs font-bold uppercase tracking-wider ${isDark ? "text-slate-400" : "text-navy-400"}`}>Antrean Validasi</span>
-            <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${isDark ? "bg-slate-800 text-slate-300" : "bg-navy-50 text-navy-600"}`}>•••</span>
+            <span className={`text-xs font-bold uppercase tracking-wider ${isDark ? "text-slate-500" : "text-slate-400"}`}>Antrean Validasi</span>
+            <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${isDark ? "bg-zinc-900 text-slate-400" : "bg-slate-50 text-slate-500"}`}>•••</span>
           </div>
           <div className="text-3xl font-bold mt-4">{pendingHumanCount}</div>
-          <div className={`flex items-center gap-1 text-[11px] mt-2.5 font-semibold ${isDark ? "text-emerald" : "text-emerald"}`}>
+          <div className={`flex items-center gap-1 text-[11px] mt-2.5 font-semibold ${isDark ? "text-emerald-500" : "text-emerald"}`}>
             <TrendingUp className="h-3 w-3" />
             <span>+15% from last quarter</span>
           </div>
@@ -302,15 +302,15 @@ export default function OverviewTab({
         {/* Card 3: New Employees */}
         <div className={`rounded-2xl p-5 border shadow-sm relative overflow-hidden transition-all duration-300 hover:scale-[1.01] ${
           isDark 
-            ? "bg-[#111026]/90 border-[#1c1a3b] text-white" 
-            : "bg-white border-navy-100 text-navy-900"
+            ? "bg-zinc-950 border-zinc-900 text-white" 
+            : "bg-white border-slate-100 text-slate-800"
         }`}>
           <div className="flex items-center justify-between">
-            <span className={`text-xs font-bold uppercase tracking-wider ${isDark ? "text-slate-400" : "text-navy-400"}`}>Warga Aktif</span>
-            <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${isDark ? "bg-slate-800 text-slate-300" : "bg-navy-50 text-navy-600"}`}>•••</span>
+            <span className={`text-xs font-bold uppercase tracking-wider ${isDark ? "text-slate-500" : "text-slate-400"}`}>Warga Aktif</span>
+            <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${isDark ? "bg-zinc-900 text-slate-400" : "bg-slate-50 text-slate-500"}`}>•••</span>
           </div>
           <div className="text-3xl font-bold mt-4">{activeWargaCount}</div>
-          <div className={`flex items-center gap-1 text-[11px] mt-2.5 font-semibold ${isDark ? "text-emerald" : "text-emerald"}`}>
+          <div className={`flex items-center gap-1 text-[11px] mt-2.5 font-semibold ${isDark ? "text-emerald-500" : "text-emerald"}`}>
             <TrendingUp className="h-3 w-3" />
             <span>+2% from last quarter</span>
           </div>
@@ -319,15 +319,15 @@ export default function OverviewTab({
         {/* Card 4: Satisfaction Rate */}
         <div className={`rounded-2xl p-5 border shadow-sm relative overflow-hidden transition-all duration-300 hover:scale-[1.01] ${
           isDark 
-            ? "bg-[#111026]/90 border-[#1c1a3b] text-white" 
-            : "bg-white border-navy-100 text-navy-900"
+            ? "bg-zinc-950 border-zinc-900 text-white" 
+            : "bg-white border-slate-100 text-slate-800"
         }`}>
           <div className="flex items-center justify-between">
-            <span className={`text-xs font-bold uppercase tracking-wider ${isDark ? "text-slate-400" : "text-navy-400"}`}>Akurasi Vision-AI</span>
-            <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${isDark ? "bg-slate-800 text-slate-300" : "bg-navy-50 text-navy-600"}`}>•••</span>
+            <span className={`text-xs font-bold uppercase tracking-wider ${isDark ? "text-slate-500" : "text-slate-400"}`}>Akurasi Vision-AI</span>
+            <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${isDark ? "bg-zinc-900 text-slate-400" : "bg-slate-50 text-slate-500"}`}>•••</span>
           </div>
           <div className="text-3xl font-bold mt-4">{avgAccuracy}%</div>
-          <div className={`flex items-center gap-1 text-[11px] mt-2.5 font-semibold ${isDark ? "text-emerald" : "text-emerald"}`}>
+          <div className={`flex items-center gap-1 text-[11px] mt-2.5 font-semibold ${isDark ? "text-emerald-500" : "text-emerald"}`}>
             <TrendingUp className="h-3 w-3" />
             <span>+5% from last quarter</span>
           </div>
@@ -341,16 +341,16 @@ export default function OverviewTab({
         {/* Left Column: Employees Performance (Bar Chart - MAPPED TO DATABASE EVENTS) */}
         <div className={`lg:col-span-2 rounded-2xl p-6 border shadow-sm flex flex-col justify-between relative ${
           isDark 
-            ? "bg-[#111026]/90 border-[#1c1a3b] text-white" 
-            : "bg-white border-navy-100 text-navy-900"
+            ? "bg-zinc-950 border-zinc-900 text-white" 
+            : "bg-white border-slate-100 text-slate-800"
         }`}>
           <div className="flex items-center justify-between border-b pb-4 border-dashed border-slate-700/20">
             <div>
               <h2 className="text-base font-bold">Kinerja Penanganan Laporan</h2>
-              <p className={`text-[10px] mt-0.5 ${isDark ? "text-slate-400" : "text-navy-400"}`}>Kecepatan klasifikasi harian sistem crowdsourcing</p>
+              <p className={`text-[10px] mt-0.5 ${isDark ? "text-slate-400" : "text-slate-500"}`}>Kecepatan klasifikasi harian sistem crowdsourcing</p>
             </div>
             <div className={`px-2.5 py-1.5 rounded-lg border text-xs font-semibold cursor-pointer flex items-center gap-1.5 ${
-              isDark ? "bg-[#1a173d] border-[#29245c] text-slate-300" : "bg-white border-navy-100 text-navy-700"
+              isDark ? "bg-zinc-900 border-zinc-800 text-slate-300" : "bg-white border-slate-100 text-slate-700"
             }`}>
               <span>Weekly</span>
               <ChevronRight className="h-3 w-3 rotate-90" />
@@ -374,37 +374,37 @@ export default function OverviewTab({
                   {/* Glowing overlapping bar group */}
                   <div className="w-8 flex items-end gap-1.5 justify-center relative h-[180px]">
                     <div 
-                      className="w-3 rounded-t-md transition-all duration-500 bg-gradient-to-t from-indigo-700 to-violet-500 group-hover:brightness-125"
+                      className="w-3 rounded-t-md transition-all duration-500 bg-gradient-to-t from-zinc-700 to-zinc-500 group-hover:brightness-125"
                       style={{ height: `${heightPercent1}%` }}
                     />
                     <div 
-                      className="w-3 rounded-t-md transition-all duration-500 bg-gradient-to-t from-purple-800 to-[#a78bfa] group-hover:brightness-125 opacity-80"
+                      className="w-3 rounded-t-md transition-all duration-500 bg-gradient-to-t from-zinc-800 to-zinc-600 group-hover:brightness-125 opacity-80"
                       style={{ height: `${heightPercent2}%` }}
                     />
                   </div>
 
-                  <span className={`text-[10px] mt-3 font-semibold ${isDark ? "text-slate-400" : "text-navy-500"}`}>{bar.label}</span>
+                  <span className={`text-[10px] mt-3 font-semibold ${isDark ? "text-slate-500" : "text-slate-500"}`}>{bar.label}</span>
 
                   {/* Tooltip HUD precisely placed */}
                   {hoveredBarIndex === idx && (
                     <div className="absolute bottom-[200px] left-1/2 -translate-x-1/2 z-30 animate-fade-in pointer-events-none">
-                      <div className="bg-[#15132d] border border-[#3e388d] text-white rounded-xl p-3.5 shadow-2xl min-w-[180px]">
+                      <div className="bg-zinc-900 border border-zinc-800 text-white rounded-xl p-3.5 shadow-2xl min-w-[180px]">
                         <div className="text-[10px] font-bold text-slate-400">{bar.label}, 2026</div>
                         <div className="flex items-center justify-between text-xs font-bold mt-2">
-                          <span className="text-violet-400">Pembersihan Selesai:</span>
+                          <span className="text-zinc-400">Pembersihan Selesai:</span>
                           <span>{bar.val1}%</span>
                         </div>
                         <div className="flex items-center justify-between text-xs font-bold mt-1">
-                          <span className="text-purple-300">Antrean AI:</span>
+                          <span className="text-zinc-500">Antrean AI:</span>
                           <span>{bar.val2}%</span>
                         </div>
                         <div className="flex items-center justify-between text-xs font-bold mt-1">
-                          <span className="text-[#a78bfa]">Validasi Manual:</span>
+                          <span className="text-zinc-300">Validasi Manual:</span>
                           <span>{bar.val3}%</span>
                         </div>
                       </div>
                       {/* Triangle Arrow */}
-                      <div className="w-3 h-3 bg-[#15132d] border-r border-b border-[#3e388d] transform rotate-45 absolute -bottom-1.5 left-1/2 -translate-x-1/2" />
+                      <div className="w-3 h-3 bg-zinc-900 border-r border-b border-zinc-800 transform rotate-45 absolute -bottom-1.5 left-1/2 -translate-x-1/2" />
                     </div>
                   )}
                 </div>
@@ -416,16 +416,16 @@ export default function OverviewTab({
         {/* Right Column: Employee Attendance (Donut Chart - 100% LIVE MAPPED) */}
         <div className={`rounded-2xl p-6 border shadow-sm flex flex-col justify-between ${
           isDark 
-            ? "bg-[#111026]/90 border-[#1c1a3b] text-white" 
-            : "bg-white border-navy-100 text-navy-900"
+            ? "bg-zinc-950 border-zinc-900 text-white" 
+            : "bg-white border-slate-100 text-slate-800"
         }`}>
           <div className="flex items-center justify-between border-b pb-4 border-dashed border-slate-700/20">
             <div>
               <h2 className="text-base font-bold">Status Kehadiran Laporan</h2>
-              <p className={`text-[10px] mt-0.5 ${isDark ? "text-slate-400" : "text-navy-400"}`}>Proporsi sebaran penanganan</p>
+              <p className={`text-[10px] mt-0.5 ${isDark ? "text-slate-400" : "text-slate-500"}`}>Proporsi sebaran penanganan</p>
             </div>
             <div className={`px-2 py-1 rounded-lg border text-[10px] font-bold ${
-              isDark ? "bg-[#1a173d] border-[#29245c] text-slate-300" : "bg-white border-navy-100 text-navy-700"
+              isDark ? "bg-zinc-900 border-zinc-800 text-slate-300" : "bg-white border-slate-100 text-slate-700"
             }`}>
               4 June 2026
             </div>
@@ -436,7 +436,7 @@ export default function OverviewTab({
             <div className="relative w-32 h-32 select-none shrink-0">
               <svg width="100%" height="100%" viewBox="0 0 140 140" className="transform -rotate-90">
                 {/* Background Ring */}
-                <circle cx="70" cy="70" r="50" fill="transparent" stroke={isDark ? "#1f1d3e" : "#e2e8f0"} strokeWidth="12" />
+                <circle cx="70" cy="70" r="50" fill="transparent" stroke={isDark ? "#18181b" : "#f1f5f9"} strokeWidth="12" />
                 
                 {/* Present (Resolved Slice) */}
                 {resolvedPercent > 0 && (
@@ -445,7 +445,7 @@ export default function OverviewTab({
                     cy="70" 
                     r="50" 
                     fill="transparent" 
-                    stroke={isDark ? "#8b5cf6" : "#6366f1"} 
+                    stroke={isDark ? "#e4e4e7" : "#475569"} 
                     strokeWidth="12" 
                     strokeDasharray={dashArrayResolved} 
                     strokeDashoffset={offsetResolved}
@@ -498,16 +498,16 @@ export default function OverviewTab({
               {/* Center HUD Text */}
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
                 <span className="text-lg font-extrabold leading-none">{totalReportsCount}</span>
-                <span className={`text-[8px] font-bold uppercase mt-1 ${isDark ? "text-slate-400" : "text-navy-400"}`}>Total Laporan</span>
+                <span className={`text-[8px] font-bold uppercase mt-1 ${isDark ? "text-slate-500" : "text-slate-400"}`}>Total Laporan</span>
               </div>
             </div>
 
             {/* Legend Labels Grid */}
             <div className="flex flex-col gap-2 text-xs font-semibold">
               <div className="flex items-center gap-1.5">
-                <div className={`h-2.5 w-2.5 rounded-full shrink-0 ${isDark ? "bg-[#8b5cf6]" : "bg-[#6366f1]"}`} />
+                <div className={`h-2.5 w-2.5 rounded-full shrink-0 ${isDark ? "bg-zinc-350" : "bg-slate-500"}`} />
                 <div className="flex flex-col">
-                  <span className={`text-[10px] leading-none ${isDark ? "text-slate-400" : "text-navy-500"}`}>Ditangani</span>
+                  <span className={`text-[10px] leading-none ${isDark ? "text-slate-500" : "text-slate-500"}`}>Ditangani</span>
                   <span className="text-xs font-extrabold mt-0.5">{resolvedCount}</span>
                 </div>
               </div>
@@ -515,7 +515,7 @@ export default function OverviewTab({
               <div className="flex items-center gap-1.5">
                 <div className="h-2.5 w-2.5 rounded-full shrink-0 bg-yellow-400" />
                 <div className="flex flex-col">
-                  <span className={`text-[10px] leading-none ${isDark ? "text-slate-400" : "text-navy-500"}`}>Antrean AI</span>
+                  <span className={`text-[10px] leading-none ${isDark ? "text-slate-500" : "text-slate-500"}`}>Antrean AI</span>
                   <span className="text-xs font-extrabold mt-0.5">{pendingAiCount}</span>
                 </div>
               </div>
@@ -523,7 +523,7 @@ export default function OverviewTab({
               <div className="flex items-center gap-1.5">
                 <div className="h-2.5 w-2.5 rounded-full shrink-0 bg-emerald-500" />
                 <div className="flex flex-col">
-                  <span className={`text-[10px] leading-none ${isDark ? "text-slate-400" : "text-navy-500"}`}>Validasi</span>
+                  <span className={`text-[10px] leading-none ${isDark ? "text-slate-500" : "text-slate-500"}`}>Validasi</span>
                   <span className="text-xs font-extrabold mt-0.5">{(pendingHumanCount + approvedCount)}</span>
                 </div>
               </div>
@@ -531,7 +531,7 @@ export default function OverviewTab({
               <div className="flex items-center gap-1.5">
                 <div className="h-2.5 w-2.5 rounded-full shrink-0 bg-red-500" />
                 <div className="flex flex-col">
-                  <span className={`text-[10px] leading-none ${isDark ? "text-slate-400" : "text-navy-500"}`}>Ditolak</span>
+                  <span className={`text-[10px] leading-none ${isDark ? "text-slate-500" : "text-slate-500"}`}>Ditolak</span>
                   <span className="text-xs font-extrabold mt-0.5">{rejectedCount}</span>
                 </div>
               </div>
@@ -543,8 +543,8 @@ export default function OverviewTab({
             onClick={() => setActiveTab("reports")}
             className={`w-full py-3 rounded-xl border text-xs font-bold text-center transition-all select-none cursor-pointer ${
               isDark 
-                ? "bg-[#181635]/80 hover:bg-[#201d4a] border-[#282459] text-white" 
-                : "bg-[#f8fafc] hover:bg-navy-50 border-navy-100 text-navy-700"
+                ? "bg-zinc-900 hover:bg-zinc-850 border-zinc-800 text-white" 
+                : "bg-[#f8fafc] hover:bg-slate-50 border-slate-100 text-slate-700"
             }`}
           >
             View Full Details
@@ -556,18 +556,18 @@ export default function OverviewTab({
       {/* TABLE BOTTOM: ACTUAL GEOSPASIAL REPORTS TABLE LISTING */}
       <div className={`rounded-2xl border shadow-sm overflow-hidden ${
         isDark 
-          ? "bg-[#111026]/90 border-[#1c1a3b] text-white" 
-          : "bg-white border-navy-100 text-navy-900"
+          ? "bg-zinc-950 border-zinc-900 text-white" 
+          : "bg-white border-slate-100 text-slate-800"
       }`}>
         <div className="p-5 flex items-center justify-between border-b border-slate-700/10">
           <div>
             <h2 className="text-base font-bold">Pelaporan Spasial Terkini</h2>
-            <p className={`text-[10px] mt-0.5 ${isDark ? "text-slate-400" : "text-navy-400"}`}>Daftar penugasan dan evaluasi lencana sistem crowdsourcing berdasarkan pelaporan warga</p>
+            <p className={`text-[10px] mt-0.5 ${isDark ? "text-slate-400" : "text-slate-550"}`}>Daftar penugasan dan evaluasi lencana sistem crowdsourcing berdasarkan pelaporan warga</p>
           </div>
           <button 
             onClick={() => setActiveTab("reports")}
             className={`px-3 py-1.5 rounded-lg border text-xs font-semibold cursor-pointer flex items-center gap-1.5 transition-all ${
-              isDark ? "bg-[#1a173d]/60 border-[#29245c] text-slate-300 hover:bg-[#201d4d]" : "bg-white border-navy-100 text-navy-700 hover:bg-navy-50"
+              isDark ? "bg-zinc-900/60 border-zinc-800 text-slate-300 hover:bg-zinc-850" : "bg-white border-slate-100 text-slate-700 hover:bg-slate-50"
             }`}
           >
             <span>Semua Laporan</span>
@@ -580,7 +580,7 @@ export default function OverviewTab({
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className={`text-[10px] font-bold uppercase tracking-widest border-b select-none ${
-                isDark ? "border-[#211e48] text-slate-400" : "border-navy-50 text-navy-400"
+                isDark ? "border-zinc-800 text-slate-400" : "border-slate-100 text-slate-500"
               }`}>
                 <th className="py-4 px-5">ID</th>
                 <th className="py-4 px-5">Reporter</th>
@@ -617,7 +617,7 @@ export default function OverviewTab({
                   else if (report.danger_level === "Sedang") dangerColor = "text-amber-500";
 
                   // Status badge style
-                  let statusBg = "bg-indigo-500/10 text-indigo-400 border-indigo-500/20";
+                  let statusBg = "bg-slate-500/10 text-slate-400 border-slate-500/20";
                   if (report.status === "approved" || report.status === "resolved") statusBg = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
                   else if (report.status === "rejected") statusBg = "bg-rose-500/10 text-rose-400 border-rose-500/20";
                   else if (report.status === "pending_human") statusBg = "bg-amber-500/10 text-amber-400 border-amber-500/20";
@@ -626,11 +626,11 @@ export default function OverviewTab({
                     <tr 
                       key={report.id} 
                       className={`transition-colors ${
-                        isDark ? "hover:bg-[#181636]/60" : "hover:bg-slate-50"
+                        isDark ? "hover:bg-zinc-900/50" : "hover:bg-slate-50"
                       }`}
                     >
                       {/* ID */}
-                      <td className={`py-4 px-5 font-semibold font-mono ${isDark ? "text-[#a78bfa]" : "text-navy-700"}`}>
+                      <td className={`py-4 px-5 font-semibold font-mono ${isDark ? "text-zinc-300" : "text-slate-700"}`}>
                         #{report.id.slice(0, 6).toUpperCase()}
                       </td>
 
@@ -652,7 +652,7 @@ export default function OverviewTab({
                       {/* Waste Type */}
                       <td className="py-4 px-5 font-semibold">
                         <span className={`px-2 py-1 rounded-md text-[10px] font-extrabold border ${
-                          isDark ? "bg-[#1d1b49]/40 border-violet-900/40 text-[#c084fc]" : "bg-violet-50 border-violet-100 text-violet-700"
+                          isDark ? "bg-zinc-900/50 border-zinc-800 text-zinc-350" : "bg-slate-50 border-slate-100 text-slate-700"
                         }`}>
                           {report.waste_type || "N/A"}
                         </span>
@@ -667,10 +667,10 @@ export default function OverviewTab({
                       <td className="py-4 px-5">
                         <div className="flex items-center gap-2.5 max-w-[120px]">
                           <div className={`h-1 flex-1 rounded-full overflow-hidden ${
-                            isDark ? "bg-slate-800" : "bg-slate-100"
+                            isDark ? "bg-zinc-800" : "bg-slate-100"
                           }`}>
                             <div 
-                              className="h-full bg-gradient-to-r from-violet-500 to-indigo-600 rounded-full"
+                              className="h-full bg-gradient-to-r from-zinc-600 to-zinc-500 rounded-full"
                               style={{ width: `${report.confidence_score || 85}%` }}
                             />
                           </div>
@@ -686,7 +686,7 @@ export default function OverviewTab({
                       </td>
 
                       {/* Date */}
-                      <td className={`py-4 px-5 font-medium ${isDark ? "text-slate-400" : "text-navy-500"}`}>
+                      <td className={`py-4 px-5 font-medium ${isDark ? "text-slate-500" : "text-slate-500"}`}>
                         {formattedDate}
                       </td>
 
@@ -699,8 +699,8 @@ export default function OverviewTab({
                           }}
                           className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all hover:scale-105 cursor-pointer ${
                             isDark 
-                              ? "bg-violet-950/25 hover:bg-violet-900/40 border border-violet-800/40 text-violet-300" 
-                              : "bg-navy-50 hover:bg-navy-100 border border-navy-100 text-navy-700"
+                              ? "bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300" 
+                              : "bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700"
                           }`}
                         >
                           Tinjau
