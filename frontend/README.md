@@ -1,471 +1,367 @@
-<div align="center">
+# Genesis.id — Frontend
 
-# 🌍 Genesis.id — Web Portal & Admin Dashboard
+> Next.js web portal and administrative dashboard for the Genesis.id environmental crowdsourcing platform.
 
-**Platform Crowdsourcing Lingkungan Cerdas Berbasis AI**
-
-[![Next.js](https://img.shields.io/badge/Next.js-16.2.9-black?style=for-the-badge&logo=nextdotjs&logoColor=white)](https://nextjs.org/)
-[![React](https://img.shields.io/badge/React-19.2-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4.3-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
-
-[![Deploy](https://img.shields.io/badge/🌐_Production-genesisHub.web.id-8b5cf6?style=for-the-badge)](https://genesisHub.web.id)
-[![API](https://img.shields.io/badge/🔗_Backend_API-genesisHub.my.id-10b981?style=for-the-badge)](https://genesisHub.my.id)
-[![License](https://img.shields.io/badge/License-Proprietary-ef4444?style=for-the-badge)](#)
-
-<br/>
-
-> *"Menghubungkan warga, pemerintah, dan kecerdasan buatan dalam satu ekosistem pengelolaan lingkungan yang transparan, terukur, dan real-time."*
+| | |
+|---|---|
+| **Framework** | Next.js 16.2.9 (App Router, Turbopack) |
+| **Runtime** | React 19, TypeScript 5 (strict) |
+| **Styling** | TailwindCSS 4.3, custom design tokens |
+| **Production** | [genesisHub.web.id](https://genesisHub.web.id) |
+| **Backend API** | [genesisHub.my.id](https://genesisHub.my.id) |
 
 ---
 
-[Arsitektur](#-arsitektur-sistem) · [Fitur](#-fitur-unggulan) · [Quickstart](#-quickstart) · [Deployment](#-deployment--docker) · [Keamanan](#-kebijakan-keamanan) · [SEO](#-seo--web-vitals) · [Tim](#-tim--kontribusi)
+## Table of Contents
 
-</div>
-
----
-
-## 📐 Arsitektur Sistem
-
-```mermaid
-graph LR
-    subgraph Client Layer
-        A["📱 Flutter Mobile App"]
-        B["🖥️ Next.js Web Portal"]
-    end
-
-    subgraph API Gateway
-        C["⚡ NestJS + Fastify Backend"]
-    end
-
-    subgraph Data Layer
-        D["🐘 Supabase PostgreSQL"]
-        E["🧠 pgvector (RAG Embeddings)"]
-        F["📦 Supabase Storage (Images)"]
-    end
-
-    subgraph AI Services
-        G["🤖 Vision AI (Waste Classification)"]
-        H["💬 RAG Chatbot (OpenRouter LLM)"]
-    end
-
-    A -->|JWT Auth + REST API| C
-    B -->|JWT Admin Auth + REST API| C
-    B -.->|Read-Only Analytics| D
-    C -->|Service Role Key| D
-    C -->|Embedding Search| E
-    C -->|Image Upload/Serve| F
-    C -->|Inference Request| G
-    C -->|Context-Aware Chat| H
-```
-
-### Tech Stack
-
-| Layer | Teknologi | Keterangan |
-|:------|:----------|:-----------|
-| **Framework** | Next.js 16 (App Router) | Server & Client Components, Turbopack |
-| **UI Library** | React 19 | Concurrent features, Server Actions |
-| **Language** | TypeScript 5 (Strict Mode) | Zero tolerance terhadap tipe `any` |
-| **Styling** | TailwindCSS 4.3 + Custom Design Tokens | Glassmorphism, Neon Glow, Ambient Lighting |
-| **Icons** | Lucide React | 1500+ SVG icons, tree-shakeable |
-| **Maps** | Leaflet + CartoDB Voyager Tiles | Pemetaan geospasial interaktif |
-| **Typography** | Geist Sans & Geist Mono (Google Fonts) | Font premium eksklusif Vercel |
-| **Charts** | Custom SVG (Bar + Donut) | 100% terhubung ke array database live |
-| **SEO** | JSON-LD Schema, OpenGraph, Sitemap | Google Search Console terverifikasi |
-| **Deployment** | Docker (Multi-stage Alpine) | Non-root container, standalone output |
+- [Architecture](#architecture)
+- [Getting Started](#getting-started)
+- [Project Structure](#project-structure)
+- [Admin Dashboard](#admin-dashboard)
+- [Data Integrity](#data-integrity)
+- [Security Model](#security-model)
+- [Deployment](#deployment)
+- [SEO Configuration](#seo-configuration)
+- [Cross-Platform Integration](#cross-platform-integration)
 
 ---
 
-## ✨ Fitur Unggulan
-
-### 🏠 Landing Page Publik
-
-Halaman pemasaran responsif yang dirancang untuk mengedukasi warga tentang platform crowdsourcing lingkungan Genesis.id. Dilengkapi video background dinamis, statistik lingkungan real-time, dan tombol unduh aplikasi mobile.
-
-**Routes Publik:**
-
-| Route | Deskripsi |
-|:------|:----------|
-| `/` | Hero section, value proposition, CTA download |
-| `/features` | Showcase fitur AI classification & gamifikasi |
-| `/solutions` | Solusi smart city untuk pemerintah daerah |
-| `/services` | Layanan DaaS (Data-as-a-Service) API |
-| `/contact` | Formulir kontak & informasi tim |
-| `/docs` | Dokumentasi API interaktif (OpenAPI/Swagger) |
-
----
-
-### 🛡️ Admin Dashboard — Moderator Command Center
-
-Panel administrasi komprehensif dengan **8 modul operasional**, seluruhnya terintegrasi langsung ke database Supabase PostgreSQL melalui NestJS Backend API.
-
-#### Navigasi Sidebar Terstruktur
-
-Menu dikelompokkan ke dalam 3 kategori agar admin tidak kebingungan:
+## Architecture
 
 ```
-┌─────────────────────────────────┐
-│  DASBOR & KONTROL               │
-│  ├─ 📊 Ringkasan Analitik       │
-│  ├─ 📍 Laporan Spasial     [3]  │  ← Badge jumlah antrean validasi
-│  └─ 👥 Kontrol Warga            │
-│                                 │
-│  SIARAN & GAMIFIKASI            │
-│  ├─ 🏆 Pusat Tantangan          │
-│  └─ 📢 Pusat Siaran             │
-│                                 │
-│  AI & KEAMANAN                  │
-│  ├─ 📄 Basis Pengetahuan AI     │
-│  └─ 📋 Log Audit Sistem         │
-└─────────────────────────────────┘
+                    ┌─────────────────────┐
+                    │   Supabase          │
+                    │   PostgreSQL + RLS  │
+                    │   pgvector          │
+                    │   Storage (S3)      │
+                    └────────┬────────────┘
+                             │
+                    ┌────────┴────────────┐
+                    │   NestJS + Fastify  │
+                    │   REST API Gateway  │
+                    │   JWT / RBAC        │
+                    └──┬──────────────┬───┘
+                       │              │
+              ┌────────┴───┐   ┌──────┴────────┐
+              │ Next.js    │   │ Flutter       │
+              │ Admin      │   │ Mobile App    │
+              │ Dashboard  │   │ (Citizen)     │
+              └────────────┘   └───────────────┘
 ```
 
----
+The frontend communicates with the NestJS backend via authenticated REST calls. Read-only analytics may query Supabase directly through the client SDK, but all write operations (profile mutations, badge awards, report status changes) are routed through the backend to enforce RBAC and protect the service role key.
 
-#### 📊 Tab 1 — Ringkasan Analitik (Overview)
+### Technology Decisions
 
-Dashboard utama yang menampilkan kesehatan operasional seluruh platform dalam satu pandangan.
-
-| Komponen | Sumber Data | Keterangan |
-|:---------|:------------|:-----------|
-| **4 Metric Cards** | `reports[]`, `profiles[]` | Total Laporan, Antrean Validasi, Warga Aktif, Akurasi Vision-AI |
-| **Bar Chart** | `reports[]` (index-bucketed) | Kecepatan penanganan laporan per hari (7 hari) dengan tooltip hover HUD |
-| **Donut Chart** | `reports[]` (status filter) | Proporsi: Ditangani · Antrean AI · Validasi Manual · Ditolak |
-| **Tabel Laporan Terkini** | `reports[]` (sorted desc, top 5) | ID, Reporter, Waste Type, Danger Level, AI Confidence, Status, Date, Action |
-
-> **⚠️ Zero Dummy Policy:** Semua angka metrik menampilkan nilai `0` jika database kosong — bukan angka placeholder palsu.
+| Concern | Choice | Rationale |
+|---|---|---|
+| Rendering | Client-side (`"use client"`) for dashboard | Real-time state updates, interactive charts, WebSocket-ready |
+| Charts | Custom SVG (Bar, Donut) | Zero external dependency, full control over data binding |
+| Maps | Leaflet + CartoDB Voyager tiles | Lightweight, offline-capable tile caching |
+| Icons | Lucide React | Tree-shakeable, consistent 24px grid |
+| Typography | Geist Sans / Geist Mono | Optimized variable font from Google Fonts |
+| Auth | JWT stored in `localStorage` | Stateless session, validated server-side per request |
 
 ---
 
-#### 📍 Tab 2 — Laporan Spasial (Reports)
+## Getting Started
 
-Moderasi laporan lingkungan crowdsource dari seluruh wilayah dengan visualisasi peta interaktif.
+### Prerequisites
 
-- **Leaflet Map** — Menampilkan pin koordinat laporan dengan popup detail
-- **Search & Filter** — Pencarian teks bebas + filter status (Semua / Pending / Approved / Rejected)
-- **Detail Drawer** — Slide panel untuk melihat foto sampah, deskripsi AI, dan koordinat GPS
-- **Aksi Moderasi** — Approve ✅ / Reject ❌ / Delete 🗑️ dengan **modal konfirmasi wajib**
-- **Batch Actions** — Approve All Pending / Reject All Pending secara massal
-- **Status DTO Mapping** — Frontend `'resolved'` → Backend `'approved'` (otomatis)
+- Node.js >= 18
+- npm >= 9
 
----
-
-#### 👥 Tab 3 — Kontrol Warga (Profiles)
-
-Manajemen penuh atas seluruh akun warga terdaftar dengan kemampuan administratif tingkat tinggi.
-
-- **Pencarian Warga** — Filter berdasarkan nama, username, atau kota
-- **Detail Profil** — Avatar, XP, Level, Streak, Kota, Provinsi, Tanggal bergabung
-- **🏅 Award / Revoke Badge** — Berikan atau cabut lencana dari profil warga
-- **🎮 Adjust Gamification** — Koreksi manual XP, Level, dan Streak via modal input
-- **🚫 Ban / Unban** — Larang akses warga secara langsung
-- **🗑️ Delete Profile** — Hapus akun dengan **dialog konfirmasi** (bukan `window.confirm`)
-- **➕ Create Badge** — Buat lencana kustom baru (kode, judul, deskripsi)
-
----
-
-#### 📄 Tab 4 — Basis Pengetahuan AI (RAG Knowledge Base)
-
-Kelola dokumen regulasi hukum yang menjadi sumber referensi chatbot RAG di aplikasi mobile.
-
-- **Daftar Dokumen** — Judul, Kategori, Jumlah Karakter, Tanggal Upload
-- **📖 Reading Drawer** — Baca konten teks penuh dokumen secara inline
-- **➕ Tambah Dokumen** — Upload regulasi baru (otomatis chunking + embedding ke pgvector)
-- **🗑️ Hapus Dokumen** — Memerlukan input teks konfirmasi keamanan (`HAPUS`)
-- **Font Legibility** — Font besar dan jelas untuk keterbacaan optimal dokumen hukum
-
----
-
-#### 🏆 Tab 5 — Pusat Tantangan (Challenges & Events)
-
-Pengelolaan tantangan gamifikasi dan event resmi yang mendorong partisipasi warga.
-
-- **Challenges** — Buat, lihat, dan hapus tantangan XP/Points
-- **Official Events** — Kelola event komunitas (kerja bakti, festival green)
-- **Modal konfirmasi** wajib sebelum penghapusan
-
----
-
-#### 📢 Tab 6 — Pusat Siaran (Broadcast Center)
-
-Kirim notifikasi broadcast ke seluruh warga atau kelompok target tertentu.
-
-- **Compose Broadcast** — Judul, Pesan, Kategori (Alert/Info/Event), Target
-- **Broadcast History** — Log riwayat siaran terkirim
-
----
-
-#### 📋 Tab 7 — Log Audit Sistem (Audit Trail)
-
-Rekam jejak setiap tindakan administratif untuk transparansi dan akuntabilitas.
-
-- **Action Logging** — LOGIN, REPORT_UPDATE, PROFILE_DELETE, BADGE_AWARD, dll.
-- **Immutable Timeline** — Tidak bisa dihapus, hanya bisa dilihat
-- **Detail Granular** — Admin name, action type, detail, timestamp ISO
-
----
-
-### 🎨 Theme Engine — Dual Mode System
-
-| | Light Mode (Default) | Dark Mode |
-|:--|:---------------------|:----------|
-| **Background** | `bg-surface` / White | `#0a0915` Ultra Dark |
-| **Cards** | White + Navy borders | `#111026` + Indigo borders |
-| **Sidebar** | White/80 glassmorphism | `#0b0a1a/95` deep space |
-| **Accents** | Navy-900, Indigo-600 | Violet-500, `#a78bfa` neon |
-| **Ambient** | Subtle navy/gold blur | Neon purple/gold glow circles |
-
-Preferensi tema tersimpan di `localStorage('admin_theme')` dan langsung tersinkronkan saat login.
-
----
-
-### 🤖 AI Assistant — Asisten Marhas
-
-Laci interaktif (*sliding drawer*) yang menampilkan chatbot AI bawaan dengan kemampuan:
-
-- Membaca **metrik real-time** langsung dari state aktif dashboard
-- Menjawab pertanyaan seperti *"Berapa laporan masuk?"* dengan angka database aktual
-- Menyediakan statistik: Total Laporan, Warga Terdaftar, Dokumen Regulasi, Laporan Tertunda
-
----
-
-## 🔐 Kebijakan Keamanan
-
-### Data Integrity — Zero Dummy Data Policy
-
-```
-┌──────────────────────────────────────────────────────┐
-│                  LIVE MODE ACTIVE                     │
-│                                                      │
-│  ✅ API Success  →  Render data dari PostgreSQL       │
-│  ❌ API Failure  →  Clear ALL state arrays to []      │
-│                     Set connectionError state         │
-│                     Show "Failed to Connect" banner   │
-│                     ❌ NEVER fallback to mock data     │
-│                                                      │
-│  🔄 SIMULATOR MODE  →  Use localStorage emulator     │
-│                        Mock data ONLY in this mode   │
-└──────────────────────────────────────────────────────┘
-```
-
-### Secret Key Protection
-
-| Rule | Detail |
-|:-----|:-------|
-| `SUPABASE_SERVICE_ROLE_KEY` | **HANYA** di `.env` server NestJS backend |
-| Browser exposure | **DILARANG KERAS** — tidak ada service key di client |
-| Sensitive operations | Dialirkan melalui JWT-authenticated NestJS endpoints |
-| Admin auth | JWT token disimpan di `localStorage('genesis_admin_token')` |
-
-### RBAC (Role-Based Access Control)
-
-```
-citizen  →  Flutter mobile app (read/write own data)
-admin    →  Next.js dashboard (full administrative control)
-```
-
-Rute admin dilindungi oleh `@Roles('admin')` + `RolesGuard` di backend NestJS.
-
----
-
-## 🚀 Quickstart
-
-### Prasyarat
-
-| Tool | Versi Minimum |
-|:-----|:-------------|
-| Node.js | ≥ 18.0 |
-| npm | ≥ 9.0 |
-
-### Instalasi & Jalankan
+### Installation
 
 ```bash
-# 1. Clone repository
-git clone https://github.com/agissugandi7203-ops/EKKA-2026_MarhasAI.git
-cd EKKA-2026_MarhasAI/frontend
-
-# 2. Install dependencies
+cd frontend
 npm install
-
-# 3. Konfigurasi environment
-cp .env.example .env.local
 ```
 
-Edit `.env.local`:
+### Configuration
+
+Create `.env.local` in the project root:
+
 ```env
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...your-anon-key
+NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-anon-key>
 ```
+
+> **Important:** Never place `SUPABASE_SERVICE_ROLE_KEY` in any frontend environment file. Service-level operations must be proxied through the NestJS backend.
+
+### Development
 
 ```bash
-# 4. Jalankan development server
-npm run dev
-
-# 5. Buka browser
-# → http://localhost:3000          (Landing Page)
-# → http://localhost:3000/admin    (Admin Dashboard)
+npm run dev          # Start dev server (Turbopack, http://localhost:3000)
+npm run build        # Production build
+npm run start        # Serve production build
+npm run lint         # ESLint check
 ```
-
-### NPM Scripts
-
-| Script | Perintah | Keterangan |
-|:-------|:---------|:-----------|
-| `dev` | `npm run dev` | Development server dengan hot reload (Turbopack) |
-| `build` | `npm run build` | Kompilasi optimized production bundle |
-| `start` | `npm run start` | Jalankan production server |
-| `lint` | `npm run lint` | ESLint code quality check |
 
 ---
 
-## 🐳 Deployment — Docker
-
-Dockerfile menggunakan **multi-stage build** dengan keamanan non-root container:
-
-```bash
-# Build image
-docker build -t genesis-frontend .
-
-# Run container
-docker run -p 3000:3000 \
-  -e NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co \
-  -e NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key \
-  genesis-frontend
-```
-
-<details>
-<summary>📄 <strong>Dockerfile Architecture</strong></summary>
-
-```dockerfile
-# Stage 1: Builder (node:20-alpine)
-# - npm ci (clean install)
-# - npm run build (optimized production bundle)
-
-# Stage 2: Runner (node:20-alpine)
-# - Non-root user (nextjs:nodejs, UID 1001)
-# - Standalone output only (~100MB vs ~500MB full)
-# - Exposed on port 3000
-```
-
-</details>
-
----
-
-## 🔍 SEO & Web Vitals
-
-| Aspek | Implementasi |
-|:------|:-------------|
-| **Meta Tags** | Title, Description, Keywords per halaman |
-| **OpenGraph** | `og:title`, `og:description`, `og:url`, `og:type` |
-| **Twitter Cards** | `summary_large_image` |
-| **JSON-LD** | Schema.org `Organization` structured data |
-| **Sitemap** | `/sitemap.xml` — 6 routes terindeks |
-| **Robots** | `/robots.txt` — allow all crawlers |
-| **Google Verification** | `googlee4a64ab1a21f7c0d.html` |
-| **Canonical URL** | `https://genesisHub.web.id` |
-
----
-
-## 📁 Struktur Proyek
+## Project Structure
 
 ```
 frontend/
 ├── public/
-│   ├── sitemap.xml              # Sitemap dinamis (6 routes)
-│   ├── robots.txt               # Crawler directives
-│   ├── manifest.json            # PWA manifest
-│   ├── schema-org.json          # Structured data
-│   ├── googlee4a64ab1a21f7c0d.html  # Google Search Console
-│   └── videos/                  # Background video assets
+│   ├── sitemap.xml                   # 6 indexed routes
+│   ├── robots.txt                    # Crawler directives
+│   ├── manifest.json                 # PWA metadata
+│   ├── schema-org.json               # Structured data
+│   ├── googlee4a64ab1a21f7c0d.html   # Search Console verification
+│   └── videos/                       # Landing page media assets
 │
 ├── src/
 │   ├── app/
-│   │   ├── layout.tsx           # Root layout (Geist fonts, SEO metadata, JSON-LD)
-│   │   ├── globals.css          # Design tokens & utility classes
-│   │   ├── page.tsx             # Landing Page publik
+│   │   ├── layout.tsx                # Root layout (fonts, metadata, JSON-LD)
+│   │   ├── globals.css               # Design tokens, utility classes
+│   │   ├── page.tsx                  # Public landing page
 │   │   │
 │   │   ├── admin/
-│   │   │   ├── page.tsx         # 🧠 Admin Dashboard Controller (1360 lines)
-│   │   │   │                    #    State management, fetchData, handlers,
-│   │   │   │                    #    theme engine, AI drawer, connection error
-│   │   │   ├── login/
-│   │   │   │   └── page.tsx     # JWT authentication form
+│   │   │   ├── page.tsx              # Dashboard controller (~1360 LOC)
+│   │   │   ├── login/page.tsx        # JWT authentication
 │   │   │   └── components/
 │   │   │       ├── Sidebar.tsx       # Grouped navigation (3 categories)
-│   │   │       ├── OverviewTab.tsx   # Analytics dashboard (charts + metrics)
-│   │   │       ├── ReportsTab.tsx    # Geospatial reports + Leaflet map
-│   │   │       ├── ProfilesTab.tsx   # User management + gamification
-│   │   │       ├── RagTab.tsx        # AI Knowledge Base (RAG documents)
-│   │   │       ├── ChallengesTab.tsx # Gamification challenges & events
+│   │   │       ├── OverviewTab.tsx   # Analytics: metrics, bar chart, donut, table
+│   │   │       ├── ReportsTab.tsx    # Report moderation + Leaflet map
+│   │   │       ├── ProfilesTab.tsx   # User management + gamification controls
+│   │   │       ├── RagTab.tsx        # AI knowledge base (RAG documents)
+│   │   │       ├── ChallengesTab.tsx # Gamification challenges and events
 │   │   │       ├── BroadcastTab.tsx  # Notification broadcast center
-│   │   │       └── AuditTab.tsx      # System audit trail log
+│   │   │       └── AuditTab.tsx      # Immutable admin action log
 │   │   │
-│   │   ├── contact/             # Contact page
-│   │   ├── docs/                # API documentation portal
-│   │   ├── features/            # Feature showcase page
-│   │   ├── services/            # DaaS services page
-│   │   └── solutions/           # Smart city solutions page
+│   │   ├── contact/                  # Contact page
+│   │   ├── docs/                     # API documentation portal
+│   │   ├── features/                 # Feature showcase
+│   │   ├── services/                 # DaaS service catalog
+│   │   └── solutions/                # Smart city solutions
 │   │
 │   └── components/
-│       ├── Header.tsx           # Global navigation header
-│       └── BoomerangVideoBg.tsx # Dynamic video background component
+│       ├── Header.tsx                # Global navigation
+│       └── BoomerangVideoBg.tsx      # Video background component
 │
-├── Dockerfile                   # Multi-stage production build
-├── tailwind.config.ts           # TailwindCSS configuration
-├── tsconfig.json                # TypeScript strict mode config
-├── next.config.ts               # Next.js configuration
-└── package.json                 # Dependencies & scripts
+├── Dockerfile                        # Multi-stage production build
+├── tailwind.config.ts
+├── tsconfig.json                     # strict: true
+└── package.json
 ```
 
 ---
 
-## 🔗 Integrasi Multi-Platform
+## Admin Dashboard
 
-Genesis.id beroperasi sebagai **tiga sub-proyek** yang saling terhubung:
+The admin panel (`/admin`) is the operational command center for managing the Genesis.id platform. Access requires JWT authentication with role `admin`.
 
-| Sub-Proyek | Teknologi | Domain | Peran |
-|:-----------|:----------|:-------|:------|
-| **Frontend** (ini) | Next.js 16 | `genesisHub.web.id` | Portal publik + Admin dashboard |
-| **Backend** | NestJS + Fastify | `genesisHub.my.id` | REST API, JWT auth, RBAC, AI inference |
-| **Mobile** | Flutter + Dio + BLoC | Google Play Store | Aplikasi warga (laporan, chatbot, gamifikasi) |
+### Navigation
 
-### Alur Data
+The sidebar groups modules into three logical sections:
+
+| Group | Modules |
+|---|---|
+| **Dashboard & Control** | Overview Analytics, Spatial Reports, Citizen Management |
+| **Broadcast & Gamification** | Challenge Center, Broadcast Center |
+| **AI & Security** | RAG Knowledge Base, System Audit Log |
+
+### Module Reference
+
+#### Overview Analytics
+
+Aggregated platform health metrics derived from live database state.
+
+- **Metric cards** — Total reports, validation queue depth, active citizens, Vision-AI accuracy
+- **Bar chart** — Daily report processing velocity (7-day window, index-bucketed from `reports[]`)
+- **Donut chart** — Status distribution: resolved, pending AI, pending human, rejected
+- **Recent reports table** — Latest 5 reports sorted by `created_at` descending
+
+All values render directly from state arrays. When the database is empty, values display as `0` — never as placeholder numbers.
+
+#### Spatial Reports
+
+Geospatial report moderation with interactive mapping.
+
+- Leaflet map with CartoDB Voyager tiles showing report pin coordinates
+- Full-text search and status-based filtering
+- Detail drawer with waste photo, AI classification result, GPS coordinates
+- Approve / Reject / Delete actions with mandatory confirmation dialogs
+- Batch operations (approve all pending, reject all pending)
+- Automatic status mapping: frontend `resolved` → backend DTO `approved`
+
+#### Citizen Management
+
+Full administrative control over registered citizen profiles.
+
+- Profile search by name, username, or city
+- Gamification adjustment (XP, level, streak) via modal input
+- Badge award and revocation through backend API
+- Account ban/unban toggle
+- Profile deletion with typed confirmation dialog (not `window.confirm`)
+- Badge creation with custom code, title, and description
+
+#### RAG Knowledge Base
+
+Document management for the chatbot's retrieval-augmented generation pipeline.
+
+- Document listing with title, category, character count, upload date
+- Full-text reading drawer for inline document review
+- Document upload with automatic chunking and pgvector embedding
+- Deletion requires typed security confirmation (`HAPUS`)
+
+#### Challenge Center
+
+Gamification incentive management.
+
+- Create and delete XP/point-based challenges
+- Manage official community events
+- Confirmation dialogs on all destructive actions
+
+#### Broadcast Center
+
+Push notification composition and delivery tracking.
+
+- Compose messages with title, body, category (alert/info/event), and target audience
+- Historical broadcast log
+
+#### System Audit Log
+
+Immutable record of all administrative actions.
+
+- Logged actions: LOGIN, REPORT_UPDATE, PROFILE_DELETE, BADGE_AWARD, BAN_TOGGLE, etc.
+- Fields: admin name, action type, detail string, ISO 8601 timestamp
+- Read-only — entries cannot be modified or deleted
+
+### Theme System
+
+The dashboard supports two visual modes:
+
+| Property | Light (default) | Dark |
+|---|---|---|
+| Background | White / `bg-surface` | `#0a0915` |
+| Card surfaces | White, navy borders | `#111026`, indigo borders |
+| Sidebar | `white/80` with blur | `#0b0a1a/95` |
+| Accent palette | Navy-900, Indigo-600 | Violet-500, `#a78bfa` |
+
+Theme preference persists in `localStorage` under the key `admin_theme` and synchronizes on session load.
+
+### AI Assistant
+
+A slide-out drawer accessible from the top navigation bar. The assistant reads live state arrays to answer operational queries (e.g., report counts, citizen totals, pending validations) with exact figures from the current database snapshot.
+
+---
+
+## Data Integrity
+
+The dashboard operates in two modes, selected via the sidebar toggle:
+
+### Live Mode
+
+Fetches data from the production NestJS API at `https://genesisHub.my.id`. If any API call fails:
+
+1. All state arrays are cleared to `[]`
+2. A `connectionError` state is set with the HTTP status or error message
+3. A connection failure banner renders in the main content area
+4. **No silent fallback to mock data occurs**
+
+This guarantees that administrators always see actual database state or an explicit error — never stale or fabricated numbers.
+
+### Simulator Mode
+
+Uses `localStorage`-backed emulated datasets for offline development and demonstration. Mock data is only loaded and rendered in this mode.
+
+---
+
+## Security Model
+
+### Secret Key Isolation
+
+| Key | Location | Notes |
+|---|---|---|
+| `SUPABASE_SERVICE_ROLE_KEY` | Backend `.env` only | Bypasses RLS; never exposed to browser |
+| `SUPABASE_ANON_KEY` | Frontend `.env.local` | Read-only, subject to RLS policies |
+| Admin JWT | `localStorage` | Validated per-request by NestJS `AuthGuard` |
+
+### Role-Based Access Control
+
+| Role | Surface | Capabilities |
+|---|---|---|
+| `citizen` | Flutter mobile | Read/write own reports and profile |
+| `admin` | Next.js dashboard | Full platform control; protected by `@Roles('admin')` + `RolesGuard` |
+
+### Confirmation Safeguards
+
+All destructive actions (delete report, delete profile, remove document, revoke badge) require a modal confirmation dialog. No action uses `window.confirm()` or `window.alert()`.
+
+---
+
+## Deployment
+
+### Docker
+
+The project includes a multi-stage Dockerfile optimized for production:
+
+```bash
+docker build -t genesis-frontend .
+docker run -p 3000:3000 \
+  -e NEXT_PUBLIC_SUPABASE_URL=<url> \
+  -e NEXT_PUBLIC_SUPABASE_ANON_KEY=<key> \
+  genesis-frontend
+```
+
+Build stages:
+1. **Builder** (`node:20-alpine`) — `npm ci`, `npm run build`
+2. **Runner** (`node:20-alpine`) — Non-root user (`nextjs`, UID 1001), standalone output only
+
+The runner stage copies only the standalone server and static assets, reducing the final image size from ~500MB to ~100MB.
+
+---
+
+## SEO Configuration
+
+| Element | Implementation |
+|---|---|
+| Title / Description | Per-page via Next.js `Metadata` export |
+| OpenGraph | `og:title`, `og:description`, `og:url`, `og:type`, `og:locale` |
+| Twitter Cards | `summary_large_image` |
+| JSON-LD | `Organization` schema injected in root layout |
+| Sitemap | `/sitemap.xml` — 6 public routes |
+| Robots | `/robots.txt` — all crawlers allowed |
+| Search Console | Verified via `googlee4a64ab1a21f7c0d.html` |
+| Canonical | `https://genesisHub.web.id` |
+
+---
+
+## Cross-Platform Integration
+
+Genesis.id consists of three sub-projects:
+
+| Component | Stack | Domain | Role |
+|---|---|---|---|
+| Frontend (this) | Next.js 16 | `genesisHub.web.id` | Public portal, admin dashboard |
+| Backend | NestJS + Fastify | `genesisHub.my.id` | API gateway, JWT auth, RBAC, AI services |
+| Mobile | Flutter, Dio, BLoC | Google Play | Citizen app (reports, chatbot, gamification) |
+
+### Data Flow
 
 ```
-Warga (Flutter) ──POST /reports──→ NestJS ──→ Vision AI classify
-                                      │          ↓
-                                      │     Supabase DB (insert)
-                                      │          ↓
-Admin (Next.js) ←── GET /reports ─────┘     AI confidence < 70%?
-       │                                        ↓
-       │                                 status = 'pending_human'
-       │                                        ↓
-       └─── PATCH /reports/:id ──────→ Admin approve/reject
-                                        ↓
-                                  XP + Badge awarded to reporter
+Citizen submits report (Flutter)
+  → POST /reports → NestJS
+    → Vision AI classifies waste type + danger level
+    → Insert to Supabase with status based on confidence threshold
+      → confidence >= 70%  →  status: 'approved'
+      → confidence < 70%   →  status: 'pending_human'
+
+Admin reviews pending reports (Next.js)
+  → GET /reports → Display in Reports Tab
+  → PATCH /reports/:id → Approve or Reject
+    → XP and badge awarded to reporter on approval
 ```
 
 ---
 
-## 👥 Tim & Kontribusi
+## License
 
-<table>
-  <tr>
-    <td align="center"><b>Genesis.id — MarhasAI Team</b></td>
-  </tr>
-  <tr>
-    <td align="center">
-      LKS Dikdasmen Nasional 2026<br/>
-      <i>IT Software Solution for Business</i>
-    </td>
-  </tr>
-</table>
+Proprietary. All rights reserved.
 
 ---
 
-<div align="center">
-
-**Built with ❤️ using Next.js, React, TypeScript, and TailwindCSS**
-
-`genesisHub.web.id` · `genesisHub.my.id`
-
-</div>
+*Genesis.id — MarhasAI Team | LKS Dikdasmen Nasional 2026*
