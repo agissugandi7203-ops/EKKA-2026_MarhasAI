@@ -1,5 +1,11 @@
 <div align="center">
-  <img src="logo.png" alt="Genesis Logo" width="160" />
+  <table style="border:none; margin: 0 auto;">
+    <tr>
+      <td align="center" bgcolor="#1A1A1A" style="border-radius: 12px; padding: 16px;">
+        <img src="logo.png" alt="Genesis Logo" width="160" />
+      </td>
+    </tr>
+  </table>
 </div>
 
 <h1 align="center">Genesis</h1>
@@ -33,16 +39,21 @@
 
 ## 📖 1. Latar Belakang & Urgensi Masalah
 
-### 1.1. Krisis Pengelolaan Lingkungan Urban
-Pertumbuhan kawasan urban di Indonesia yang sangat cepat memicu tantangan besar dalam pengelolaan lingkungan hidup. Pemerintah daerah sering kali mengalami keterlambatan dalam mendeteksi dan menangani pelanggaran lingkungan—seperti pembuangan sampah liar di fasilitas umum, pembuangan limbah industri cair ke sungai, hingga pembakaran sampah terbuka di pemukiman padat. Keterbatasan personel dinas lapangan menyebabkan pengawasan tidak dapat dilakukan 24/7 di seluruh titik rawan.
+### 1.1. Paradoks Aplikasi Pelaporan Lingkungan
+Di Indonesia, telah banyak instansi atau pengembang yang menciptakan aplikasi pelaporan sampah atau pengaduan tata kota. Namun, mayoritas dari platform tersebut gagal mencapai adopsi massal atau dengan cepat ditinggalkan oleh penggunanya (*churn*). 
 
-### 1.2. Kelemahan Sistem Pelaporan Konvensional
-Di sisi lain, partisipasi aktif warga (crowdsourcing) melalui sistem pelaporan konvensional, baik via WhatsApp dinas, call center, maupun aplikasi pengaduan publik yang ada saat ini, sering kali tidak efisien dan menghadapi kendala struktural:
+Akar masalahnya bukan terletak pada keterbatasan teknis, melainkan pada **ketiadaan insentif dan manfaat nyata (tangible benefit)**. Sistem konvensional menuntut warga untuk proaktif meluangkan waktu, memotret, dan mengirim laporan secara sukarela, tetapi tidak menawarkan imbalan apa pun—baik berupa insentif finansial, pengakuan sosial, maupun sekadar pengalaman interaktif yang menyenangkan. Konsep "meminta tanpa memberi" ini bertentangan dengan prinsip pelibatan pengguna modern.
 
-1. **Laporan Ganda & Geospasial Spam**: Saat terjadi tumpukan sampah mencolok di jalan protokol, puluhan warga dapat melaporkan objek yang sama secara bersamaan. Hal ini memicu duplikasi data di database pemerintah, menyebabkan antrean laporan menumpuk, dan membuang-buang waktu petugas lapangan yang dikerahkan ke lokasi yang sama berulang kali.
-2. **Pelanggaran Privasi & Kebocoran Data (UU PDP)**: Foto laporan lapangan yang dikirim warga sering kali memperlihatkan wajah orang lain, plat nomor kendaraan pribadi, atau aktivitas sensitif di latar belakang secara tidak sengaja. Tanpa adanya mekanisme penyensoran otomatis di sisi server, publikasi gambar ini melanggar Undang-Undang Pelindungan Data Pribadi (UU PDP) dan membahayakan privasi warga.
-3. **Ketidakakuratan Pemilahan Laporan Manual**: Petugas kebersihan kota kesulitan memilah ribuan laporan harian untuk mengidentifikasi jenis sampah (organik, anorganik, limbah B3) dan mengestimasi tingkat bahaya. Proses kurasi manusia yang lambat menunda tindakan penanganan kritis untuk limbah berbahaya.
-4. **Kompleksitas Literasi Hukum Lingkungan**: Warga sering ragu untuk bertindak atau melaporkan pelanggaran karena tidak memahami dasar hukum yang berlaku. Portal regulasi Jaringan Dokumentasi dan Informasi Hukum (JDIH) pemerintah sering kali menyajikan dokumen PDF statis dengan bahasa hukum yang kaku, panjang, dan sulit dipahami secara instan oleh warga biasa.
+### 1.2. Gamifikasi: Memanfaatkan Psikologi Gen Z
+Berdasarkan fakta empiris, generasi masa kini (terutama Gen Z dan Milenial) sangat terdorong oleh elemen permainan (*gaming*), kompetisi, *leaderboard*, serta *Fear of Missing Out* (FOMO). Mereka bersedia menempuh jarak bermil-mil hanya untuk berburu karakter virtual dalam *game* sejenis *Pokémon Go*.
+
+Genesis memanfaatkan fenomena psikologis ini dengan membawa pendekatan **Gamification** ke ranah pelestarian lingkungan. Genesis bukanlah sekadar aplikasi pengaduan biasa, melainkan sebuah ekosistem partisipatif di mana warga akan mendapatkan *Experience Points* (XP), lencana pencapaian (*Badges*), dan koin virtual yang memiliki potensi konversi untuk *reward*. Warga dapat saling berkompetisi menduduki peringkat teratas di *Leaderboard* tingkat kota, mengubah tindakan menjaga lingkungan hidup dari sebuah kewajiban yang membosankan menjadi sebuah *game* dunia nyata yang adiktif dan bermanfaat.
+
+### 1.3. Tantangan Teknis: Spam Spasial dan Privasi
+Selain masalah insentif, sistem pelaporan modern juga tetap harus menyelesaikan kendala operasional yang kritis:
+1. **Laporan Ganda & Geospasial Spam**: Jika sebuah pelanggaran lingkungan cukup mencolok, puluhan warga (yang terdorong oleh imbalan poin di Genesis) dapat melaporkan objek yang sama secara bersamaan. Tanpa mitigasi, hal ini akan memicu antrean *spam* di server pemerintah dan membuang waktu petugas.
+2. **Pelanggaran Privasi (UU PDP)**: Warga yang memotret pelanggaran sering kali secara tidak sengaja menangkap wajah orang lain atau plat nomor kendaraan. Mempublikasikan gambar mentah ini sangat berisiko melanggar regulasi Pelindungan Data Pribadi.
+3. **Ketidakpahaman Hukum**: Banyak warga ragu atau takut bertindak karena tidak memahami payung hukumnya secara persis, sementara portal pemerintah yang kaku (JDIH) tidak mampu menjawab keraguan warga secara instan.
 
 ---
 
@@ -384,5 +395,5 @@ Kode sumber ini dilisensikan di bawah **MIT License**. Lihat dokumen [LICENSE](L
 ---
 
 <div align="center">
-  <p>Dikembangkan dengan 🩵 oleh Tim Genesis untuk EKKA LKS 2026.</p>
+  <p><strong>© 2026 Tim Genesis.</strong> Disusun khusus untuk dokumentasi teknis dan audit proyek LKS EKKA.</p>
 </div>
