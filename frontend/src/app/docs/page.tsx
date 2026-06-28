@@ -36,6 +36,37 @@ export default function Documentation() {
   const [dangerLevel, setDangerLevel] = useState("");
   const [limit, setLimit] = useState(10);
 
+  // Dynamic Cities list from backend
+  const [citiesList, setCitiesList] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchCities = async () => {
+      try {
+        const res = await fetch("https://genesisHub.my.id/b2g/cities", {
+          method: "GET",
+          headers: {
+            "x-api-key": apiKey || "genesis_trial_key_2026",
+            "Accept": "application/json",
+          },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data)) {
+            const cleaned = data.filter(Boolean).sort();
+            setCitiesList(cleaned);
+            return;
+          }
+        }
+      } catch (err: any) {
+        console.warn("Failed to fetch cities from backend, using defaults:", err.message);
+      }
+      // Fallback to defaults if backend is offline/CORS blocked/unreachable
+      setCitiesList(["Kota Surabaya", "Kabupaten Sidoarjo", "Kabupaten Gresik", "Kota Malang"]);
+    };
+
+    fetchCities();
+  }, [apiKey]);
+
   // Client Execution
   const [loading, setLoading] = useState(false);
   const [responseJson, setResponseJson] = useState<any>(null);
@@ -449,10 +480,11 @@ void fetchB2gData() async {
                     className="w-full text-sm rounded-xl border border-navy-100 px-4 py-3 bg-slate-50/50 focus:outline-none focus:border-primary/50"
                   >
                     <option value="">Semua Wilayah</option>
-                    <option value="Kota Surabaya">Kota Surabaya</option>
-                    <option value="Kabupaten Sidoarjo">Kabupaten Sidoarjo</option>
-                    <option value="Kabupaten Gresik">Kabupaten Gresik</option>
-                    <option value="Kota Malang">Kota Malang</option>
+                    {citiesList.map((city) => (
+                      <option key={city} value={city}>
+                        {city}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
