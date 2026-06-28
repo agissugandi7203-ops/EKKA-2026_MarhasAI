@@ -1,5 +1,11 @@
 <div align="center">
-  <img src="logo_dark.png" alt="Genesis Logo" width="160" style="border-radius: 12px;" />
+  <table style="border:none; margin: 0 auto;">
+    <tr>
+      <td align="center" bgcolor="#1A1A1A" style="border-radius: 12px; padding: 16px;">
+        <img src="mobile/assets/images/logo.png" alt="Genesis Logo" width="160" />
+      </td>
+    </tr>
+  </table>
 </div>
 
 <h1 align="center">Genesis</h1>
@@ -31,12 +37,39 @@
 
 ---
 
+## 🔗 Akses & Unduhan (Proof of Work)
+
+Untuk mempermudah dewan juri melakukan peninjauan teknis, seluruh instrumen sistem Genesis telah diunggah dan dapat diakses secara publik melalui tautan resmi di bawah ini:
+
+<div align="center">
+  <a href="https://genesisHub.web.id">
+    <img src="https://img.shields.io/badge/🌐_Buka_Web_Dashboard-000000?style=for-the-badge&logo=next.js&logoColor=white" alt="Web Dashboard" />
+  </a>
+  <a href="https://genesisHub.my.id/api">
+    <img src="https://img.shields.io/badge/⚙️_Buka_API_Swagger-E0234E?style=for-the-badge&logo=nestjs&logoColor=white" alt="API Gateway" />
+  </a>
+</div>
+
+<div align="center">
+  <a href="mobile/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk">
+    <img src="https://img.shields.io/badge/📱_Download_APK_(ARM64)-02569B?style=for-the-badge&logo=android&logoColor=white" alt="Download APK ARM64" />
+  </a>
+  <a href="mobile/build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk">
+    <img src="https://img.shields.io/badge/📱_Download_APK_(ARM32)-02569B?style=for-the-badge&logo=android&logoColor=white" alt="Download APK ARM32" />
+  </a>
+  <a href="mobile/build/app/outputs/flutter-apk/app-x86_64-release.apk">
+    <img src="https://img.shields.io/badge/💻_Download_APK_(x86__64)-02569B?style=for-the-badge&logo=android&logoColor=white" alt="Download APK x86_64" />
+  </a>
+</div>
+
+---
+
 ## 📖 1. Latar Belakang & Urgensi Masalah
 
 ### 1.1. Paradoks Aplikasi Pelaporan Lingkungan
 Di Indonesia, telah banyak instansi atau pengembang yang menciptakan aplikasi pelaporan sampah atau pengaduan tata kota. Namun, mayoritas dari platform tersebut gagal mencapai adopsi massal atau dengan cepat ditinggalkan oleh penggunanya (*churn*). 
 
-Akar masalahnya bukan terletak pada keterbatasan teknis, melainkan pada **ketiadaan insentif dan manfaat nyata (tangible benefit)**. Sistem konvensional menuntut warga untuk proaktif meluangkan waktu, memotret, dan mengirim laporan secara sukarela, tetapi tidak menawarkan imbalan apa pun—baik berupa insentif finansial, pengakuan sosial, maupun sekadar pengalaman interaktif yang menyenangkan. Konsep "meminta tanpa memberi" ini bertentangan dengan prinsip pelibatan pengguna modern.
+Akar masalahnya bukan terletak pada keterbatasan teknis, melainkan pada **ketiadaan insentif dan manfaat nyata (tangible benefit)**. Sistem konvensional menuntut warga untuk proaktif meluangkan waktu, memotret, dan mengirim laporan secara sukarela, tetapi tidak menawarkan imbalan apa pun, baik berupa insentif finansial, pengakuan sosial, maupun sekadar pengalaman interaktif yang menyenangkan. Konsep "meminta tanpa memberi" ini bertentangan dengan prinsip pelibatan pengguna modern.
 
 ### 1.2. Gamifikasi: Memanfaatkan Psikologi Gen Z
 Berdasarkan fakta empiris, generasi masa kini (terutama Gen Z dan Milenial) sangat terdorong oleh elemen permainan (*gaming*), kompetisi, *leaderboard*, serta *Fear of Missing Out* (FOMO). Mereka bersedia menempuh jarak bermil-mil hanya untuk berburu karakter virtual dalam *game* sejenis *Pokémon Go*.
@@ -55,7 +88,7 @@ Selain masalah insentif, sistem pelaporan modern juga tetap harus menyelesaikan 
 
 **Genesis** hadir sebagai solusi komprehensif, multi-platform, dan berbasis *State-of-the-Art* Artificial Intelligence untuk menjembatani pelaporan warga dengan penanganan tanggap dari pemerintah. 
 
-Sistem kami mengotomatisasi seluruh alur—dari saat warga memotret pelanggaran, hingga data tersebut terverifikasi, tersensor, dan divisualisasikan di dashboard pemerintah. 
+Sistem kami mengotomatisasi seluruh alur, dari saat warga memotret pelanggaran, hingga data tersebut terverifikasi, tersensor, dan divisualisasikan di dashboard pemerintah. 
 
 Berikut adalah pilar inovasi yang ditawarkan Genesis:
 
