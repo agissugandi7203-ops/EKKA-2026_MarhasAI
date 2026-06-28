@@ -248,10 +248,12 @@ class _BadgeListPageState extends State<BadgeListPage> {
                           height: 72,
                           colorFilter: unlocked
                               ? null
-                              : ColorFilter.mode(
-                                  Colors.grey.withValues(alpha: 0.4),
-                                  BlendMode.srcIn,
-                                ),
+                              : const ColorFilter.matrix(<double>[
+                                  0.2126, 0.7152, 0.0722, 0, 0,
+                                  0.2126, 0.7152, 0.0722, 0, 0,
+                                  0.2126, 0.7152, 0.0722, 0, 0,
+                                  0,      0,      0,      0.6, 0,
+                                ]),
                         ),
                       ),
                     ),
@@ -538,10 +540,12 @@ class _BadgeListPageState extends State<BadgeListPage> {
                                             badge.svgString,
                                             colorFilter: unlocked
                                                 ? null
-                                                : ColorFilter.mode(
-                                                    Colors.grey.withValues(alpha: 0.4),
-                                                    BlendMode.srcIn,
-                                                  ),
+                                                : const ColorFilter.matrix(<double>[
+                                                    0.2126, 0.7152, 0.0722, 0, 0,
+                                                    0.2126, 0.7152, 0.0722, 0, 0,
+                                                    0.2126, 0.7152, 0.0722, 0, 0,
+                                                    0,      0,      0,      0.6, 0,
+                                                  ]),
                                           ),
                                         ),
                                       ),

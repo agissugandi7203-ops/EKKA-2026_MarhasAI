@@ -283,9 +283,7 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
               ),
             ),
             Positioned.fill(
-              child: SafeArea(
-                child: _buildShimmerLoading(),
-              ),
+              child: _buildShimmerLoading(),
             ),
           ],
         ),
@@ -341,43 +339,44 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
           ),
         ],
       ),
-      body: Stack(
-        children: [
-          // Elegant Slate-Navy Gradient Header Curve
-          Container(
-            height: 260,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Color(0xFF0F172A),
-                  Color(0xFF1E293B),
-                ],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
+      body: RefreshIndicator(
+        onRefresh: _fetchProfile,
+        color: AppColors.navy900,
+        backgroundColor: Colors.white,
+        edgeOffset: MediaQuery.of(context).padding.top + kToolbarHeight + 10,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+          child: Stack(
+            children: [
+              // Slate-Navy Gradient Header Curve (now inside scroll view!)
+              Container(
+                height: 260,
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Color(0xFF0F172A),
+                      Color(0xFF1E293B),
+                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(40),
+                    bottomRight: Radius.circular(40),
+                  ),
+                ),
               ),
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(40),
-                bottomRight: Radius.circular(40),
-              ),
-            ),
-          ),
-          RefreshIndicator(
-            onRefresh: _fetchProfile,
-            color: AppColors.navy900,
-            backgroundColor: Colors.white,
-            edgeOffset: MediaQuery.of(context).padding.top + kToolbarHeight + 10,
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-              padding: EdgeInsets.only(
-                left: AppConstants.pagePaddingH,
-                right: AppConstants.pagePaddingH,
-                top: MediaQuery.of(context).padding.top + kToolbarHeight + 16,
-                bottom: 110, // Avoid overlapping with floating bottom navbar
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // ── Hero Profile Card (Claymorphic, Premium & 3D Soft) ──
+              Padding(
+                padding: EdgeInsets.only(
+                  left: AppConstants.pagePaddingH,
+                  right: AppConstants.pagePaddingH,
+                  top: MediaQuery.of(context).padding.top + kToolbarHeight + 16,
+                  bottom: 110, // Avoid overlapping with floating bottom navbar
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // ── Hero Profile Card (Claymorphic, Premium & 3D Soft) ──
                   FadeSlideEntrance(
                     delay: const Duration(milliseconds: 50),
                     child: Container(
@@ -605,11 +604,13 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                                 title: 'Laporan Selesai',
                                 value: '$completedReports',
                                 icon: Icons.check_circle_rounded,
-                                iconColor: const Color(0xFF10B981),
-                                bgColor: const Color(0xFFECFDF5),
-                                borderColor: const Color(0xFF10B981).withValues(alpha: 0.35),
-                                shadowColor: const Color(0xFF047857).withValues(alpha: 0.08),
-                                textColor: const Color(0xFF065F46),
+                                iconColor: AppColors.emerald,
+                                bgColor: AppColors.emeraldLight,
+                                borderColor: AppColors.emerald.withValues(alpha: 0.35),
+                                shadowColor: AppColors.emerald.withValues(alpha: 0.08),
+                                textColor: const Color(0xFF0F5132),
+                                lottieAsset: 'assets/animations/achievements/Image.json',
+                                lottieRepeat: false,
                               ),
                             ),
                             const SizedBox(width: AppConstants.spacing12),
@@ -618,11 +619,11 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                                 title: 'Total Point',
                                 value: '${xp * 3}',
                                 icon: Icons.monetization_on_rounded,
-                                iconColor: const Color(0xFFF59E0B),
-                                bgColor: const Color(0xFFFEF3C7),
-                                borderColor: const Color(0xFFF59E0B).withValues(alpha: 0.35),
-                                shadowColor: const Color(0xFFB45309).withValues(alpha: 0.08),
-                                textColor: const Color(0xFF92400E),
+                                iconColor: AppColors.gold,
+                                bgColor: AppColors.gold50,
+                                borderColor: AppColors.gold.withValues(alpha: 0.35),
+                                shadowColor: AppColors.gold.withValues(alpha: 0.08),
+                                textColor: const Color(0xFF856404),
                                 lottieAsset: 'assets/animations/achievements/badge.json',
                                 lottieRepeat: false,
                               ),
@@ -633,11 +634,11 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                                 title: 'Streak Aktif',
                                 value: '$activeStreak Hari',
                                 icon: Icons.local_fire_department_rounded,
-                                iconColor: const Color(0xFFF43F5E),
-                                bgColor: const Color(0xFFFFF1F2),
-                                borderColor: const Color(0xFFF43F5E).withValues(alpha: 0.35),
-                                shadowColor: const Color(0xFFBE123C).withValues(alpha: 0.08),
-                                textColor: const Color(0xFF9F1239),
+                                iconColor: AppColors.burgundy500,
+                                bgColor: AppColors.burgundy100,
+                                borderColor: AppColors.burgundy500.withValues(alpha: 0.35),
+                                shadowColor: AppColors.burgundy500.withValues(alpha: 0.08),
+                                textColor: AppColors.burgundy700,
                                 lottieAsset: 'assets/animations/achievements/strike_fire.json',
                                 lottieRepeat: true,
                               ),
@@ -703,11 +704,12 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                 ],
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildStatCard({
     required String title,
@@ -722,53 +724,38 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
     bool lottieRepeat = true,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 16),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: borderColor,
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: shadowColor,
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-          const BoxShadow(
-            color: Colors.white,
-            blurRadius: 4,
-            offset: Offset(-2, -2),
-          ),
-        ],
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+      decoration: const BoxDecoration(
+        color: Colors.transparent,
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           if (lottieAsset != null)
             SizedBox(
-              width: 28,
-              height: 28,
+              width: 56,
+              height: 56,
               child: Lottie.asset(lottieAsset, repeat: lottieRepeat),
             )
           else
-            Icon(icon, color: iconColor, size: 24),
-          const SizedBox(height: AppConstants.spacing12),
+            Icon(icon, color: iconColor, size: 36),
+          const SizedBox(height: AppConstants.spacing8),
           Text(
             value,
+            textAlign: TextAlign.center,
             style: AppTextStyles.headlineMedium.copyWith(
               fontWeight: FontWeight.bold,
               fontSize: 18,
-              color: textColor,
+              color: AppColors.navy900,
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 4),
           Text(
             title,
+            textAlign: TextAlign.center,
             style: AppTextStyles.bodySmall.copyWith(
-              fontSize: 10,
-              color: textColor.withValues(alpha: 0.8),
+              fontSize: 11,
+              color: AppColors.textSecondary,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -808,10 +795,12 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                 svgContent,
                 colorFilter: unlocked
                     ? null
-                    : ColorFilter.mode(
-                        Colors.grey.withValues(alpha: 0.4),
-                        BlendMode.srcIn,
-                      ),
+                    : const ColorFilter.matrix(<double>[
+                        0.2126, 0.7152, 0.0722, 0, 0,
+                        0.2126, 0.7152, 0.0722, 0, 0,
+                        0.2126, 0.7152, 0.0722, 0, 0,
+                        0,      0,      0,      0.6, 0,
+                      ]),
               ),
             ),
           ),
@@ -834,11 +823,11 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
 
   Widget _buildShimmerLoading() {
     return SingleChildScrollView(
-      physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.only(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: EdgeInsets.only(
         left: AppConstants.pagePaddingH,
         right: AppConstants.pagePaddingH,
-        top: AppConstants.pagePaddingV,
+        top: MediaQuery.of(context).padding.top + kToolbarHeight + 16,
         bottom: 110,
       ),
       child: Shimmer.fromColors(

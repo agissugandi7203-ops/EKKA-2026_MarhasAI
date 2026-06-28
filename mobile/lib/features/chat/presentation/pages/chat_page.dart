@@ -46,6 +46,8 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
   bool _isTyping = false;
   bool _isVoiceRecording = false;
   bool _isTranscribing = false;
+  bool _webSearchEnabled = false;
+  OverlayEntry? _topToastOverlayEntry;
 
   final AudioRecorder _audioRecorder = AudioRecorder();
   String _lastWords = '';
@@ -68,6 +70,8 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    _topToastOverlayEntry?.remove();
+    _topToastOverlayEntry = null;
     _textController.removeListener(_onTextChanged);
     _textController.dispose();
     _scrollController.dispose();
@@ -86,14 +90,17 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
     }
   }
 
-  void _scrollToBottom() {
+  void _scrollToBottom({bool force = false}) {
     if (_scrollController.hasClients) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 250),
-          curve: Curves.easeOut,
-        );
+        final position = _scrollController.position;
+        if (force || (position.maxScrollExtent - position.pixels < 150)) {
+          _scrollController.animateTo(
+            position.maxScrollExtent,
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOut,
+          );
+        }
       });
     }
   }
@@ -140,7 +147,11 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
     );
 
     if (mounted) {
-      context.read<ChatBloc>().add(SendMessageRequested(userMsg, _selectedModel));
+      context.read<ChatBloc>().add(SendMessageRequested(
+        userMsg,
+        _selectedModel,
+        webSearch: _webSearchEnabled,
+      ));
       
       // Trigger daily quest challenge completion
       DioClient.completeChallenge('chat_ai');
@@ -154,8 +165,131 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
         _textController.clear();
       }
       
-      _scrollToBottom();
+      _scrollToBottom(force: true);
     }
+  }
+
+  void _showTopToast(String message, {bool isSuccess = true}) {
+    _topToastOverlayEntry?.remove();
+    _topToastOverlayEntry = null;
+
+    final overlay = Overlay.of(context);
+    _topToastOverlayEntry = OverlayEntry(
+      builder: (context) => _TopToastWidget(
+        message: message,
+        isSuccess: isSuccess,
+        onDismiss: () {
+          _topToastOverlayEntry?.remove();
+          _topToastOverlayEntry = null;
+        },
+      ),
+    );
+
+    overlay.insert(_topToastOverlayEntry!);
+  }
+
+  List<Map<String, String>> _extractSources(String text) {
+    final List<Map<String, String>> sources = [];
+    final regExp = RegExp(r'\[([^\]]+)\]\((https?://[^\s)]+)\)');
+    final matches = regExp.allMatches(text);
+    
+    final Set<String> seenUrls = {};
+    for (final match in matches) {
+      final title = match.group(1)?.trim() ?? '';
+      final url = match.group(2)?.trim() ?? '';
+      if (url.isNotEmpty && !seenUrls.contains(url)) {
+        seenUrls.add(url);
+        sources.add({
+          'title': title,
+          'url': url,
+        });
+      }
+    }
+    return sources;
+  }
+
+  Widget _buildGroundingSources(String text) {
+    final sources = _extractSources(text);
+    if (sources.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            const Icon(
+              Icons.language_rounded,
+              size: 14,
+              color: AppColors.gold,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              'Sumber Referensi Terkait:',
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.navy700,
+                fontWeight: FontWeight.bold,
+                fontSize: 11,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          child: Row(
+            children: sources.map((source) {
+              final domain = Uri.tryParse(source['url'] ?? '')?.host ?? source['title'] ?? 'web';
+              return Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: Tooltip(
+                  message: source['url'] ?? '',
+                  child: InkWell(
+                    onTap: () {
+                      Clipboard.setData(ClipboardData(text: source['url'] ?? ''));
+                      context.showSuccessSnackBar('Tautan disalin: ${source['url']}');
+                    },
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: AppColors.gold.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: AppColors.gold.withValues(alpha: 0.25),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.link_rounded,
+                            size: 11,
+                            color: AppColors.gold,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            domain.replaceFirst('www.', ''),
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppColors.gold,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+        const SizedBox(height: 4),
+      ],
+    );
   }
 
   @override
@@ -165,7 +299,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
         if (state.errorMessage != null && state.errorMessage!.isNotEmpty) {
           context.showErrorSnackBar(state.errorMessage!);
         }
-        _scrollToBottom();
+        _scrollToBottom(force: false);
       },
       builder: (context, state) {
         final messages = state.messages;
@@ -527,19 +661,27 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
         // AI Body Content: Clean full-width text without any background, rendered with Markdown Parser
         Padding(
           padding: const EdgeInsets.only(left: 36.0, right: 8.0, bottom: 12.0),
-          child: msg.message.isEmpty
-              ? SizedBox(
-                  width: 50,
-                  height: 30,
-                  child: Lottie.asset(
-                    'assets/animations/global/ai_thinking.json',
-                    fit: BoxFit.contain,
-                  ),
-                )
-              : _MarkdownStreamRenderer(
-                  data: msg.message,
-                  isStreaming: isActiveStreaming,
-                ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              msg.message.isEmpty
+                  ? (_webSearchEnabled
+                      ? const _WebSearchGroundingIndicator()
+                      : SizedBox(
+                          width: 50,
+                          height: 30,
+                          child: Lottie.asset(
+                            'assets/animations/global/ai_thinking.json',
+                            fit: BoxFit.contain,
+                          ),
+                        ))
+                  : _MarkdownStreamRenderer(
+                      data: msg.message,
+                      isStreaming: isActiveStreaming,
+                    ),
+              _buildGroundingSources(msg.message),
+            ],
+          ),
         ),
         const Padding(
           padding: EdgeInsets.only(left: 36.0, right: 8.0),
@@ -1128,10 +1270,47 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
                       // Text input row
                       Row(
                         children: [
-                          const Icon(
-                            Icons.language_rounded,
-                            color: AppColors.textSecondary,
-                            size: 20,
+                          Tooltip(
+                            message: _webSearchEnabled ? 'Pencarian Web Aktif' : 'Pencarian Web Nonaktif',
+                            child: InkWell(
+                              onTap: () {
+                                setState(() {
+                                  _webSearchEnabled = !_webSearchEnabled;
+                                });
+                                if (_webSearchEnabled) {
+                                  _showTopToast(
+                                    'Pencarian Web Diaktifkan!',
+                                    isSuccess: true,
+                                  );
+                                } else {
+                                  _showTopToast(
+                                    'Pencarian Web Dinonaktifkan.',
+                                    isSuccess: false,
+                                  );
+                                }
+                              },
+                              borderRadius: BorderRadius.circular(20),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: _webSearchEnabled 
+                                      ? AppColors.gold.withValues(alpha: 0.15) 
+                                      : Colors.transparent,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: AnimatedRotation(
+                                  turns: _webSearchEnabled ? 1.0 : 0.0,
+                                  duration: const Duration(milliseconds: 300),
+                                  curve: Curves.easeInOutBack,
+                                  child: Icon(
+                                    Icons.language_rounded,
+                                    color: _webSearchEnabled ? AppColors.gold : AppColors.textSecondary,
+                                    size: 20,
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
                           const SizedBox(width: 10),
                           Expanded(
@@ -1272,8 +1451,8 @@ class _MarkdownStreamRendererState extends State<_MarkdownStreamRenderer> with S
       data: text,
       selectable: true,
       styleSheet: MarkdownStyleSheet(
-        p: AppTextStyles.bodyMedium.copyWith(
-          color: AppColors.textPrimary,
+        p: AppTextStyles.bodyLarge.copyWith(
+          color: AppColors.navy900,
           height: 1.55,
         ),
         h1: AppTextStyles.headlineSmall.copyWith(
@@ -1290,23 +1469,24 @@ class _MarkdownStreamRendererState extends State<_MarkdownStreamRenderer> with S
           color: AppColors.navy900,
           fontWeight: FontWeight.bold,
           height: 1.4,
+          fontSize: 15,
         ),
-        listBullet: AppTextStyles.bodyMedium.copyWith(
-          color: AppColors.navy600,
+        listBullet: AppTextStyles.bodyLarge.copyWith(
+          color: AppColors.navy900,
           fontWeight: FontWeight.bold,
         ),
         tableBorder: TableBorder.all(
           color: AppColors.divider,
           width: 1,
         ),
-        tableHead: AppTextStyles.bodyMedium.copyWith(
+        tableHead: AppTextStyles.bodyLarge.copyWith(
           color: AppColors.navy900,
           fontWeight: FontWeight.bold,
-          fontSize: 13,
+          fontSize: 14,
         ),
-        tableBody: AppTextStyles.bodyMedium.copyWith(
+        tableBody: AppTextStyles.bodyLarge.copyWith(
           color: AppColors.textPrimary,
-          fontSize: 13,
+          fontSize: 14,
         ),
         tableCellsPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         code: AppTextStyles.bodySmall.copyWith(
@@ -1321,6 +1501,268 @@ class _MarkdownStreamRendererState extends State<_MarkdownStreamRenderer> with S
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: AppColors.divider),
         ),
+      ),
+    );
+  }
+}
+
+class _TopToastWidget extends StatefulWidget {
+  final String message;
+  final bool isSuccess;
+  final VoidCallback onDismiss;
+
+  const _TopToastWidget({
+    required this.message,
+    required this.isSuccess,
+    required this.onDismiss,
+  });
+
+  @override
+  State<_TopToastWidget> createState() => _TopToastWidgetState();
+}
+
+class _TopToastWidgetState extends State<_TopToastWidget> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<Offset> _offsetAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 350),
+      vsync: this,
+    );
+
+    _offsetAnimation = Tween<Offset>(
+      begin: const Offset(0.0, -1.5),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOutBack,
+    ));
+
+    _controller.forward();
+
+    // Auto dismiss after 2.5 seconds
+    Future.delayed(const Duration(milliseconds: 2500), () {
+      if (mounted) {
+        _controller.reverse().then((_) => widget.onDismiss());
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+          child: SlideTransition(
+            position: _offsetAnimation,
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: widget.isSuccess ? AppColors.emerald : AppColors.navy700,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: (widget.isSuccess ? AppColors.emerald : AppColors.navy900)
+                          .withValues(alpha: 0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    width: 1.5,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      widget.isSuccess ? Icons.search_rounded : Icons.language_rounded,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    Flexible(
+                      child: Text(
+                        widget.message,
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _WebSearchGroundingIndicator extends StatefulWidget {
+  const _WebSearchGroundingIndicator();
+
+  @override
+  State<_WebSearchGroundingIndicator> createState() => _WebSearchGroundingIndicatorState();
+}
+
+class _WebSearchGroundingIndicatorState extends State<_WebSearchGroundingIndicator> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _opacityAnimation;
+  int _currentTextIndex = 0;
+  final List<String> _loadingTexts = [
+    'Menghubungkan ke layanan pencarian...',
+    'Menganalisis kata kunci pencarian warga...',
+    'Menelusuri artikel regulasi & berita terpercaya...',
+    'Mengekstrak referensi web paling valid...',
+    'Menyusun jawaban berbasis data real-time...',
+  ];
+  
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    );
+    
+    _scaleAnimation = Tween<double>(begin: 0.95, end: 1.05).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+    _opacityAnimation = Tween<double>(begin: 0.6, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+
+    _controller.repeat(reverse: true);
+    _rotateText();
+  }
+
+  void _rotateText() async {
+    while (mounted) {
+      await Future.delayed(const Duration(seconds: 3));
+      if (mounted) {
+        setState(() {
+          _currentTextIndex = (_currentTextIndex + 1) % _loadingTexts.length;
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: AppColors.gold.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.gold.withValues(alpha: 0.3),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.gold.withValues(alpha: 0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ScaleTransition(
+            scale: _scaleAnimation,
+            child: FadeTransition(
+              opacity: _opacityAnimation,
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.gold.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.gold.withValues(alpha: 0.2),
+                      blurRadius: 8,
+                      spreadRadius: 1,
+                    )
+                  ]
+                ),
+                child: const Icon(
+                  Icons.language_rounded,
+                  color: AppColors.gold,
+                  size: 20,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      'Pencarian Web Aktif',
+                      style: AppTextStyles.labelSmall.copyWith(
+                        color: AppColors.gold,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const SizedBox(
+                      width: 10,
+                      height: 10,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 1.5,
+                        valueColor: AlwaysStoppedAnimation<Color>(AppColors.gold),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  child: Text(
+                    _loadingTexts[_currentTextIndex],
+                    key: ValueKey<int>(_currentTextIndex),
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.navy900,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 12.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

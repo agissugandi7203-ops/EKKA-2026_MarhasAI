@@ -55,7 +55,7 @@ class _TukarPoinPageState extends State<TukarPoinPage> {
       {
         'title': 'Minyak Goreng Sawit Premium 1L',
         'points': 150,
-        'image': 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&q=80&w=400',
+        'image': 'https://images.unsplash.com/photo-1622484211148-154109867941?auto=format&fit=crop&q=80&w=400',
         'description': 'Minyak goreng kelapa sawit bermutu tinggi, bersih dan jernih.',
       },
       {
@@ -343,7 +343,7 @@ class _TukarPoinPageState extends State<TukarPoinPage> {
                                                 Text(
                                                   '$price Poin',
                                                   style: AppTextStyles.labelSmall.copyWith(
-                                                    color: AppColors.goldLight,
+                                                    color: AppColors.gold,
                                                     fontWeight: FontWeight.bold,
                                                     fontSize: 10,
                                                   ),
@@ -352,30 +352,61 @@ class _TukarPoinPageState extends State<TukarPoinPage> {
                                             ),
                                           ),
                                           const SizedBox(width: 8),
-                                          SizedBox(
-                                            height: 32,
-                                            child: ElevatedButton(
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: canRedeem ? AppColors.navy900 : AppColors.disabled,
-                                                foregroundColor: canRedeem ? Colors.white : AppColors.textDisabled,
-                                                elevation: 0,
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius: BorderRadius.circular(16),
+                                          GestureDetector(
+                                            onTap: () {
+                                              context.showInfoSnackBar(
+                                                'Fitur Tukar akan segera hadir: ${item['title']} segera dapat ditukarkan dengan poin Anda!',
+                                              );
+                                            },
+                                            child: AnimatedContainer(
+                                              duration: const Duration(milliseconds: 200),
+                                              height: 32,
+                                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                                              decoration: BoxDecoration(
+                                                borderRadius: BorderRadius.circular(16),
+                                                gradient: canRedeem
+                                                    ? const LinearGradient(
+                                                        colors: [AppColors.navy500, AppColors.navy700],
+                                                        begin: Alignment.topLeft,
+                                                        end: Alignment.bottomRight,
+                                                      )
+                                                    : const LinearGradient(
+                                                        colors: [AppColors.navy100, AppColors.navy50],
+                                                        begin: Alignment.topLeft,
+                                                        end: Alignment.bottomRight,
+                                                      ),
+                                                border: Border.all(
+                                                  color: canRedeem
+                                                      ? Colors.white.withValues(alpha: 0.35)
+                                                      : const Color(0xFFCBD5E1),
+                                                  width: 1,
                                                 ),
-                                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                                boxShadow: canRedeem
+                                                    ? [
+                                                        BoxShadow(
+                                                          color: AppColors.navy500.withValues(alpha: 0.25),
+                                                          offset: const Offset(0, 4),
+                                                          blurRadius: 8,
+                                                        ),
+                                                        BoxShadow(
+                                                          color: Colors.white.withValues(alpha: 0.2),
+                                                          offset: const Offset(0, -2),
+                                                          blurRadius: 4,
+                                                          spreadRadius: -1,
+                                                        ),
+                                                      ]
+                                                    : null,
                                               ),
-                                              onPressed: () {
-                                                context.showInfoSnackBar(
-                                                  'Fitur Tukar akan segera hadir: ${item['title']} segera dapat ditukarkan dengan poin Anda!',
-                                                );
-                                              },
-                                              child: Text(
-                                                'Tukar',
-                                                style: AppTextStyles.labelSmall.copyWith(
-                                                  color: canRedeem ? Colors.white : AppColors.textDisabled,
-                                                  fontWeight: FontWeight.bold,
+                                                child: Center(
+                                                  child: Text(
+                                                    'Tukar',
+                                                    style: AppTextStyles.labelSmall.copyWith(
+                                                      color: canRedeem ? Colors.white : AppColors.textDisabled,
+                                                      fontWeight: FontWeight.bold,
+                                                      fontSize: 11,
+                                                    ),
+                                                  ),
                                                 ),
-                                              ),
                                             ),
                                           ),
                                         ],

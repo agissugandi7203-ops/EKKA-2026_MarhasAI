@@ -130,21 +130,21 @@ class GenesisBottomNavBar extends StatelessWidget {
                       shape: BoxShape.circle,
                       gradient: const LinearGradient(
                         colors: [
-                          AppColors.emerald,
-                          Color(0xFF1B9B5E),
+                          AppColors.navy500,
+                          AppColors.navy700,
                         ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.emerald.withValues(alpha: 0.35),
+                          color: AppColors.navy500.withValues(alpha: 0.35),
                           blurRadius: 18,
                           spreadRadius: 2,
                           offset: const Offset(0, 6),
                         ),
                         BoxShadow(
-                          color: AppColors.gold.withValues(alpha: 0.2),
+                          color: AppColors.navy700.withValues(alpha: 0.15),
                           blurRadius: 8,
                           spreadRadius: 0,
                           offset: const Offset(0, 2),
@@ -200,7 +200,7 @@ class _NavBarItem extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             AnimatedScale(
-              scale: isSelected ? 1.15 : 1.0,
+              scale: isSelected ? 1.2 : 1.0,
               duration: AppConstants.animFast,
               curve: Curves.easeOutBack,
               child: Stack(
@@ -253,8 +253,8 @@ class _NavBarItem extends StatelessWidget {
             const SizedBox(height: 2),
             AnimatedContainer(
               duration: AppConstants.animFast,
-              height: 3,
-              width: isSelected ? 8 : 0,
+              height: 4,
+              width: isSelected ? 16 : 0,
               decoration: BoxDecoration(
                 color: AppColors.gold,
                 borderRadius: BorderRadius.circular(2),

@@ -963,7 +963,7 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
                 textColor: const Color(0xFF047857),
                 gradientColors: [const Color(0xFFECFDF5), const Color(0xFFD1FAE5)],
                 lottieAsset: 'assets/animations/achievements/trophy.json',
-                lottieRepeat: true,
+                lottieRepeat: false,
               ),
             ),
           ),
@@ -1107,18 +1107,24 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
           final bool isDone = quest['isCompleted'] as bool;
           final bool isHighlighted = quest['id'] == firstUncompletedId;
 
-          Widget leadingIcon;
+          final Widget leadingIcon;
           final String code = quest['code'] as String? ?? '';
+          final Color iconBgColor;
+          final Color iconColor;
+
           if (code == 'report_1_waste') {
             leadingIcon = const Icon(Icons.camera_alt_rounded, size: 18);
+            iconBgColor = const Color(0xFFE0F2FE); // light blue
+            iconColor = AppColors.navy700;
           } else if (code == 'chat_ai') {
             leadingIcon = const Icon(Icons.forum_rounded, size: 18);
+            iconBgColor = const Color(0xFFFCE7F3); // light pink
+            iconColor = AppColors.burgundy700;
           } else {
             leadingIcon = const Icon(Icons.emoji_events_rounded, size: 18);
+            iconBgColor = const Color(0xFFFEF3C7); // light gold
+            iconColor = const Color(0xFFB45309);
           }
-
-          const Color iconBgColor = Color(0xFFEEF2F6);
-          const Color iconColor = AppColors.navy800;
 
           return AnimatedContainer(
             duration: const Duration(milliseconds: 350),
@@ -1133,32 +1139,58 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
                     : (isHighlighted ? const Color(0xFFFBBF24) : AppColors.divider.withValues(alpha: 0.7)),
                 width: isHighlighted && !isDone ? 2.2 : 1.5,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: isDone
-                      ? AppColors.navy900.withValues(alpha: 0.01)
-                      : (isHighlighted
-                          ? const Color(0xFFFBBF24).withValues(alpha: 0.15)
-                          : AppColors.navy900.withValues(alpha: 0.03)),
-                  blurRadius: isHighlighted && !isDone ? 16 : 14,
-                  offset: const Offset(0, 6),
-                ),
-              ],
+              boxShadow: isDone
+                  ? [
+                      BoxShadow(
+                        color: AppColors.navy900.withValues(alpha: 0.01),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      )
+                    ]
+                  : [
+                      // Primary soft-depth bottom shadow
+                      BoxShadow(
+                        color: (isHighlighted ? const Color(0xFFFBBF24) : AppColors.navy500).withValues(alpha: 0.12),
+                        offset: const Offset(0, 10),
+                        blurRadius: 20,
+                        spreadRadius: -2,
+                      ),
+                      // Inner-emulated top-left highlight shadow
+                      const BoxShadow(
+                        color: Colors.white,
+                        offset: Offset(0, -4),
+                        blurRadius: 8,
+                        spreadRadius: 1,
+                      ),
+                    ],
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Icon Badge
+                // Icon Badge (Claymorphic Bubble)
                 Container(
-                  width: 40,
+                  width: 42,
                   height: 40,
                   decoration: BoxDecoration(
                     color: iconBgColor,
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: iconColor.withValues(alpha: 0.1),
-                      width: 1,
+                      color: Colors.white,
+                      width: 1.5,
                     ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: iconColor.withValues(alpha: 0.15),
+                        offset: const Offset(0, 4),
+                        blurRadius: 6,
+                      ),
+                      BoxShadow(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        offset: const Offset(0, -2),
+                        blurRadius: 4,
+                        spreadRadius: -1,
+                      ),
+                    ],
                   ),
                   child: Center(
                     child: Icon(

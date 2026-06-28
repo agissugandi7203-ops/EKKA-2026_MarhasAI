@@ -97,13 +97,6 @@ class _StatisticDetailPageState extends State<StatisticDetailPage> {
       } catch (_) {}
     }
 
-    bool allZero = true;
-    for (final val in monthlyCounts) {
-      if (val > 0) allZero = false;
-    }
-    if (allZero) {
-      return [20, 35, 15, 55, 40, 70, 65];
-    }
     return monthlyCounts;
   }
 
@@ -128,20 +121,6 @@ class _StatisticDetailPageState extends State<StatisticDetailPage> {
       if (i + 1 > now.weekday) {
         weeklyCounts[i] = 0;
       }
-    }
-
-    bool allZero = true;
-    for (final val in weeklyCounts) {
-      if (val > 0) allZero = false;
-    }
-    if (allZero) {
-      final List<int> fallback = [3, 5, 2, 6, 4, 1, 3];
-      for (int i = 0; i < 7; i++) {
-        if (i + 1 > now.weekday) {
-          fallback[i] = 0;
-        }
-      }
-      return fallback;
     }
 
     return weeklyCounts;

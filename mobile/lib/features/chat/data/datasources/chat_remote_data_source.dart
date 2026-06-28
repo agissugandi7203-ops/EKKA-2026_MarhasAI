@@ -11,9 +11,10 @@ class ChatRemoteDataSource {
   ChatRemoteDataSource(this._dioClient);
 
   /// Mengirim pesan secara instan (mengembalikan respons lengkap langsung)
-  Future<String> sendMessageInstant(ChatMessageModel message, String model, List<ChatMessageModel> history) async {
+  Future<String> sendMessageInstant(ChatMessageModel message, String model, List<ChatMessageModel> history, {bool webSearch = false}) async {
     final Map<String, dynamic> data = message.toJson();
     data['model'] = model;
+    data['webSearch'] = webSearch;
     data['history'] = history.map((m) => {
       'sender': m.sender == 'user' ? 'user' : 'assistant',
       'message': m.message,
@@ -49,10 +50,10 @@ class ChatRemoteDataSource {
   }
 
   /// Mengirim pesan dengan streaming (mengembalikan Stream token kata demi kata)
-  Stream<String> sendMessageStream(ChatMessageModel message, String model, List<ChatMessageModel> history) {
+  Stream<String> sendMessageStream(ChatMessageModel message, String model, List<ChatMessageModel> history, {bool webSearch = false}) {
     final controller = StreamController<String>();
 
-    _executeStreamRequest(message, model, history, controller);
+    _executeStreamRequest(message, model, history, controller, webSearch: webSearch);
 
     return controller.stream;
   }
@@ -62,11 +63,13 @@ class ChatRemoteDataSource {
     ChatMessageModel message,
     String model,
     List<ChatMessageModel> history,
-    StreamController<String> controller,
-  ) async {
+    StreamController<String> controller, {
+    bool webSearch = false,
+  }) async {
     try {
       final Map<String, dynamic> data = message.toJson();
       data['model'] = model;
+      data['webSearch'] = webSearch;
       data['history'] = history.map((m) => {
         'sender': m.sender == 'user' ? 'user' : 'assistant',
         'message': m.message,
