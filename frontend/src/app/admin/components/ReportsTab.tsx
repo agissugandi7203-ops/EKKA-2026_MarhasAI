@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Search,
   Map,
@@ -8,7 +8,14 @@ import {
   Clock,
   Sparkles,
   CheckCircle,
-  UserCheck
+  UserCheck,
+  MapPin,
+  Trash2,
+  ExternalLink,
+  SlidersHorizontal,
+  CheckSquare,
+  Square,
+  AlertTriangle
 } from "lucide-react";
 import { TrashReport } from "./OverviewTab";
 
@@ -23,8 +30,11 @@ interface ReportsTabProps {
   adminFeedback: string;
   setAdminFeedback: (feedback: string) => void;
   handleUpdateReportStatus: (id: string, nextStatus: "approved" | "resolved" | "rejected") => void;
+  handleDeleteReport: (id: string) => Promise<void>;
+  handleBatchAction: (ids: string[], action: "approved" | "rejected" | "delete") => Promise<void>;
   actionLoading: boolean;
   loading: boolean;
+  theme?: "light" | "dark";
 }
 
 export default function ReportsTab({
@@ -38,10 +48,22 @@ export default function ReportsTab({
   adminFeedback,
   setAdminFeedback,
   handleUpdateReportStatus,
+  handleDeleteReport,
+  handleBatchAction,
   actionLoading,
-  loading
+  loading,
+  theme = "light"
 }: ReportsTabProps) {
   const mapInstanceRef = useRef<any>(null);
+
+  // Advanced Sorting & Area states
+  const [sortBy, setSortBy] = useState<"newest" | "danger" | "lowest_ai">("newest");
+  const [areaSearch, setAreaSearch] = useState("");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  // Custom warning dialog states
+  const [batchConfirmAction, setBatchConfirmAction] = useState<{ action: "approved" | "rejected" | "delete"; ids: string[] } | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   // Leaflet Map Initialization with CartoDB Voyager/Positron Soft Tiles
   useEffect(() => {
@@ -210,52 +232,168 @@ export default function ReportsTab({
     mapInstanceRef.current.setView([lat, lng], 15, { animate: true, duration: 1 });
   }, [selectedReport]);
 
-  const filteredReports = reports.filter((r) => {
+  // Handle checkbox selection
+  const toggleSelectAll = () => {
+    if (selectedIds.length === filteredReports.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredReports.map((r) => r.id));
+    }
+  };
+
+  const toggleSelectId = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (selectedIds.includes(id)) {
+      setSelectedIds(selectedIds.filter((item) => item !== id));
+    } else {
+      setSelectedIds([...selectedIds, id]);
+    }
+  };
+
+  const triggerBatchAction = (action: "approved" | "rejected" | "delete") => {
+    if (selectedIds.length === 0) return;
+    setBatchConfirmAction({ action, ids: [...selectedIds] });
+  };
+
+  const handleConfirmBatchAction = async () => {
+    if (!batchConfirmAction) return;
+    await handleBatchAction(batchConfirmAction.ids, batchConfirmAction.action);
+    setSelectedIds([]);
+    setBatchConfirmAction(null);
+  };
+
+  // 1. Search & Basic Filter
+  let filteredReports = reports.filter((r) => {
     const matchText = (r.waste_type || "").toLowerCase().includes(reportSearch.toLowerCase()) ||
                       (r.description || "").toLowerCase().includes(reportSearch.toLowerCase());
     const matchFilter = reportFilter === "all" ? true : r.status === reportFilter;
-    return matchText && matchFilter;
+    
+    // Area Search matching
+    const matchArea = !areaSearch ? true : 
+                      (r.profiles?.city_or_district || "").toLowerCase().includes(areaSearch.toLowerCase()) ||
+                      (r.description || "").toLowerCase().includes(areaSearch.toLowerCase());
+
+    return matchText && matchFilter && matchArea;
   });
 
+  // 2. Advanced Sorting Logic
+  filteredReports = filteredReports.sort((a, b) => {
+    if (sortBy === "danger") {
+      const dangerRank: Record<string, number> = { "Tinggi": 3, "Sedang": 2, "Rendah": 1 };
+      const rankA = dangerRank[a.danger_level || "Sedang"] || 2;
+      const rankB = dangerRank[b.danger_level || "Sedang"] || 2;
+      return rankB - rankA;
+    }
+    if (sortBy === "lowest_ai") {
+      const scoreA = a.confidence_score || 100;
+      const scoreB = b.confidence_score || 100;
+      return scoreA - scoreB; // Ascending: lowest confidence score first
+    }
+    // "newest" by default
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
+
+  // Get Google Maps url
+  const getGoogleMapsUrl = (rep: TrashReport) => {
+    let lat = -7.2504;
+    let lng = 112.7508;
+    if (rep.coordinates?.latitude && rep.coordinates?.longitude) {
+      lat = rep.coordinates.latitude;
+      lng = rep.coordinates.longitude;
+    }
+    return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+  };
+
   return (
-    <div className="flex flex-col gap-6 animate-fade-up h-full">
+    <div className="flex flex-col gap-6 animate-fade-up h-full relative">
       
       {/* Header section with inline Search/Filters */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-navy-900">Laporan Spasial Lingkungan Warga</h1>
           <p className="text-xs text-navy-500 font-light mt-1.5">
-            Kontrol absolut atas penemuan tumpukan sampah, tunda/tolak laporan palsu, dan verifikasi koordinat spasial.
+            Kontrol absolut atas penemuan tumpukan sampah, tindakan massal, hapus rujukan spam, dan verifikasi koordinat spasial.
           </p>
         </div>
 
         {/* Search & Filter widgets */}
         <div className="flex flex-wrap items-center gap-3">
+          {/* Keyword Search */}
           <div className="relative">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-navy-400" />
             <input
               type="text"
-              placeholder="Cari tumpukan..."
+              placeholder="Cari kata kunci..."
               value={reportSearch}
               onChange={(e) => setReportSearch(e.target.value)}
-              className="bg-white border border-navy-100 rounded-xl pl-9 pr-4 py-2 text-xs text-navy-900 placeholder-navy-400 focus:outline-none focus:border-navy-300 focus:bg-navy-50/30 transition-colors w-44 shadow-sm"
+              className="bg-white border border-navy-100 rounded-xl pl-9 pr-4 py-2 text-xs text-navy-900 placeholder-navy-400 focus:outline-none focus:border-navy-300 focus:bg-navy-50/30 transition-colors w-40 shadow-sm"
             />
           </div>
 
+          {/* Area Search */}
+          <div className="relative">
+            <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-navy-400" />
+            <input
+              type="text"
+              placeholder="Filter wilayah..."
+              value={areaSearch}
+              onChange={(e) => setAreaSearch(e.target.value)}
+              className="bg-white border border-navy-100 rounded-xl pl-9 pr-4 py-2 text-xs text-navy-900 placeholder-navy-400 focus:outline-none focus:border-navy-300 focus:bg-navy-50/30 transition-colors w-40 shadow-sm"
+            />
+          </div>
+
+          {/* Status Filter */}
           <select
             value={reportFilter}
             onChange={(e) => setReportFilter(e.target.value)}
             className="bg-white border border-navy-100 rounded-xl px-3 py-2 text-xs text-navy-700 focus:outline-none focus:border-navy-300 cursor-pointer shadow-sm font-medium"
           >
             <option value="all">Semua Status</option>
-            <option value="pending_human">Pending Verifikasi Manusia</option>
-            <option value="pending_ai">Pending Klasifikasi AI</option>
-            <option value="approved">Approved (Menunggu Eksekusi)</option>
-            <option value="resolved">Resolved (Tuntas)</option>
-            <option value="rejected">Rejected (Ditolak)</option>
+            <option value="pending_human">Pending Verifikasi</option>
+            <option value="pending_ai">Klasifikasi AI</option>
+            <option value="approved">Disetujui (Menunggu)</option>
+            <option value="resolved">Tuntas (Resolved)</option>
+            <option value="rejected">Ditolak (Rejected)</option>
           </select>
+
+          {/* Sorter Dropdown */}
+          <div className="flex items-center gap-1 bg-white border border-navy-100 rounded-xl px-2 py-1.5 shadow-sm">
+            <SlidersHorizontal className="h-3 w-3 text-navy-500" />
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className="bg-transparent border-none text-[11px] font-bold text-navy-700 focus:outline-none cursor-pointer"
+            >
+              <option value="newest">Terbaru</option>
+              <option value="danger">Bahaya Tertinggi</option>
+              <option value="lowest_ai">Skor AI Terendah</option>
+            </select>
+          </div>
         </div>
       </div>
+
+      {/* Batch Control Header Bar */}
+      {filteredReports.length > 0 && (
+        <div className="bg-navy-50/70 border border-navy-100/40 rounded-2xl px-4 py-2.5 flex items-center justify-between select-none">
+          <button
+            onClick={toggleSelectAll}
+            className="flex items-center gap-2 text-xs font-bold text-navy-700 cursor-pointer hover:text-navy-900 transition-colors"
+          >
+            {selectedIds.length === filteredReports.length ? (
+              <CheckSquare className="h-4 w-4 text-navy-900" />
+            ) : (
+              <Square className="h-4 w-4 text-navy-400" />
+            )}
+            Pilih Semua ({filteredReports.length} Laporan)
+          </button>
+          
+          {selectedIds.length > 0 && (
+            <span className="text-[10px] text-navy-500 font-bold uppercase tracking-wider">
+              {selectedIds.length} Terpilih dari {filteredReports.length} daftar
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Map + Scroll Feed */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-[500px]">
@@ -269,17 +407,30 @@ export default function ReportsTab({
           ) : (
             filteredReports.map((rep) => {
               const isSelected = selectedReport?.id === rep.id;
+              const isChecked = selectedIds.includes(rep.id);
               return (
                 <div
                   key={rep.id}
                   onClick={() => setSelectedReport(rep)}
-                  className={`p-4 rounded-3xl cursor-pointer border transition-all duration-300 flex flex-col gap-3 ${
+                  className={`p-4 rounded-3xl cursor-pointer border transition-all duration-300 flex flex-col gap-3 relative ${
                     isSelected
                       ? "bg-navy-900 border-navy-900 text-white scale-[1.01] shadow-[0_8px_24px_rgba(5,12,24,0.15)]"
                       : "bg-white border-navy-100/80 hover:bg-navy-50/50 hover:border-navy-200 text-navy-900 shadow-sm"
                   }`}
                 >
                   <div className="flex gap-3">
+                    {/* Checkbox */}
+                    <div
+                      onClick={(e) => toggleSelectId(rep.id, e)}
+                      className="flex items-center justify-center pt-1"
+                    >
+                      {isChecked ? (
+                        <CheckSquare className={`h-4.5 w-4.5 shrink-0 ${isSelected ? 'text-white' : 'text-navy-900'}`} />
+                      ) : (
+                        <Square className={`h-4.5 w-4.5 shrink-0 ${isSelected ? 'text-white/40' : 'text-navy-300'}`} />
+                      )}
+                    </div>
+
                     <img 
                       src={rep.image_url} 
                       alt={rep.waste_type} 
@@ -303,9 +454,18 @@ export default function ReportsTab({
                       <p className={`text-[10px] leading-relaxed truncate mt-1 ${isSelected ? 'text-white/70' : 'text-navy-500'}`}>
                         {rep.description}
                       </p>
-                      <span className={`text-[9px] leading-none mt-2 font-mono ${isSelected ? 'text-white/40' : 'text-navy-400'}`}>
-                        {new Date(rep.created_at).toLocaleDateString("id-ID")}
-                      </span>
+                      <div className="flex items-center justify-between mt-2 select-none">
+                        <span className={`text-[9px] leading-none font-mono ${isSelected ? 'text-white/40' : 'text-navy-400'}`}>
+                          {new Date(rep.created_at).toLocaleDateString("id-ID")}
+                        </span>
+                        
+                        {rep.danger_level === "Tinggi" && (
+                          <span className="flex items-center gap-0.5 text-red-600 font-extrabold text-[8px] uppercase tracking-wider bg-red-50 border border-red-100 px-1.5 py-0.5 rounded">
+                            <AlertTriangle className="h-2 w-2" />
+                            CRITICAL
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -330,6 +490,43 @@ export default function ReportsTab({
 
       </div>
 
+      {/* FLOATING BATCH ACTION PANEL */}
+      {selectedIds.length > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-navy-950/95 backdrop-blur-md border border-navy-800 rounded-3xl py-3.5 px-6 shadow-2xl flex flex-col sm:flex-row items-center gap-5 z-50 animate-fade-up select-none max-w-[95%]">
+          <div className="text-center sm:text-left">
+            <div className="text-xs font-bold text-white">{selectedIds.length} Laporan Spasial Terpilih</div>
+            <p className="text-[10px] text-navy-400 font-light mt-0.5">Terapkan tindakan massal absolut secara instan.</p>
+          </div>
+
+          <div className="flex items-center gap-3 shrink-0">
+            <button
+              onClick={() => triggerBatchAction("approved")}
+              className="bg-emerald text-white px-3.5 py-2 rounded-xl text-[11px] font-bold hover:bg-emerald-dark transition-all cursor-pointer shadow-md"
+            >
+              Setujui Massal
+            </button>
+            <button
+              onClick={() => triggerBatchAction("rejected")}
+              className="bg-gold text-navy-950 px-3.5 py-2 rounded-xl text-[11px] font-bold hover:bg-yellow-500 transition-all cursor-pointer shadow-md"
+            >
+              Tolak Massal
+            </button>
+            <button
+              onClick={() => triggerBatchAction("delete")}
+              className="bg-red-600 text-white px-3.5 py-2 rounded-xl text-[11px] font-bold hover:bg-red-700 transition-all cursor-pointer shadow-md"
+            >
+              Hapus Massal
+            </button>
+            <button
+              onClick={() => setSelectedIds([])}
+              className="text-[11px] font-bold text-navy-300 hover:text-white transition-all cursor-pointer"
+            >
+              Batal
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ABSOLUTE REPORT ACTION MODAL */}
       {selectedReport && (
         <div className="fixed inset-0 bg-navy-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
@@ -346,9 +543,34 @@ export default function ReportsTab({
             <div className="overflow-y-auto p-6 md:p-8 flex flex-col gap-6">
               
               {/* Heading */}
-              <div className="border-b border-navy-50 pb-4 select-none">
-                <span className="text-[10px] font-bold text-gold uppercase tracking-wider">Identifikasi Lapangan Absolut</span>
-                <h2 className="text-xl font-bold text-navy-900 mt-1">Laporan {selectedReport.id}</h2>
+              <div className="border-b border-navy-50 pb-4 select-none flex items-center justify-between gap-4">
+                <div>
+                  <span className="text-[10px] font-bold text-gold uppercase tracking-wider">Identifikasi Lapangan Absolut</span>
+                  <h2 className="text-xl font-bold text-navy-900 mt-1">Laporan {selectedReport.id}</h2>
+                </div>
+
+                {/* Google Maps link & Delete permanently button */}
+                <div className="flex items-center gap-2">
+                  <a
+                    href={getGoogleMapsUrl(selectedReport)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 bg-emerald-light/30 border border-emerald-light/60 hover:bg-emerald hover:text-white hover:border-emerald px-3 py-1.5 rounded-xl text-[10px] font-bold text-emerald transition-all shadow-sm shrink-0 cursor-pointer"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    Buka Google Maps
+                  </a>
+
+                  <button
+                    onClick={() => {
+                      setDeleteConfirmId(selectedReport.id);
+                    }}
+                    className="flex items-center gap-1.5 border border-red-200 bg-red-50 hover:bg-red-600 hover:text-white hover:border-red-600 px-3 py-1.5 rounded-xl text-[10px] font-bold text-red-700 transition-all shadow-sm shrink-0 cursor-pointer"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                    Hapus Laporan
+                  </button>
+                </div>
               </div>
 
               {/* Photos + Details */}
@@ -433,6 +655,84 @@ export default function ReportsTab({
                 )}
               </div>
 
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- IN-UI CUSTOM INDIVIDUAL DELETE MODAL (Glassmorphic) --- */}
+      {deleteConfirmId && (
+        <div className="fixed inset-0 bg-navy-950/40 backdrop-blur-md flex items-center justify-center p-4 z-[1000] animate-fade-in">
+          <div className={`w-full max-w-sm ${theme === "dark" ? "bg-[#131127]/95 border-indigo-900/40 text-slate-100" : "bg-white/95 text-navy-900 border-navy-100"} border backdrop-blur-xl rounded-3xl shadow-2xl p-6 md:p-8 flex flex-col gap-6 text-center select-none`}>
+            <div className="mx-auto h-12 w-12 rounded-2xl flex items-center justify-center bg-red-50 border border-red-100 text-red-600 animate-bounce">
+              <AlertTriangle className="h-5.5 w-5.5" />
+            </div>
+
+            <div>
+              <h3 className="text-base font-bold leading-tight">Hapus Laporan Secara Permanen</h3>
+              <p className="text-xs text-navy-500 font-light leading-relaxed mt-2">
+                Apakah Anda yakin ingin menghapus laporan <strong className="font-bold">#{deleteConfirmId}</strong> secara permanen dari server? Tindakan ini bersifat irreversible dan tidak dapat dibatalkan!
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setDeleteConfirmId(null)}
+                className="flex-1 rounded-xl border border-navy-100 text-navy-700 hover:bg-navy-50 py-2.5 text-xs font-bold transition-all cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                onClick={async () => {
+                  await handleDeleteReport(deleteConfirmId);
+                  setDeleteConfirmId(null);
+                  setSelectedReport(null);
+                }}
+                className="flex-1 rounded-xl bg-red-600 hover:bg-red-700 text-white py-2.5 text-xs font-bold transition-all cursor-pointer shadow-md"
+              >
+                Hapus Permanen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- IN-UI CUSTOM BATCH ACTION MODAL (Glassmorphic) --- */}
+      {batchConfirmAction && (
+        <div className="fixed inset-0 bg-navy-950/40 backdrop-blur-md flex items-center justify-center p-4 z-[1000] animate-fade-in">
+          <div className={`w-full max-w-sm ${theme === "dark" ? "bg-[#131127]/95 border-indigo-900/40 text-slate-100" : "bg-white/95 text-navy-900 border-navy-100"} border backdrop-blur-xl rounded-3xl shadow-2xl p-6 md:p-8 flex flex-col gap-6 text-center select-none`}>
+            <div className={`mx-auto h-12 w-12 rounded-2xl flex items-center justify-center border ${
+              batchConfirmAction.action === "delete" ? "bg-red-50 border-red-100 text-red-600" : "bg-gold-50 border-gold-100 text-gold"
+            } animate-pulse`}>
+              <AlertTriangle className="h-5.5 w-5.5" />
+            </div>
+
+            <div>
+              <h3 className="text-base font-bold leading-tight">
+                {batchConfirmAction.action === "delete" ? "Hapus Massal Laporan" : "Verifikasi Massal Laporan"}
+              </h3>
+              <p className="text-xs text-navy-500 font-light leading-relaxed mt-2">
+                {batchConfirmAction.action === "delete" 
+                  ? `⚠️ PERINGATAN: Anda akan menghapus secara permanen ${batchConfirmAction.ids.length} laporan terpilih dari server. Tindakan ini tidak dapat dibatalkan!`
+                  : `Apakah Anda yakin ingin memperbarui status ${batchConfirmAction.ids.length} laporan terpilih secara massal menjadi ${batchConfirmAction.action.toUpperCase()}?`}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setBatchConfirmAction(null)}
+                className="flex-1 rounded-xl border border-navy-100 text-navy-700 hover:bg-navy-50 py-2.5 text-xs font-bold transition-all cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleConfirmBatchAction}
+                className={`flex-1 rounded-xl py-2.5 text-xs font-bold transition-all cursor-pointer shadow-md text-white ${
+                  batchConfirmAction.action === "delete" ? "bg-red-600 hover:bg-red-700" : "bg-navy-900 hover:bg-navy-850"
+                }`}
+              >
+                Konfirmasi
+              </button>
             </div>
           </div>
         </div>

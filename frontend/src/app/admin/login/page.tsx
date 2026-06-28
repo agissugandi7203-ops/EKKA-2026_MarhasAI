@@ -249,40 +249,7 @@ export default function AdminLogin() {
             </button>
           </form>
 
-          {/* Dummy/Live accounts notice */}
-          <div className="mt-8 pt-6 border-t border-navy-50">
-            <div className="bg-navy-50 rounded-xl p-4 border border-navy-100 flex flex-col gap-2 shadow-[inset_0_1px_2px_rgba(0,0,0,0.01)]">
-              {loginMode === "live" ? (
-                <>
-                  <div className="flex items-center gap-1.5 text-emerald-600 text-[10px] uppercase tracking-wider font-bold select-none animate-pulse">
-                    <Terminal className="h-3 w-3" />
-                    Kredensial Live Database (Supabase)
-                  </div>
-                  <div className="text-[11px] text-navy-700 font-mono mt-1 flex flex-col gap-1">
-                    <div>Email: <span className="text-navy-900 font-semibold select-all">admin@genesis.id</span></div>
-                    <div>Sandi: <span className="text-navy-900 font-semibold select-all">cocArief2510</span></div>
-                    <div className="text-[10px] text-navy-400 mt-1 font-sans italic leading-normal">
-                      Menghubungi endpoint NestJS global & Supabase REST API secara realtime.
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="flex items-center gap-1.5 text-gold text-[10px] uppercase tracking-wider font-bold select-none">
-                    <Terminal className="h-3 w-3" />
-                    Kredensial Simulator Offline
-                  </div>
-                  <div className="text-[11px] text-navy-700 font-mono mt-1 flex flex-col gap-1">
-                    <div>Email: <span className="text-navy-900 font-semibold select-all">admin@genesis.id</span></div>
-                    <div>Sandi: <span className="text-navy-900 font-semibold select-all">admin123</span></div>
-                    <div className="text-[10px] text-navy-400 mt-1 font-sans italic leading-normal">
-                      Menggunakan data tiruan offline yang disimpan di LocalStorage browser.
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
+          {/* Security sanitized - Credentials help box removed */}
 
         </div>
       </div>
