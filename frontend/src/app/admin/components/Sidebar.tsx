@@ -82,16 +82,13 @@ export default function Sidebar({
 
   return (
     <aside
-      className={`shrink-0 flex flex-col justify-between z-20 transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)] relative select-none ${
+      className={`shrink-0 flex flex-col justify-between z-20 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] relative select-none ${
         isCollapsed ? "w-[72px]" : "w-[260px]"
-      } h-screen ${
+      } h-screen md:h-[calc(100vh-2rem)] md:my-4 md:ml-4 md:rounded-2xl border ${
         isDark
-          ? "bg-black text-slate-100"
-          : "bg-white text-slate-800"
+          ? "bg-black text-slate-100 border-zinc-900 shadow-[0_8px_30px_rgb(0,0,0,0.5)]"
+          : "bg-white text-slate-800 border-slate-200/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)]"
       }`}
-      style={{
-        borderRight: isDark ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgba(0,0,0,0.06)"
-      }}
     >
       {/* Collapse Toggle — pill on the edge */}
       <button
