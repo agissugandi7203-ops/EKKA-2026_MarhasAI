@@ -23,6 +23,7 @@ export default function Header() {
     { label: "Services", href: "/services" },
     { label: "Features", href: "/features" },
     { label: "Documentation", href: "/docs" },
+    { label: "Admin Portal", href: "/admin/login" },
     { label: "Contact", href: "/contact" },
   ];
 
