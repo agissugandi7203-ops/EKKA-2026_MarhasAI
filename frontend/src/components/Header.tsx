@@ -23,7 +23,6 @@ export default function Header() {
     { label: "Services", href: "/services" },
     { label: "Features", href: "/features" },
     { label: "Documentation", href: "/docs" },
-    { label: "Admin Portal", href: "/admin/login" },
     { label: "Contact", href: "/contact" },
   ];
 
@@ -75,7 +74,19 @@ export default function Header() {
           </nav>
 
           {/* Action Buttons (right) */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
+            {/* Admin Portal CTA */}
+            <Link
+              href="/admin/login"
+              className={`hidden sm:flex items-center gap-2 rounded-xl py-1.5 px-3.5 border transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer select-none text-xs font-semibold ${
+                isScrolled
+                  ? 'border-navy-200 bg-white text-navy-900 hover:bg-navy-50 shadow-sm'
+                  : 'border-white/20 bg-white/10 text-white hover:bg-white/20 backdrop-blur-md shadow-sm'
+              }`}
+            >
+              Admin Portal
+            </Link>
+
             {/* Download App CTA button */}
             <a
               href="#"
@@ -132,6 +143,22 @@ export default function Header() {
                   </Link>
                 );
               })}
+              
+              {/* Divider */}
+              <div className={`h-[1px] my-1 ${isScrolled ? 'bg-navy-100/50' : 'bg-white/10'}`} />
+              
+              {/* Admin Portal in mobile drawer */}
+              <Link
+                href="/admin/login"
+                onClick={() => setIsMenuOpen(false)}
+                className={`rounded-xl px-4 py-3 text-sm font-semibold text-center transition-all duration-200 border ${
+                  isScrolled
+                    ? 'border-navy-200 bg-navy-50 text-navy-900 hover:bg-navy-100'
+                    : 'border-white/20 bg-white/10 text-white hover:bg-white/20'
+                }`}
+              >
+                Admin Portal
+              </Link>
             </div>
           </div>
         )}
