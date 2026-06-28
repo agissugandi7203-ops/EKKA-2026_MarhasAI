@@ -8,7 +8,7 @@ export default function Solutions() {
   return (
     <main className="relative w-full min-h-screen bg-surface flex flex-col">
       <div className="relative w-full h-screen overflow-hidden flex flex-col justify-between">
-        <BoomerangVideoBg src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260331_074327_a4d6275d-82d9-4c83-bfbe-f1fb2213c17c.mp4" />
+        <BoomerangVideoBg src="/videos/solutions.mp4" />
         {/* Dark overlay specifically requested for readability */}
         <div className="absolute inset-0 bg-black/50 z-10 pointer-events-none" />
         

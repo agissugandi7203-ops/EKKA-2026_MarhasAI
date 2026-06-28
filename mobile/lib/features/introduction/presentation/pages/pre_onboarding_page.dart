@@ -113,7 +113,7 @@ class PreOnboardingPage extends StatelessWidget {
                     FadeSlideEntrance(
                       delay: const Duration(milliseconds: 400),
                       child: Text(
-                        'Genesis.id',
+                        'Genesis',
                         style: AppTextStyles.displayLarge.copyWith(
                           color: Colors.white,
                           letterSpacing: 1.5,

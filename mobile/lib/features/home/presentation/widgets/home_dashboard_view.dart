@@ -935,6 +935,7 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
               textColor: const Color(0xFFC2410C),
               gradientColors: [const Color(0xFFFFF7ED), const Color(0xFFFFEDD5)],
               lottieAsset: 'assets/animations/achievements/strike_fire.json',
+              lottieRepeat: true,
             ),
           ),
           const SizedBox(width: 12),
@@ -946,6 +947,8 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
               iconColor: const Color(0xFF3B82F6),
               textColor: const Color(0xFF1D4ED8),
               gradientColors: [const Color(0xFFEFF6FF), const Color(0xFFDBEAFE)],
+              lottieAsset: 'assets/animations/achievements/Image.json',
+              lottieRepeat: false,
             ),
           ),
           const SizedBox(width: 12),
@@ -959,6 +962,8 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
                 iconColor: const Color(0xFF10B981),
                 textColor: const Color(0xFF047857),
                 gradientColors: [const Color(0xFFECFDF5), const Color(0xFFD1FAE5)],
+                lottieAsset: 'assets/animations/achievements/trophy.json',
+                lottieRepeat: true,
               ),
             ),
           ),
@@ -975,51 +980,58 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
     required Color textColor,
     required List<Color> gradientColors,
     String? lottieAsset,
+    bool lottieRepeat = true,
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: gradientColors,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: gradientColors[0],
         borderRadius: BorderRadius.circular(24.0),
         border: Border.all(
-          color: iconColor.withValues(alpha: 0.15),
+          color: Colors.white.withValues(alpha: 0.55),
           width: 1.5,
         ),
         boxShadow: [
+          // Elegant color-matched 3D claymorphic bottom-right depth shadow
           BoxShadow(
-            color: AppColors.navy900.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: iconColor.withValues(alpha: 0.14),
+            offset: const Offset(0, 8),
+            blurRadius: 12,
+          ),
+          // Clean top-left light source reflection
+          BoxShadow(
+            color: Colors.white.withValues(alpha: 0.65),
+            offset: const Offset(-4, -4),
+            blurRadius: 8,
           ),
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           if (lottieAsset != null)
             SizedBox(
-              width: 24,
-              height: 24,
-              child: Lottie.asset(lottieAsset, repeat: true),
+              width: 44,
+              height: 44,
+              child: Lottie.asset(lottieAsset, repeat: lottieRepeat),
             )
           else
             Icon(icon, color: iconColor, size: 24),
           const SizedBox(height: 12),
           Text(
             value,
+            textAlign: TextAlign.center,
             style: AppTextStyles.headlineSmall.copyWith(
               fontWeight: FontWeight.bold,
-              fontSize: 14,
+              fontSize: 13,
               color: textColor,
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 4),
           Text(
             title,
+            textAlign: TextAlign.center,
             style: AppTextStyles.bodySmall.copyWith(
               color: AppColors.textSecondary,
               fontSize: 9,

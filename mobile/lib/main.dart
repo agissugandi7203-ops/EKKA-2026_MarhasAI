@@ -203,7 +203,7 @@ class _GenesisAppState extends State<GenesisApp> {
           BlocProvider<ReportsBloc>.value(value: _reportsBloc),
         ],
         child: MaterialApp.router(
-          title: 'Genesis.id',
+          title: 'Genesis',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.lightTheme,
           routerConfig: _appRouter.router,

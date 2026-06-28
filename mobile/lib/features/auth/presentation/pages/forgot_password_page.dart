@@ -83,7 +83,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                           child: AuthHeader(
                             title: 'Forget Password',
                             subtitle: 'Reset your account password and access your personal account again.',
-                            icon: Icons.lock_reset_rounded,
+                            lottieAsset: 'assets/animations/introduction/forgot_password.json',
+                            lottieSize: 140.0,
                           ),
                         ),
                         const SizedBox(height: AppConstants.spacing40),

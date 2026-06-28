@@ -78,7 +78,8 @@ class _SignUpPageState extends State<SignUpPage> {
                           child: AuthHeader(
                             title: 'Create New Account',
                             subtitle: 'Join us and start contributing to a cleaner, greener earth.',
-                            icon: Icons.person_add_outlined,
+                            lottieAsset: 'assets/animations/introduction/create_account.json',
+                            lottieSize: 140.0,
                           ),
                         ),
                         const SizedBox(height: AppConstants.spacing40),

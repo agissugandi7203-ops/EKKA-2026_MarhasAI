@@ -46,3 +46,30 @@ Sebelum memulai tugas apa pun atau menulis kode, Anda **WAJIB** membaca dokumen 
 *   Selalu patuhi prinsip clean code yang ada dalam [CLEAN_CODE_GUIDELINES.md](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/docs/CLEAN_CODE_GUIDELINES.md).
 *   Jangan membuat perubahan besar pada arsitektur tanpa membuat/memperbarui rancangan spesifikasi terlebih dahulu.
 
+---
+
+## 💡 Prinsip Clean Code Agen AI (Clean Code & Robustness Rules)
+
+Sebagai Agen AI pengembang Genesis.id, Anda **WAJIB** mematuhi prinsip-prinsip clean code dan ketahanan sistem (*robustness*) berikut ini secara konsisten di seluruh lapisan sub-proyek (Next.js, NestJS, dan Flutter):
+
+### 1. Strict Type Safety (Anti-`any` & Anti-`dynamic`)
+*   **Next.js & NestJS (TypeScript)**: Dilarang keras menulis tipe `any`. Selalu definisikan tipe data, interface, atau gunakan generics secara eksplisit. Aktifkan `"strict": true` pada `tsconfig.json`.
+*   **Flutter (Dart)**: Gunakan tipe data spesifik (hindari `dynamic` kecuali saat parsing payload JSON mentah). Selalu nyatakan tipe kembalian fungsi (*return type*) secara eksplisit.
+
+### 2. Pencegahan Kebocoran Memori & Sumber Daya (Resource Disposal)
+*   **React/Next.js Hooks**: Setiap kali menggunakan `useEffect` yang mendaftarkan `addEventListener`, mendaftarkan timer (`setInterval`/`setTimeout`), atau meluncurkan animasi (`requestAnimationFrame`), Anda **WAJIB** mengembalikan fungsi pembersihan (*cleanup function*) untuk membatalkannya guna mencegah kebocoran memori.
+*   **Flutter Controllers**: Semua objek yang mengimplementasikan pembuangan sumber daya (seperti `TextEditingController`, `ScrollController`, `StreamSubscription`) harus secara eksplisit dibuang (*disposed*) di dalam metode lifecycle `dispose()`.
+
+### 3. Optimalisasi Performa Scroll & Rendering (Smooth Scroll Guarantee)
+*   **Offscreen Execution Pause**: Untuk operasi latar belakang yang intensif (seperti looping canvas, pemrosesan frame video, atau animasi terus-menerus), gunakan `IntersectionObserver` di Next.js untuk menjeda proses ketika elemen sedang berada di luar layar (off-screen) agar tidak membebani performa gulir (*scroll*) pengguna.
+*   **Passive Listeners**: Di sisi web, jika membuat *event listener* pada scroll, gunakan `{ passive: true }` untuk mencegah hambatan interaksi pada utas utama browser.
+
+### 4. Penanganan Eror yang Aman & User-Friendly (Robust Error Handling)
+*   **No Silent Catch**: Jangan pernah menelan eror di dalam blok `catch` kosong. Minimal, cetak dengan logger yang sesuai (`console.error` di Next.js, `Logger` di NestJS, atau `debugPrint`/`talker` di Flutter).
+*   **UI Fallbacks**: Gunakan *Error Boundary* (di React) atau `GenesisErrorWidget` (di Flutter) agar aplikasi tidak crash total (*crash to black/red screen*) ketika terjadi kesalahan pada sub-komponen UI.
+
+### 5. Pemisahan Tanggung Jawab (Separation of Concerns - SoC)
+*   **Next.js**: Pisahkan logika visual (UI Component) dari logika bisnis/data fetching. Letakkan status kompleks dan pemanggilan API di dalam *Custom Hooks* (seperti React Query/SWR).
+*   **NestJS**: Jaga agar *Controller* tetap tipis (hanya mengurusi request, routing, validasi DTO) dan letakkan seluruh logika bisnis di dalam *Service*.
+*   **Flutter**: Widget presentasi hanya boleh menangani gambar UI berdasarkan status saat ini. Seluruh status aplikasi, logika bisnis, dan interaksi repositori wajib ditangani oleh BLoC/Cubit.
+

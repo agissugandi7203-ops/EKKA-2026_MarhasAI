@@ -208,8 +208,10 @@ class _LoginPageState extends State<LoginPage> {
 
                               // ── Header branding (Selamat Datang) ──
                               const AuthHeader(
-                                title: 'Welcome to Genesis.id',
+                                title: 'Welcome to Genesis',
                                 subtitle: 'Pilih metode masuk untuk melanjutkan aksi lingkunganmu',
+                                lottieAsset: 'assets/animations/introduction/login_utama.json',
+                                lottieSize: 180.0,
                               ),
                               const SizedBox(height: AppConstants.spacing40),
 

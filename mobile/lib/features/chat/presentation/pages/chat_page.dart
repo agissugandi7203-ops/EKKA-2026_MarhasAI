@@ -286,8 +286,8 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
              ScaleTransition(
                scale: _orbScaleAnimation,
                child: SizedBox(
-                 width: 160,
-                 height: 160,
+                 width: 240,
+                 height: 240,
                  child: Lottie.asset(
                    'assets/animations/artificial/ai_home.json',
                    repeat: true,

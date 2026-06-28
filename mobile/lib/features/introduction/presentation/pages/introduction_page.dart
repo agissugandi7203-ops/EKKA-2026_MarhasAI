@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:shimmer/shimmer.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -15,7 +14,7 @@ import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../auth/presentation/pages/login_page.dart';
 import '../widgets/intro_page_indicator.dart';
 
-/// Halaman onboarding Genesis.id — 3 slide pengenalan fitur utama + Halaman Login.
+/// Halaman onboarding Genesis — 3 slide pengenalan fitur utama + Halaman Login.
 ///
 /// Setiap slide memiliki gambar latar belakang fullscreen yang representatif
 /// dengan shadow gradient bottom-to-top agar tombol di bawah tetap terlihat jelas.
@@ -38,19 +37,19 @@ class _IntroductionPageState extends State<IntroductionPage> {
       title: 'Laporkan Masalah\nLingkungan',
       description:
           'Ambil foto, tandai lokasi, dan laporkan masalah kebersihan di sekitarmu. AI akan memverifikasi laporanmu secara otomatis.',
-      imageUrl: 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?q=80&w=1080',
+      imagePath: 'assets/images/intro/intro_report.jpg',
     ),
     _IntroSlideData(
       title: 'Kumpulkan XP\n& Lencana',
       description:
           'Setiap laporan memberikan XP. Naikkan levelmu, jaga streak harianmu, dan raih lencana eksklusif.',
-      imageUrl: 'https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=1080',
+      imagePath: 'assets/images/intro/intro_xp.png',
     ),
     _IntroSlideData(
       title: 'Jadikan Kotamu\nTerbersih',
       description:
           'Kontribusimu membantu kotamu naik peringkat. Bersaing dengan kota lain di papan peringkat nasional!',
-      imageUrl: 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?q=80&w=1080',
+      imagePath: 'assets/images/intro/intro_city.jpg',
     ),
   ];
 
@@ -131,19 +130,11 @@ class _IntroductionPageState extends State<IntroductionPage> {
                   return Stack(
                     children: [
                       Positioned.fill(
-                        child: Image.network(
-                          _slides[index].imageUrl,
+                        child: Image.asset(
+                          _slides[index].imagePath,
                           fit: BoxFit.cover,
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) return child;
-                            return Shimmer.fromColors(
-                              baseColor: AppColors.navy800,
-                              highlightColor: AppColors.navy700,
-                              child: Container(color: AppColors.navy800),
-                            );
-                          },
                           errorBuilder: (context, error, stackTrace) {
-                            return Container(color: AppColors.navy800);
+                            return Container(color: AppColors.navy900);
                           },
                         ),
                       ),
@@ -269,11 +260,11 @@ class _IntroductionPageState extends State<IntroductionPage> {
 class _IntroSlideData {
   final String title;
   final String description;
-  final String imageUrl;
+  final String imagePath;
 
   const _IntroSlideData({
     required this.title,
     required this.description,
-    required this.imageUrl,
+    required this.imagePath,
   });
 }

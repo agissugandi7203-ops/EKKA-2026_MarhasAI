@@ -8,7 +8,7 @@ export default function Services() {
   return (
     <main className="relative w-full min-h-screen bg-surface flex flex-col">
       <div className="relative w-full h-screen overflow-hidden flex flex-col justify-between">
-        <BoomerangVideoBg src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260520_133010_cb9c806d-bc9d-47f1-ac4c-b1759134ec8b.mp4" />
+        <BoomerangVideoBg src="/videos/services.mp4" />
         {/* Dark overlay specifically requested for readability */}
         <div className="absolute inset-0 bg-black/50 z-10 pointer-events-none" />
         

@@ -115,7 +115,8 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
                       AuthHeader(
                         title: 'Verification Code',
                         subtitle: 'Kami telah mengirimkan kode OTP ke email Anda untuk proses verifikasi. Pastikan untuk memeriksa kotak masuk dan FOLDER SPAM email Anda.',
-                        icon: Icons.mark_email_read_outlined,
+                        lottieAsset: 'assets/animations/introduction/otp.json',
+                        lottieSize: 130.0,
                       ),
                       const SizedBox(height: AppConstants.spacing8),
 

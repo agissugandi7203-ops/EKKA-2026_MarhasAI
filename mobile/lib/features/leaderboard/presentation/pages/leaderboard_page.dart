@@ -1,7 +1,9 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:lottie/lottie.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/constants/app_svgs.dart';
@@ -11,6 +13,7 @@ import '../../../../core/widgets/fade_slide_entrance.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
+import '../../../profile/domain/repositories/profile_repository.dart';
 import '../../domain/repositories/leaderboard_repository.dart';
 import '../../data/models/user_leaderboard_model.dart';
 
@@ -21,28 +24,21 @@ class LeaderboardPage extends StatefulWidget {
   State<LeaderboardPage> createState() => _LeaderboardPageState();
 }
 
-class _LeaderboardPageState extends State<LeaderboardPage> {
-  int _selectedFilter = 0; // 0 = Kabupaten, 1 = Provinsi, 2 = Nasional
+class _LeaderboardPageState extends State<LeaderboardPage> with AutomaticKeepAliveClientMixin {
+  int _selectedFilter = 0; // 0 = Lokasi Saya (City), 1 = Provinsi Saya, 2 = Nasional
   String _selectedKabupaten = 'Kota Bandung';
   String _selectedProvinsi = 'Jawa Barat';
+
+  String? _userCity;
+  String? _userProvince;
 
   List<UserLeaderboardModel> _leaderboardList = [];
   bool _isLoading = true;
   String? _errorMessage;
+  bool _victoryPopupShown = false;
 
-  final List<String> _kabupatenList = [
-    'Kota Bandung',
-    'Kab. Bandung Barat',
-    'Kota Cimahi',
-    'Kab. Sumedang'
-  ];
-
-  final List<String> _provinsiList = [
-    'Jawa Barat',
-    'DKI Jakarta',
-    'Jawa Tengah',
-    'Jawa Timur'
-  ];
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -53,15 +49,28 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
   Future<void> _fetchLeaderboard() async {
     if (!mounted) return;
     setState(() {
-      _isLoading = true;
+      _isLoading = _leaderboardList.isEmpty;
       _errorMessage = null;
     });
 
-    // Trigger daily quest challenge completion (viewing leaderboard)
+    // Trigger tantangan harian (memeriksa leaderboard)
     DioClient.completeChallenge('check_leaderboard');
 
+    // Ambil references ke repository sebelum ada async gap (BuildContext safety)
+    final profileRepo = context.read<ProfileRepository>();
+    final repo = context.read<LeaderboardRepository>();
+
     try {
-      final repo = context.read<LeaderboardRepository>();
+      // Ambil lokasi real-time pengguna dari profil jika belum di-cache
+      if (_userCity == null || _userProvince == null) {
+        final profile = await profileRepo.getMyProfile();
+        _userCity = profile.cityOrDistrict ?? 'Kota Bandung';
+        _userProvince = profile.province ?? 'Jawa Barat';
+
+        _selectedKabupaten = _userCity!;
+        _selectedProvinsi = _userProvince!;
+      }
+
       List<UserLeaderboardModel> list;
       if (_selectedFilter == 0) {
         list = await repo.getGlobalLeaderboard(city: _selectedKabupaten);
@@ -80,6 +89,12 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
     } catch (e) {
       if (mounted) {
         setState(() {
+          // Fallback anggun ke default jika offline atau terjadi error
+          _userCity ??= 'Kota Bandung';
+          _userProvince ??= 'Jawa Barat';
+          _selectedKabupaten = _userCity!;
+          _selectedProvinsi = _userProvince!;
+
           _isLoading = false;
           _errorMessage = e.toString();
         });
@@ -87,16 +102,78 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
     }
   }
 
+  // --- ELEGANT & CLEAN MATTE DECORATIONS ---
+
+  Decoration _clayDecoration({
+    required Color color,
+    double radius = 24,
+    Color? shadowColor,
+  }) {
+    final hsl = HSLColor.fromColor(color);
+    final lightColor = hsl.withLightness((hsl.lightness + 0.1).clamp(0.0, 1.0)).toColor();
+    final darkColor = shadowColor ?? hsl.withLightness((hsl.lightness - 0.12).clamp(0.0, 1.0)).toColor();
+
+    return BoxDecoration(
+      color: color,
+      borderRadius: BorderRadius.circular(radius),
+      border: Border.all(
+        color: lightColor.withValues(alpha: 0.22),
+        width: 1.5,
+      ),
+      boxShadow: [
+        // Bayangan lembut kedalaman matte kanan-bawah (sangat anggun, no glowing highlight)
+        BoxShadow(
+          color: darkColor.withValues(alpha: 0.35),
+          blurRadius: 12,
+          offset: const Offset(3, 6),
+        ),
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.08),
+          blurRadius: 6,
+          offset: const Offset(1, 2),
+        ),
+      ],
+    );
+  }
+
+  Decoration _clayCardDecoration({
+    required Color color,
+    double radius = 24,
+    bool isSelf = false,
+  }) {
+    return BoxDecoration(
+      color: color,
+      borderRadius: BorderRadius.circular(radius),
+      border: Border.all(
+        color: isSelf 
+            ? AppColors.gold.withValues(alpha: 0.25) 
+            : AppColors.divider.withValues(alpha: 0.4),
+        width: 1.5,
+      ),
+      boxShadow: [
+        // Bayangan jatuh matte yang sangat halus
+        BoxShadow(
+          color: isSelf 
+              ? AppColors.gold.withValues(alpha: 0.08) 
+              : const Color(0xFF90A4AE).withValues(alpha: 0.12),
+          blurRadius: 12,
+          offset: const Offset(2, 6),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Determine active user ID
+    super.build(context);
+    // Cari ID pengguna aktif dari AuthBloc
     final authState = context.watch<AuthBloc>().state;
     String? currentUserId;
     if (authState is Authenticated) {
       currentUserId = authState.user.id;
     }
 
-    // Find current user standing
+    // Cari peringkat pengguna saat ini
     UserLeaderboardModel? currentUserEntry;
     int currentUserIndex = -1;
     if (currentUserId != null) {
@@ -109,12 +186,23 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
       }
     }
 
-    // Split top 3 and the rest
+    if (currentUserIndex != -1 && currentUserIndex < 3 && !_victoryPopupShown) {
+      _victoryPopupShown = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showVictoryPopup(currentUserIndex + 1);
+      });
+    }
+
+    // Pemisahan 3 besar dan baris sisanya
     final firstUser = _leaderboardList.isNotEmpty ? _leaderboardList[0] : null;
     final secondUser = _leaderboardList.length > 1 ? _leaderboardList[1] : null;
     final thirdUser = _leaderboardList.length > 2 ? _leaderboardList[2] : null;
 
     final listEntries = _leaderboardList.length > 3 ? _leaderboardList.sublist(3) : <UserLeaderboardModel>[];
+
+    // Label tab dinamis berbasis lokasi riil
+    final String cityLabel = _userCity ?? 'Lokasi';
+    final String provinceLabel = _userProvince ?? 'Provinsi';
 
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -128,7 +216,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
             children: [
               // Curved Dark Navy Header Banner
               Container(
-                height: 440,
+                height: 450,
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
@@ -139,22 +227,8 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                     ],
                   ),
                   borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(36),
-                    bottomRight: Radius.circular(36),
-                  ),
-                ),
-              ),
-
-              // Glowing decorative rings
-              Positioned(
-                top: -40,
-                left: -40,
-                child: Container(
-                  width: 150,
-                  height: 150,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AppColors.navy600.withValues(alpha: 0.15),
+                    bottomLeft: Radius.circular(44),
+                    bottomRight: Radius.circular(44),
                   ),
                 ),
               ),
@@ -168,7 +242,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                   FadeSlideEntrance(
                     delay: const Duration(milliseconds: 50),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      padding: const EdgeInsets.symmetric(horizontal: 12.0),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -199,21 +273,14 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
 
-                  // Location filters
+                  // Location Filter Tabs
                   FadeSlideEntrance(
                     delay: const Duration(milliseconds: 100),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _buildLocationFilter(),
-                        const SizedBox(height: 8),
-                        _buildLocationSelectorTag(),
-                      ],
-                    ),
+                    child: _buildLocationFilter(cityLabel, provinceLabel),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 24),
 
                   if (_isLoading)
                     Padding(
@@ -232,65 +299,71 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                       ),
                     )
                   else ...[
-                    // Podium UI
-                    FadeSlideEntrance(
-                      delay: const Duration(milliseconds: 150),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: AppConstants.pagePaddingH),
-                        child: Container(
-                          padding: const EdgeInsets.fromLTRB(12, 20, 12, 16),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF1E293B).withValues(alpha: 0.65),
-                            borderRadius: BorderRadius.circular(28),
-                            border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1.5),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.25),
-                                blurRadius: 20,
-                                offset: const Offset(0, 10),
-                              ),
-                            ],
+                    // Podium UI (Elegant Solid Deep Navy Panel)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: AppConstants.pagePaddingH),
+                      child: Container(
+                        padding: const EdgeInsets.fromLTRB(10, 24, 10, 16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF152238), // Elegant solid deep navy
+                          borderRadius: BorderRadius.circular(28),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.06),
+                            width: 1.5,
                           ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              // Rank 2 (Left)
-                              Expanded(
-                                child: _buildPodiumPosition(
-                                  user: secondUser,
-                                  fallbackName: 'Peringkat 2',
-                                  rank: 2,
-                                  badge: '🥈',
-                                  color: const Color(0xFFC0C0C0),
-                                  height: 72,
-                                ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.22),
+                              blurRadius: 18,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            // Rank 2 (Left)
+                            Expanded(
+                              child: AnimatedPodiumPosition(
+                                user: secondUser,
+                                fallbackName: 'Peringkat 2',
+                                rank: 2,
+                                badge: '🥈',
+                                color: const Color(0xFF7E8B9B), // Elegant Matte Muted Silver
+                                targetHeight: 85,
+                                startDelay: const Duration(milliseconds: 200),
+                                clayDecorationBuilder: _clayDecoration,
                               ),
-                              // Rank 1 (Center)
-                              Expanded(
-                                child: _buildPodiumPosition(
-                                  user: firstUser,
-                                  fallbackName: 'Peringkat 1',
-                                  rank: 1,
-                                  badge: '👑',
-                                  color: AppColors.gold,
-                                  height: 104,
-                                  isGold: true,
-                                ),
+                            ),
+                            // Rank 1 (Center)
+                            Expanded(
+                              child: AnimatedPodiumPosition(
+                                user: firstUser,
+                                fallbackName: 'Peringkat 1',
+                                rank: 1,
+                                badge: '👑',
+                                color: const Color(0xFFD9A02B), // Elegant Solid Gold
+                                targetHeight: 120,
+                                isGold: true,
+                                startDelay: const Duration(milliseconds: 400),
+                                clayDecorationBuilder: _clayDecoration,
                               ),
-                              // Rank 3 (Right)
-                              Expanded(
-                                child: _buildPodiumPosition(
-                                  user: thirdUser,
-                                  fallbackName: 'Peringkat 3',
-                                  rank: 3,
-                                  badge: '🥉',
-                                  color: const Color(0xFFCD7F32),
-                                  height: 56,
-                                ),
+                            ),
+                            // Rank 3 (Right)
+                            Expanded(
+                              child: AnimatedPodiumPosition(
+                                user: thirdUser,
+                                fallbackName: 'Peringkat 3',
+                                rank: 3,
+                                badge: '🥉',
+                                color: const Color(0xFF9E7C6F), // Elegant Matte Muted Bronze
+                                targetHeight: 65,
+                                startDelay: const Duration(milliseconds: 600),
+                                clayDecorationBuilder: _clayDecoration,
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -304,41 +377,27 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                           padding: const EdgeInsets.symmetric(horizontal: AppConstants.pagePaddingH),
                           child: Container(
                             padding: const EdgeInsets.all(18),
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [AppColors.gold50, Color(0xFFFDFDFB)],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              borderRadius: BorderRadius.circular(24),
-                              border: Border.all(
-                                color: AppColors.gold.withValues(alpha: 0.35),
-                                width: 1.5,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.navy900.withValues(alpha: 0.08),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 10),
-                                ),
-                              ],
+                            decoration: _clayCardDecoration(
+                              color: AppColors.gold50,
+                              radius: 24,
+                              isSelf: true,
                             ),
                             child: Row(
                               children: [
                                 Container(
-                                  width: 44,
-                                  height: 44,
+                                  width: 46,
+                                  height: 46,
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
-                                    border: Border.all(color: AppColors.gold, width: 2),
+                                    border: Border.all(color: AppColors.gold, width: 2.0),
                                   ),
                                   child: ClipOval(
                                     child: currentUserEntry.avatarUrl != null
                                         ? Image.network(currentUserEntry.avatarUrl!, fit: BoxFit.cover)
                                         : SvgPicture.string(
                                             AppSvgs.defaultAvatar,
-                                            width: 44,
-                                            height: 44,
+                                            width: 46,
+                                            height: 46,
                                           ),
                                   ),
                                 ),
@@ -358,10 +417,10 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                                       Text(
                                         currentUserIndex == 0
                                             ? 'Luar biasa! Kamu memimpin papan peringkat saat ini! 👑'
-                                            : 'Kumpulkan ${_leaderboardList[currentUserIndex - 1].xp - currentUserEntry.xp} XP lagi untuk geser ${_leaderboardList[currentUserIndex - 1].fullName}!',
+                                            : 'Kumpulkan ${_leaderboardList[currentUserIndex - 1].xp - currentUserEntry.xp} XP lagi untuk menggeser ${_leaderboardList[currentUserIndex - 1].fullName}!',
                                         style: AppTextStyles.bodySmall.copyWith(
                                           color: AppColors.textPrimary,
-                                          fontWeight: FontWeight.w500,
+                                          fontWeight: FontWeight.w600,
                                         ),
                                       ),
                                     ],
@@ -372,7 +431,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                                   decoration: BoxDecoration(
                                     color: AppColors.gold.withValues(alpha: 0.12),
                                     borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(color: AppColors.gold.withValues(alpha: 0.2), width: 1),
+                                    border: Border.all(color: AppColors.gold.withValues(alpha: 0.2), width: 1.2),
                                   ),
                                   child: Text(
                                     '${currentUserEntry.xp} XP',
@@ -389,7 +448,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                       ),
                     const SizedBox(height: 20),
 
-                    // Rank List
+                    // Rank List of players
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: AppConstants.pagePaddingH),
                       child: Column(
@@ -397,7 +456,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                         children: [
                           if (listEntries.isEmpty)
                             Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 24),
+                              padding: const EdgeInsets.symmetric(vertical: 36),
                               child: Center(
                                 child: Text(
                                   'Tidak ada data peringkat lain.',
@@ -410,7 +469,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                               final idx = entry.key;
                               final item = entry.value;
                               return FadeSlideEntrance(
-                                delay: Duration(milliseconds: 250 + idx * 80),
+                                delay: Duration(milliseconds: 150 + idx * 70),
                                 curve: Curves.easeOutBack,
                                 child: _buildRankRow(
                                   user: item,
@@ -432,163 +491,22 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
     );
   }
 
-  void _showLocationSelectorBottomSheet(BuildContext context) {
-    final bool isKabupaten = _selectedFilter == 0;
-    final List<String> list = isKabupaten ? _kabupatenList : _provinsiList;
-    final String current = isKabupaten ? _selectedKabupaten : _selectedProvinsi;
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(28),
-          topRight: Radius.circular(28),
-        ),
-      ),
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                isKabupaten ? 'Pilih Kabupaten/Kota' : 'Pilih Provinsi',
-                style: AppTextStyles.headlineSmall.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.navy900,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              ...list.map((loc) {
-                final bool isSelected = loc == current;
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 10),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      side: BorderSide(
-                        color: isSelected ? AppColors.navy500 : AppColors.divider,
-                        width: 1.5,
-                      ),
-                    ),
-                    tileColor: isSelected ? AppColors.navy50 : Colors.white,
-                    title: Text(
-                      loc,
-                      style: AppTextStyles.titleMedium.copyWith(
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                        color: isSelected ? AppColors.navy900 : AppColors.textPrimary,
-                      ),
-                    ),
-                    trailing: isSelected
-                        ? const Icon(Icons.check_circle_rounded, color: AppColors.navy500)
-                        : null,
-                    onTap: () {
-                      setState(() {
-                        if (isKabupaten) {
-                          _selectedKabupaten = loc;
-                        } else {
-                          _selectedProvinsi = loc;
-                        }
-                      });
-                      Navigator.pop(context);
-                      _fetchLeaderboard();
-                    },
-                  ),
-                );
-              }),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildLocationSelectorTag() {
-    if (_selectedFilter == 2) {
-      return Container(
-        margin: const EdgeInsets.symmetric(vertical: 4),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.05), width: 1),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.public_rounded, color: AppColors.gold, size: 14),
-            const SizedBox(width: 6),
-            Text(
-              'Nasional: Indonesia',
-              style: AppTextStyles.labelSmall.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    final String label = _selectedFilter == 0 ? _selectedKabupaten : _selectedProvinsi;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () => _showLocationSelectorBottomSheet(context),
-            borderRadius: BorderRadius.circular(16),
-            child: Ink(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.2),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.location_on_rounded, color: AppColors.gold, size: 14),
-                  const SizedBox(width: 6),
-                  Text(
-                    label,
-                    style: AppTextStyles.labelSmall.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white70, size: 16),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLocationFilter() {
+  Widget _buildLocationFilter(String cityLabel, String provinceLabel) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: Colors.white.withValues(alpha: 0.08),
-          width: 1,
+          width: 1.2,
         ),
       ),
       child: Row(
         children: [
-          _buildFilterTab(0, 'Kabupaten'),
-          _buildFilterTab(1, 'Provinsi'),
+          _buildFilterTab(0, cityLabel),
+          _buildFilterTab(1, provinceLabel),
           _buildFilterTab(2, 'Nasional'),
         ],
       ),
@@ -602,6 +520,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
         onTap: () {
           setState(() {
             _selectedFilter = index;
+            _leaderboardList.clear(); // Clear so it shows shimmer for the new filter
           });
           _fetchLeaderboard();
         },
@@ -609,16 +528,16 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
           cursor: SystemMouseCursors.click,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 250),
-            padding: const EdgeInsets.symmetric(vertical: 8),
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
             decoration: BoxDecoration(
               color: isSelected ? Colors.white : Colors.transparent,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(16),
               boxShadow: isSelected
                   ? [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
+                        color: Colors.black.withValues(alpha: 0.12),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
                       ),
                     ]
                   : null,
@@ -631,132 +550,13 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                   fontWeight: FontWeight.bold,
                   fontSize: 11,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildPodiumPosition({
-    required UserLeaderboardModel? user,
-    required String fallbackName,
-    required int rank,
-    required String badge,
-    required Color color,
-    required double height,
-    bool isGold = false,
-  }) {
-    final name = user?.fullName ?? fallbackName;
-    final xp = user != null ? '${user.xp} XP' : '- XP';
-    final initial = user != null ? user.fullName.substring(0, 1).toUpperCase() : '?';
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(badge, style: const TextStyle(fontSize: 22)),
-        const SizedBox(height: 6),
-        Container(
-          width: isGold ? 48 : 38,
-          height: isGold ? 48 : 38,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: isGold ? AppColors.gold : color,
-              width: 2.5,
-            ),
-            color: isGold ? AppColors.gold.withValues(alpha: 0.1) : color.withValues(alpha: 0.1),
-            boxShadow: isGold
-                ? [
-                    BoxShadow(
-                      color: AppColors.gold.withValues(alpha: 0.3),
-                      blurRadius: 10,
-                      spreadRadius: 1,
-                    ),
-                  ]
-                : null,
-          ),
-          child: Center(
-            child: user?.avatarUrl != null
-                ? ClipOval(child: Image.network(user!.avatarUrl!, width: double.infinity, height: double.infinity, fit: BoxFit.cover))
-                : Text(
-                    initial,
-                    style: TextStyle(
-                      color: isGold ? AppColors.gold : color,
-                      fontWeight: FontWeight.bold,
-                      fontSize: isGold ? 16 : 14,
-                    ),
-                  ),
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          name,
-          style: AppTextStyles.labelSmall.copyWith(
-            fontSize: 11,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          textAlign: TextAlign.center,
-        ),
-        Text(
-          xp,
-          style: AppTextStyles.bodySmall.copyWith(
-            fontSize: 9,
-            color: AppColors.navy200,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 10),
-        Container(
-          width: isGold ? 72 : 62,
-          height: height,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: isGold
-                  ? [
-                      const Color(0xFFD97706),
-                      AppColors.gold,
-                      const Color(0xFFFBBF24),
-                    ]
-                  : [
-                      color.withValues(alpha: 0.7),
-                      color.withValues(alpha: 0.5),
-                      color.withValues(alpha: 0.8),
-                    ],
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-            ),
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(16),
-              topRight: Radius.circular(16),
-            ),
-            border: Border.all(
-              color: isGold ? AppColors.gold : color.withValues(alpha: 0.3),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.15),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Center(
-            child: Text(
-              '#$rank',
-              style: AppTextStyles.labelSmall.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 
@@ -769,28 +569,10 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
     return Container(
       margin: const EdgeInsets.only(bottom: AppConstants.spacing12),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
+      decoration: _clayCardDecoration(
         color: isSelf ? AppColors.goldLight.withValues(alpha: 0.15) : Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: isSelf ? AppColors.gold.withValues(alpha: 0.4) : AppColors.divider.withValues(alpha: 0.7),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isSelf
-                ? AppColors.gold.withValues(alpha: 0.03)
-                : AppColors.navy900.withValues(alpha: 0.03),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
-          if (!isSelf)
-            const BoxShadow(
-              color: Colors.white,
-              blurRadius: 6,
-              offset: Offset(-2, -2),
-            ),
-        ],
+        radius: 20,
+        isSelf: isSelf,
       ),
       child: Row(
         children: [
@@ -841,7 +623,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: isSelf ? AppColors.gold.withValues(alpha: 0.25) : Colors.transparent,
-                width: 1,
+                width: 1.0,
               ),
             ),
             child: Text(
@@ -863,12 +645,358 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
       baseColor: Colors.grey[300]!,
       highlightColor: Colors.grey[100]!,
       child: Container(
-        height: 200,
+        height: 220,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(28),
         ),
       ),
+    );
+  }
+
+  void _showVictoryPopup(int rank) {
+    final String rankTitle = rank == 1 ? 'Peringkat 1' : rank == 2 ? 'Peringkat 2' : 'Peringkat 3';
+    final String message = rank == 1
+        ? 'Luar biasa! Anda adalah sang Eco Guardian terbaik di wilayah ini. Terus pertahankan kontribusi hijau Anda!'
+        : rank == 2
+            ? 'Hebat sekali! Anda berhasil menduduki peringkat kedua. Sedikit lagi menuju puncak pelestari lingkungan!'
+            : 'Selamat! Anda masuk ke dalam 3 besar pelestari lingkungan. Kontribusi Anda sangat berarti bagi bumi!';
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) {
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: Dialog(
+            backgroundColor: Colors.transparent,
+            insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: const Color(0xFF0F172A), // Dark Slate color matching the premium style
+                borderRadius: BorderRadius.circular(32),
+                border: Border.all(
+                  color: const Color(0xFFD4AF37), // Golden bezel
+                  width: 2.0,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFD4AF37).withValues(alpha: 0.24), // Golden glow
+                    blurRadius: 24,
+                    offset: const Offset(0, 8),
+                  ),
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.4),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Celebration Lottie Animation
+                  SizedBox(
+                    width: 180,
+                    height: 180,
+                    child: Lottie.asset(
+                      'assets/animations/leaderboard/first_place.json',
+                      repeat: true,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // Rank Label
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEF3C7), // Amber 100
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: const Color(0xFFF59E0B), width: 1.5),
+                    ),
+                    child: Text(
+                      rankTitle,
+                      style: AppTextStyles.labelSmall.copyWith(
+                        color: const Color(0xFF92400E), // Amber 800
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // Congratulations Title
+                  Text(
+                    'Selamat Warga Hebat!',
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.headlineSmall.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 22,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  // Warm Personalized Message
+                  Text(
+                    message,
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: Colors.white70,
+                      fontSize: 14,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  // Action Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF10B981), // Emerald green
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                           borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 0,
+                      ).copyWith(
+                        side: WidgetStateProperty.all(
+                          BorderSide(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            width: 1.5,
+                          ),
+                        ),
+                      ),
+                      child: Text(
+                        'Terima Kasih!',
+                        style: AppTextStyles.labelSmall.copyWith(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// --- ANIMATED PODIUM POSITION WIDGET ---
+
+class AnimatedPodiumPosition extends StatefulWidget {
+  final UserLeaderboardModel? user;
+  final String fallbackName;
+  final int rank;
+  final String badge;
+  final Color color;
+  final double targetHeight;
+  final bool isGold;
+  final Duration startDelay;
+  final Decoration Function({required Color color, double radius, Color? shadowColor}) clayDecorationBuilder;
+
+  const AnimatedPodiumPosition({
+    super.key,
+    required this.user,
+    required this.fallbackName,
+    required this.rank,
+    required this.badge,
+    required this.color,
+    required this.targetHeight,
+    required this.startDelay,
+    required this.clayDecorationBuilder,
+    this.isGold = false,
+  });
+
+  @override
+  State<AnimatedPodiumPosition> createState() => _AnimatedPodiumPositionState();
+}
+
+class _AnimatedPodiumPositionState extends State<AnimatedPodiumPosition>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _heightAnimation;
+  late final Animation<double> _opacityAnimation;
+  late final Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1100),
+    );
+
+    _heightAnimation = Tween<double>(begin: 0.0, end: widget.targetHeight).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 0.8, curve: Curves.easeOutBack),
+      ),
+    );
+
+    _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.35, 1.0, curve: Curves.easeIn),
+      ),
+    );
+
+    _scaleAnimation = Tween<double>(begin: 0.3, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.4, 1.0, curve: Curves.elasticOut),
+      ),
+    );
+
+    Future.delayed(widget.startDelay, () {
+      if (mounted) {
+        _controller.forward();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final name = widget.user?.fullName ?? widget.fallbackName;
+    final xp = widget.user != null ? '${widget.user!.xp} XP' : '- XP';
+    final initial = widget.user != null ? widget.user!.fullName.substring(0, 1).toUpperCase() : '?';
+
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Badge / Crown emoji
+            Opacity(
+              opacity: _opacityAnimation.value,
+              child: Transform.scale(
+                scale: _scaleAnimation.value,
+                child: Text(widget.badge, style: const TextStyle(fontSize: 24)),
+              ),
+            ),
+            const SizedBox(height: 5),
+
+            // Profile Avatar
+            Opacity(
+              opacity: _opacityAnimation.value,
+              child: Transform.scale(
+                scale: _scaleAnimation.value,
+                child: Container(
+                  width: widget.isGold ? 50 : 40,
+                  height: widget.isGold ? 50 : 40,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: widget.isGold ? AppColors.gold : widget.color,
+                      width: 2.0,
+                    ),
+                    color: widget.isGold 
+                        ? AppColors.gold.withValues(alpha: 0.1) 
+                        : widget.color.withValues(alpha: 0.1),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.08),
+                        blurRadius: 5,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: widget.user?.avatarUrl != null
+                        ? ClipOval(
+                            child: Image.network(
+                              widget.user!.avatarUrl!,
+                              width: double.infinity,
+                              height: double.infinity,
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                        : Text(
+                            initial,
+                            style: TextStyle(
+                              color: widget.isGold ? AppColors.gold : widget.color,
+                              fontWeight: FontWeight.bold,
+                              fontSize: widget.isGold ? 16 : 14,
+                            ),
+                          ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 6),
+
+            // Name
+            Opacity(
+              opacity: _opacityAnimation.value,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: Text(
+                  name,
+                  style: AppTextStyles.labelSmall.copyWith(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+
+            // XP
+            Opacity(
+              opacity: _opacityAnimation.value,
+              child: Text(
+                xp,
+                style: AppTextStyles.bodySmall.copyWith(
+                  fontSize: 8.5,
+                  color: AppColors.navy200,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+
+            // Claymorphic Rising Stand Bar
+            Container(
+              width: widget.isGold ? 74 : 64,
+              height: _heightAnimation.value,
+              decoration: widget.clayDecorationBuilder(
+                color: widget.isGold ? const Color(0xFFD9A02B) : widget.color,
+                radius: 16,
+              ),
+              child: _heightAnimation.value > 25
+                  ? Center(
+                      child: Opacity(
+                        opacity: _opacityAnimation.value,
+                        child: Text(
+                          '#${widget.rank}',
+                          style: AppTextStyles.labelSmall.copyWith(
+                            color: widget.isGold ? const Color(0xFF78350F) : Colors.white.withValues(alpha: 0.9),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    )
+                  : const SizedBox(),
+            ),
+          ],
+        );
+      },
     );
   }
 }

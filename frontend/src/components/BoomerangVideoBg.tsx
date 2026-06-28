@@ -7,13 +7,49 @@ interface BoomerangVideoBgProps {
 }
 
 export default function BoomerangVideoBg({ src }: BoomerangVideoBgProps) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const framesRef = useRef<HTMLCanvasElement[]>([]);
+  
   const [isCapturing, setIsCapturing] = useState(true);
   const [capturedCount, setCapturedCount] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isVisible, setIsVisible] = useState(true);
+
+  // IntersectionObserver to pause loop playback when offscreen
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    if (typeof window === "undefined" || !("IntersectionObserver" in window)) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsVisible(entry.isIntersecting);
+      },
+      {
+        root: null, // viewport
+        threshold: 0.05, // trigger when at least 5% is visible
+      }
+    );
+
+    observer.observe(container);
+
+    return () => {
+      observer.unobserve(container);
+    };
+  }, []);
+
+  // Free up canvas memory when component unmounts
+  useEffect(() => {
+    return () => {
+      framesRef.current = [];
+    };
+  }, []);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -93,7 +129,7 @@ export default function BoomerangVideoBg({ src }: BoomerangVideoBgProps) {
 
   // Boomerang Loop Rendering
   useEffect(() => {
-    if (!isComplete || framesRef.current.length === 0) return;
+    if (!isComplete || framesRef.current.length === 0 || !isVisible) return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -143,10 +179,10 @@ export default function BoomerangVideoBg({ src }: BoomerangVideoBgProps) {
     return () => {
       cancelAnimationFrame(loopFrameId);
     };
-  }, [isComplete]);
+  }, [isComplete, isVisible]);
 
   return (
-    <div className="absolute inset-0 z-0 scale-[1.08] origin-center overflow-hidden bg-black">
+    <div ref={containerRef} className="absolute inset-0 z-0 scale-[1.08] origin-center overflow-hidden bg-black">
       {/* Loading state indicator - subtle overlay */}
       {loading && (
         <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/40 backdrop-blur-md">

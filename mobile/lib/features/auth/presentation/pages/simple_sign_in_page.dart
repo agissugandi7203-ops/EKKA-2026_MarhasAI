@@ -75,7 +75,9 @@ class _SimpleSignInPageState extends State<SimpleSignInPage> {
                         const Center(
                           child: AuthHeader(
                             title: 'Log In',
-                            subtitle: 'Welcome back to Genesis.id! Come on in now to continue your eco adventure.',
+                            subtitle: 'Welcome back to Genesis! Come on in now to continue your eco adventure.',
+                            lottieAsset: 'assets/animations/introduction/signup.json',
+                            lottieSize: 150.0,
                           ),
                         ),
                         const SizedBox(height: AppConstants.spacing40),

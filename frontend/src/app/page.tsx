@@ -11,7 +11,7 @@ export default function Home() {
       {/* 1. Viewport-Height Hero Section */}
       <div className="relative w-full h-screen overflow-hidden flex flex-col justify-between">
         {/* Background Loop */}
-        <BoomerangVideoBg src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260611_183632_c311af08-e4b7-458f-81e7-79847a49b3d3.mp4" />
+        <BoomerangVideoBg src="/videos/home.mp4" />
         {/* Dark overlay specifically requested for readability */}
         <div className="absolute inset-0 bg-black/50 z-10 pointer-events-none" />
 

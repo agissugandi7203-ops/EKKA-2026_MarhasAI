@@ -77,7 +77,7 @@ class SetupWelcomePage extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Text(
-                        'Sebelum mulai, kami butuh beberapa hal agar pengalamanmu di Genesis.id lebih personal dan optimal.',
+                        'Sebelum mulai, kami butuh beberapa hal agar pengalamanmu di Genesis lebih personal dan optimal.',
                         style: AppTextStyles.bodyLarge.copyWith(
                           color: AppColors.textSecondary,
                           height: 1.5,

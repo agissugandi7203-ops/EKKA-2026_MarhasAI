@@ -152,7 +152,7 @@ class _SplashPageState extends State<SplashPage>
               FadeTransition(
                 opacity: _fadeAnimation,
                 child: Text(
-                  'Genesis.id',
+                  'Genesis',
                   style: AppTextStyles.displayLarge.copyWith(
                     color: AppColors.textPrimary,
                     letterSpacing: 1.5,

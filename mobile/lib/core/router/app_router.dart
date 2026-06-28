@@ -22,6 +22,7 @@ import '../../features/setup/presentation/pages/setup_welcome_page.dart';
 import '../../features/setup/presentation/pages/welcome_page.dart';
 import '../../features/home/presentation/pages/statistic_detail_page.dart';
 import '../../features/profile/presentation/pages/tukar_poin_page.dart';
+import '../../features/profile/presentation/pages/badge_list_page.dart';
 import '../../features/home/presentation/pages/notification_center_page.dart';
 import '../../features/splash/presentation/pages/splash_page.dart';
 import '../widgets/auth_listener_wrapper.dart';
@@ -223,6 +224,11 @@ class AppRouter {
         name: Routes.notificationsName,
         builder: (context, state) => const NotificationCenterPage(),
       ),
+      GoRoute(
+        path: Routes.badges,
+        name: Routes.badgesName,
+        builder: (context, state) => const BadgeListPage(),
+      ),
     ];
   }
 
@@ -381,4 +387,7 @@ abstract final class Routes {
 
   static const String notifications = '/notifications';
   static const String notificationsName = 'notifications';
+
+  static const String badges = '/badges';
+  static const String badgesName = 'badges';
 }

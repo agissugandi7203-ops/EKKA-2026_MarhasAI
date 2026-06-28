@@ -68,9 +68,11 @@ flutter:
 
     # Animasi Lottie JSON (maskot, streak, achievement, transitions)
     - assets/animations/
+    - assets/animations/introduction/
     - assets/animations/mascot/
     - assets/animations/achievements/
     - assets/animations/transitions/
     - assets/animations/artificial/
     - assets/animations/global/
     - assets/animations/onboarding/
+    - assets/animations/leaderboard/
