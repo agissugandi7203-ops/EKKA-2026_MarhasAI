@@ -42,23 +42,17 @@
 Untuk mempermudah dewan juri melakukan peninjauan teknis, seluruh instrumen sistem Genesis telah diunggah dan dapat diakses secara publik melalui tautan resmi di bawah ini:
 
 <div align="center">
+  <a href="mobile/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk">
+    <img src="https://img.shields.io/badge/📥_DOWNLOAD_APLIKASI_MOBILE-02569B?style=for-the-badge&logo=android&logoColor=white" alt="Download APK Android" />
+  </a>
+</div>
+<br/>
+<div align="center">
   <a href="https://genesisHub.web.id">
     <img src="https://img.shields.io/badge/🌐_Buka_Web_Dashboard-000000?style=for-the-badge&logo=next.js&logoColor=white" alt="Web Dashboard" />
   </a>
   <a href="https://genesisHub.my.id/api">
     <img src="https://img.shields.io/badge/⚙️_Buka_API_Swagger-E0234E?style=for-the-badge&logo=nestjs&logoColor=white" alt="API Gateway" />
-  </a>
-</div>
-
-<div align="center">
-  <a href="mobile/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk">
-    <img src="https://img.shields.io/badge/📱_Download_APK_(ARM64)-02569B?style=for-the-badge&logo=android&logoColor=white" alt="Download APK ARM64" />
-  </a>
-  <a href="mobile/build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk">
-    <img src="https://img.shields.io/badge/📱_Download_APK_(ARM32)-02569B?style=for-the-badge&logo=android&logoColor=white" alt="Download APK ARM32" />
-  </a>
-  <a href="mobile/build/app/outputs/flutter-apk/app-x86_64-release.apk">
-    <img src="https://img.shields.io/badge/💻_Download_APK_(x86__64)-02569B?style=for-the-badge&logo=android&logoColor=white" alt="Download APK x86_64" />
   </a>
 </div>
 
