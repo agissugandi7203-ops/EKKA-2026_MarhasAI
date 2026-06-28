@@ -27,8 +27,13 @@ export interface RAGDocument {
   createdAt: string;
 }
 
+const getBackendUrl = (): string => {
+  return "https://genesisHub.my.id";
+};
+
 export default function AdminDashboard() {
   const router = useRouter();
+  const backendUrl = getBackendUrl();
 
   // --- STATE SYSTEM ---
   const [adminName, setAdminName] = useState<string>("Admin");
@@ -282,7 +287,7 @@ export default function AdminDashboard() {
 
     // Live Mode API Integration
     try {
-      const backendUrl = "https://genesisHub.my.id";
+      // Menggunakan backendUrl dinamis dari scope induk
 
       // 1. Profiles
       const profilesRes = await fetch(`${backendUrl}/profiles`, {
@@ -395,7 +400,7 @@ export default function AdminDashboard() {
 
     // Live API update
     try {
-      const backendUrl = "https://genesisHub.my.id";
+      // Menggunakan backendUrl dinamis dari scope induk
       const res = await fetch(`${backendUrl}/reports/${id}`, {
         method: "PATCH",
         headers: {
@@ -445,7 +450,7 @@ export default function AdminDashboard() {
 
     // Live API Call
     try {
-      const backendUrl = "https://genesisHub.my.id";
+      // Menggunakan backendUrl dinamis dari scope induk
       const res = await fetch(`${backendUrl}/profiles/${selectedProfile.id}/gamification`, {
         method: "PATCH",
         headers: {
@@ -509,7 +514,7 @@ export default function AdminDashboard() {
 
     // Live API award
     try {
-      const backendUrl = "https://genesisHub.my.id";
+      // Menggunakan backendUrl dinamis dari scope induk
       const res = await fetch(`${backendUrl}/badges/award`, {
         method: "POST",
         headers: {
@@ -560,7 +565,7 @@ export default function AdminDashboard() {
 
     // Live API revoke
     try {
-      const backendUrl = "https://genesisHub.my.id";
+      // Menggunakan backendUrl dinamis dari scope induk
       const res = await fetch(`${backendUrl}/badges/revoke`, {
         method: "DELETE",
         headers: {
@@ -602,7 +607,7 @@ export default function AdminDashboard() {
 
     // Live API delete
     try {
-      const backendUrl = "https://genesisHub.my.id";
+      // Menggunakan backendUrl dinamis dari scope induk
       const res = await fetch(`${backendUrl}/profiles/${profileId}`, {
         method: "DELETE",
         headers: { "Authorization": `Bearer ${token}` }
@@ -651,7 +656,7 @@ export default function AdminDashboard() {
 
     // Live API Add
     try {
-      const backendUrl = "https://genesisHub.my.id";
+      // Menggunakan backendUrl dinamis dari scope induk
       const res = await fetch(`${backendUrl}/knowledge-base`, {
         method: "POST",
         headers: {
@@ -702,7 +707,7 @@ export default function AdminDashboard() {
 
     // Live API delete
     try {
-      const backendUrl = "https://genesisHub.my.id";
+      // Menggunakan backendUrl dinamis dari scope induk
       const res = await fetch(`${backendUrl}/knowledge-base/${id}`, {
         method: "DELETE",
         headers: { "Authorization": `Bearer ${token}` }

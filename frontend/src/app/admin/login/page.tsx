@@ -11,6 +11,7 @@ export default function AdminLogin() {
   // State variables with strict types
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [loginMode, setLoginMode] = useState<"live" | "simulator">("live");
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,11 +31,8 @@ export default function AdminLogin() {
     try {
       const backendUrl = "https://genesisHub.my.id";
 
-      if (
-        (email === "admin@genesis.id" && password === "admin123") || 
-        (email === "arief@genesis.id" && password === "arief123")
-      ) {
-        // Dummy credentials
+      // 1. SIMULATOR MODE
+      if (loginMode === "simulator") {
         const dummyToken = "dummy_admin_jwt_token_2026_val";
         localStorage.setItem("genesis_admin_token", dummyToken);
         localStorage.setItem("genesis_admin_email", email);
@@ -48,7 +46,7 @@ export default function AdminLogin() {
         return;
       }
 
-      // Live authentication
+      // 2. LIVE MODE (Direct Supabase Connection)
       const supabaseProjectUrl = "https://abmypsvfuplxmyblerhv.supabase.co";
       const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFibXlwc3ZmdXBseG15Ymxlcmh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxOTM1MTUsImV4cCI6MjA5Nzc2OTUxNX0.PmBk7SfG_uIR2fnVER__qvK3zr4X2IByLNXTNfd5c4A";
       
@@ -85,17 +83,18 @@ export default function AdminLogin() {
             router.push("/admin");
             return;
           } else {
-            setError("Akses Ditolak: Akun Anda tidak memiliki peran 'admin'.");
+            setError(`Akses Ditolak: Peran akun Anda adalah '${profile.role}'. Hanya akun dengan peran 'admin' yang dapat masuk.`);
           }
         } else {
-          setError("Gagal melakukan verifikasi profil peran admin di server.");
+          setError("Gagal melakukan verifikasi profil peran admin di server backend.");
         }
       } else {
-        setError("Kredensial salah atau Supabase offline. Silakan gunakan Akun Uji Coba: admin@genesis.id / admin123");
+        const errorData = await response.json().catch(() => ({}));
+        setError(`Gagal Masuk: ${errorData.error_description || "Email atau kata sandi Anda salah."}`);
       }
     } catch (err: any) {
       console.error("Login error:", err);
-      setError("Gagal menghubungi server. Anda dapat login dengan akun demo: admin@genesis.id / admin123");
+      setError("Gagal menghubungi server. Periksa koneksi internet Anda atau coba lagi.");
     } finally {
       setLoading(false);
     }
@@ -148,6 +147,40 @@ export default function AdminLogin() {
             </div>
           )}
 
+          {/* Mode Switcher */}
+          <div className="flex p-1.5 bg-navy-50/70 border border-navy-100 rounded-2xl mb-6">
+            <button
+              type="button"
+              onClick={() => {
+                setLoginMode("live");
+                setError(null);
+              }}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold rounded-xl transition-all duration-300 cursor-pointer ${
+                loginMode === "live"
+                  ? "bg-white text-navy-900 shadow-sm border border-navy-100/30"
+                  : "text-navy-400 hover:text-navy-700"
+              }`}
+            >
+              <span className={`h-2 w-2 rounded-full ${loginMode === "live" ? "bg-emerald-500 animate-pulse" : "bg-navy-300"}`} />
+              Koneksi Live (Supabase)
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setLoginMode("simulator");
+                setError(null);
+              }}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold rounded-xl transition-all duration-300 cursor-pointer ${
+                loginMode === "simulator"
+                  ? "bg-white text-navy-900 shadow-sm border border-navy-100/30"
+                  : "text-navy-400 hover:text-navy-700"
+              }`}
+            >
+              <span className={`h-2 w-2 rounded-full ${loginMode === "simulator" ? "bg-gold animate-pulse" : "bg-navy-300"}`} />
+              Simulator (Lokal)
+            </button>
+          </div>
+
           {/* Form */}
           <form onSubmit={handleLogin} className="flex flex-col gap-5">
             {/* Email field */}
@@ -163,7 +196,7 @@ export default function AdminLogin() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@genesis.id"
+                  placeholder={loginMode === "live" ? "admin@genesis.id" : "admin@genesis.id"}
                   className="w-full bg-navy-50/50 border border-navy-100 rounded-xl py-2.5 pl-10 pr-4 text-sm text-navy-900 placeholder-navy-400 focus:outline-none focus:border-navy-300 focus:bg-white transition-all duration-200"
                   required
                 />
@@ -201,30 +234,53 @@ export default function AdminLogin() {
             <button
               type="submit"
               disabled={loading}
-              className="mt-2 w-full rounded-xl bg-navy-900 hover:bg-navy-800 text-white py-2.5 text-sm font-semibold shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:scale-100 flex items-center justify-center gap-2 select-none"
+              className={`mt-2 w-full rounded-xl text-white py-2.5 text-sm font-semibold shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:scale-100 flex items-center justify-center gap-2 select-none ${
+                loginMode === "live" ? "bg-navy-900 hover:bg-navy-850" : "bg-gold hover:bg-gold/90 text-navy-900"
+              }`}
             >
               {loading ? (
                 <>
-                  <div className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                  <div className={`h-4 w-4 rounded-full border-2 border-t-transparent animate-spin ${loginMode === "live" ? "border-white" : "border-navy-900"}`} />
                   Membuka Otoritas Admin...
                 </>
               ) : (
-                "Masuk Otoritas Admin"
+                loginMode === "live" ? "Masuk Otoritas Live" : "Masuk Otoritas Simulator"
               )}
             </button>
           </form>
 
-          {/* Dummy account notice */}
+          {/* Dummy/Live accounts notice */}
           <div className="mt-8 pt-6 border-t border-navy-50">
-            <div className="bg-navy-50 rounded-xl p-3.5 border border-navy-100 flex flex-col gap-1 shadow-[inset_0_1px_2px_rgba(0,0,0,0.01)]">
-              <div className="flex items-center gap-1.5 text-navy-500 text-[10px] uppercase tracking-wider font-bold select-none">
-                <Terminal className="h-3 w-3 text-gold" />
-                Akun Demo Pengembang
-              </div>
-              <div className="text-[11px] text-navy-700 font-mono mt-1.5 flex flex-col gap-0.5">
-                <div>Email: <span className="text-navy-900 font-semibold">admin@genesis.id</span></div>
-                <div>Sandi: <span className="text-navy-900 font-semibold">admin123</span></div>
-              </div>
+            <div className="bg-navy-50 rounded-xl p-4 border border-navy-100 flex flex-col gap-2 shadow-[inset_0_1px_2px_rgba(0,0,0,0.01)]">
+              {loginMode === "live" ? (
+                <>
+                  <div className="flex items-center gap-1.5 text-emerald-600 text-[10px] uppercase tracking-wider font-bold select-none animate-pulse">
+                    <Terminal className="h-3 w-3" />
+                    Kredensial Live Database (Supabase)
+                  </div>
+                  <div className="text-[11px] text-navy-700 font-mono mt-1 flex flex-col gap-1">
+                    <div>Email: <span className="text-navy-900 font-semibold select-all">admin@genesis.id</span></div>
+                    <div>Sandi: <span className="text-navy-900 font-semibold select-all">cocArief2510</span></div>
+                    <div className="text-[10px] text-navy-400 mt-1 font-sans italic leading-normal">
+                      Menghubungi endpoint NestJS global & Supabase REST API secara realtime.
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center gap-1.5 text-gold text-[10px] uppercase tracking-wider font-bold select-none">
+                    <Terminal className="h-3 w-3" />
+                    Kredensial Simulator Offline
+                  </div>
+                  <div className="text-[11px] text-navy-700 font-mono mt-1 flex flex-col gap-1">
+                    <div>Email: <span className="text-navy-900 font-semibold select-all">admin@genesis.id</span></div>
+                    <div>Sandi: <span className="text-navy-900 font-semibold select-all">admin123</span></div>
+                    <div className="text-[10px] text-navy-400 mt-1 font-sans italic leading-normal">
+                      Menggunakan data tiruan offline yang disimpan di LocalStorage browser.
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
