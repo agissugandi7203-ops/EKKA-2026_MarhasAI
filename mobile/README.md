@@ -1,165 +1,170 @@
-# Genesis.id Mobile App (Flutter)
+# Genesis Mobile Application (Flutter)
 
 [![Flutter Version](https://img.shields.io/badge/Flutter-v3.19%20%7C%20Dart%20v3.x-blue.svg)](#)
 [![Architecture](https://img.shields.io/badge/Architecture-Clean%20%7C%20Feature--First-brightgreen.svg)](#)
-[![State Management](https://img.shields.io/badge/State%20Management-BLoC-blue.svg)](#)
+[![State Management](https://img.shields.io/badge/State%20Management-BLoC%20%7C%20Cubit-blue.svg)](#)
 [![Navigation](https://img.shields.io/badge/Navigation-GoRouter-purple.svg)](#)
 [![Design System](https://img.shields.io/badge/Design-Material%203-teal.svg)](#)
 
-Aplikasi gawai **Genesis.id** dibangun menggunakan **Flutter** (Dart) untuk sisi warga/komunitas. Menangani kamera untuk memotret anomali lingkungan, koordinat GPS spasial presisi tinggi, gamifikasi kepedulian sosial, serta chatbot edukasi berbasis RAG.
+Genesis Mobile adalah aplikasi gawai berbasis Android yang dirancang khusus untuk warga kota Genesis agar dapat melaporkan masalah lingkungan secara spasial, melakukan konsultasi hukum perda melalui asisten cerdas, serta berpartisipasi dalam gamifikasi kebersihan kota.
 
 ---
 
-## 1. Fitur Utama
+## 1. Fitur Utama & Logika Bisnis
 
-| # | Fitur | Keterangan |
-|---|-------|------------|
-| 1 | **Splash + Introduction** | 3 slides intro (Lapor, Gamifikasi, Kompetisi Kota) + auto-navigate |
-| 2 | **Auth Flow (5 halaman)** | Login, Sign Up, Forgot Password, OTP Verification, Reset Password |
-| 3 | **Google Sign-In** | OAuth via Supabase `signInWithIdToken` |
-| 4 | **Post-Login Setup Wizard** | 4 langkah: Welcome → Lokasi GPS → Notifikasi → Profil |
-| 5 | **Profile & Gamifikasi** | XP bar, level, streak harian, katalog lencana |
-| 6 | **Onboarding Geolokasi** | Auto-detect kota via reverse geocoding (Geolocator) |
-| 7 | **Dio Client + JWT** | Interceptor otomatis Bearer token ke backend NestJS |
-| 8 | **Streaming Chatbot AI RAG** | Chatbot asisten warga real-time dengan streaming Server-Sent Events (SSE) |
-| 9 | **Dinamis Model AI Selector** | Pemilihan model AI (`Geni-Flash`, `Geni-Pro`, `DeepSeek-Chat`) melalui Modal Bottom Sheet yang terintegrasi langsung dengan state BLoC dan request payload Dio |
-| 10| **Voice Waveform Indicator** | Visualisasi gelombang suara dinamis ketika warga merekam suara |
-| 11| **Kamera Aktif & GPS Laporan** | Kamera fisik aktif dengan pratinjau foto dan penandaan lokasi GPS Geolocator |
+Aplikasi mobile Genesis mengimplementasikan fitur-fitur kompleks berikut:
+
+- **Autentikasi Komprehensif (Supabase & Google OAuth)**: Menyediakan alur registrasi, login, lupa kata sandi, verifikasi OTP, hingga reset kata sandi. Terintegrasi juga dengan Google Sign-in menggunakan Supabase ID Token.
+- **Onboarding Setup Wizard (4 Langkah)**:
+  - *Langkah 1: Welcome Screen*: Penjelasan awal proses pendaftaran profil.
+  - *Langkah 2: Geolokasi & Geocoding*: Mendapatkan izin GPS perangkat, mengambil koordinat, dan melakukan reverse geocoding untuk menentukan wilayah administrasi kota secara otomatis.
+  - *Langkah 3: Izin Notifikasi*: Meminta izin notifikasi perangkat secara elegan.
+  - *Langkah 4: Kelengkapan Profil*: Mengisi nama lengkap dan username unik yang langsung divalidasi ke backend.
+- **Laporan Masalah Lingkungan (Kamera & GPS)**: Mengakses kamera fisik untuk memotret sampah/limbah, mengambil koordinat GPS real-time, dan mengirimkannya ke server. Sistem dilengkapi deteksi duplikasi laporan serupa dalam radius 50 meter.
+- **Asisten AI Chatbot Warga (Geni)**:
+  - **Streaming SSE**: Menerima respons teks secara mengalir (Server-Sent Events) untuk latensi visual yang rendah.
+  - **Speech-to-Text (STT)**: Perekaman suara lokal yang dikirim ke backend untuk ditranskripsi otomatis menggunakan model Whisper-1.
+  - **Dinamis Model Selector**: Warga dapat memilih model AI (`Geni-Flash`, `Geni-Pro`, atau `DeepSeek-Chat`) melalui bottom sheet.
+  - **Multimodal Input**: Mendukung pengiriman file PDF dan gambar untuk dianalisis oleh AI.
+- **Gamification & Poin Sembako**:
+  - Papan peringkat (*Leaderboard*) global dan per kota.
+  - Leveling system (XP bertambah +100 setiap laporan disetujui, naik level setiap kelipatan 1000 XP).
+  - Daily Quest tracker ("Submit 1 report" memberikan bonus XP tambahan).
+  - Redemption Center untuk menukarkan akumulasi koin dengan sembako (Minyak Goreng, Beras Premium, dll).
 
 ---
 
-## 2. Struktur Clean Architecture
+## 2. Arsitektur Kode (Clean Architecture)
 
-```
-mobile/lib/
+Aplikasi mobile ini menerapkan pemisahan tanggung jawab yang ketat berbasis **Clean Architecture** dan **Feature-First**:
+
+```text
+lib/
 ├── core/
-│   ├── config/              # Supabase URL & Publishable Key
-│   ├── constants/           # Spacing, radius, durasi, form rules
-│   ├── network/             # Kustom DioClient dengan JWT interceptor
-│   ├── router/              # GoRouter + Routes constants
-│   ├── theme/               # Design System terpusat
-│   │   ├── app_colors.dart       # Palet warna (Navy, Burgundy, Gold, Emerald)
-│   │   ├── app_text_styles.dart  # Typography (Nunito + Plus Jakarta Sans)
-│   │   ├── app_theme.dart        # ThemeData Material 3
-│   │   └── app_decorations.dart  # Shadow, gradient, decoration presets
-│   ├── utils/               # Validators, extensions
-│   └── widgets/             # Reusable branded widgets
-│       ├── genesis_button.dart       # Tombol (primary, secondary, text)
-│       ├── genesis_text_field.dart   # Input field + password toggle
-│       ├── genesis_loading.dart      # Loading indicator
-│       └── genesis_scaffold.dart     # Scaffold wrapper + SafeArea
+│   ├── config/              # Kredensial Supabase & Konfigurasi Global
+│   ├── constants/           # Konstanta spacing, radius, durasi, rules
+│   ├── errors/              # Struktur penanganan error terpusat
+│   ├── network/             # DioClient kustom dengan JWT Bearer Interceptor
+│   ├── router/              # Konfigurasi GoRouter & Redirect Guard
+│   ├── theme/               # Design System Material 3 terpusat
+│   ├── utils/               # Validasi & Dart extensions (GenesisSnackBar)
+│   └── widgets/             # Widget modular (GenesisButton, GenesisTextField, dll)
 └── features/
-    ├── splash/              # Splash screen animasi (3 detik)
+    ├── splash/              # Animasi pembuka (3 detik)
     ├── introduction/        # 3 slides pengenalan fitur
-    ├── auth/                # Login, Sign Up, Forgot PW, OTP, Reset PW
-    ├── setup/               # Post-login wizard (Welcome, Lokasi, Notif, Profil)
-    ├── home/                # Beranda utama
-    ├── profile/             # Profil user, streak, & badges
-    ├── leaderboard/         # Papan peringkat global & kota
-    └── reports/             # Pelaporan spasial & upload
+    ├── auth/                # Alur masuk & daftar akun (5 halaman)
+    ├── setup/               # Post-login onboarding wizard (4 langkah)
+    ├── home/                # Beranda utama & akses cepat
+    ├── profile/             # Profil warga, statistik streak, & lencana
+    ├── leaderboard/         # Ranking kontribusi warga global & kota
+    └── reports/             # Pelaporan spasial & upload data
 ```
+
+Setiap fitur dalam direktori `features/` dibagi menjadi tiga lapisan:
+1. **Data Layer**: Terdiri dari `datasources` (HTTP API Calls & Supabase SDK) dan `models` (deserialisasi JSON).
+2. **Domain Layer**: Kontrak repositori (`repositories`) yang mendefinisikan interaksi data (Dependency Inversion Principle).
+3. **Presentation Layer**: UI (`pages`, `widgets`) dan pengelola status aplikasi menggunakan `bloc` atau `cubit`.
 
 ---
 
-## 3. Alur Navigasi
+## 3. Manajemen Status (State Management BLoC/Cubit)
 
-```
-Splash (3s) → [Pertama?] Introduction → Login
-                                          ├─→ Sign Up
-                                          ├─→ Forgot Password → OTP → Reset Password
-                                          └─→ [Auth OK]
-                                                ├─→ [Perlu Onboarding] Setup Wizard (4 step)
-                                                └─→ Home
-```
+Genesis menggunakan `flutter_bloc` untuk memisahkan logika bisnis dari UI:
+- **`AuthBloc`**: Mengelola status autentikasi (`Authenticated`, `Unauthenticated`, `AuthFailure`). Menangani transisi navigasi global dan mendeteksi apakah pengguna membutuhkan onboarding setup wizard.
+- **`SetupCubit`**: Mengelola state pendaftaran 4 langkah. Di-scope secara lokal pada sub-router sehingga otomatis di-dispose setelah selesai untuk menghindari kebocoran memori (*memory leak*).
+- **`ReportsBloc`**: Mengelola pengunggahan laporan baru, validasi status duplikasi laporan dari backend, dan penarikan riwayat laporan aktif.
+- **`ChatBloc`**: Mengelola riwayat obrolan dan pemrosesan stream Server-Sent Events (SSE) yang masuk dari NestJS.
 
 ---
 
-## 4. Design System
+## 4. Penanganan Error Terpusat
 
-### Palet Warna
-| Peran | Warna | Hex | Psikologi |
-|-------|-------|-----|-----------|
-| Primary | Navy | `#152D5C` | Kepercayaan, profesionalisme |
-| Mascot | Burgundy | `#800020` | Keberanian, passion |
-| Achievement | Gold | `#C8922A` | Prestasi, premium |
-| Environment | Emerald | `#1B7A4E` | Alam, keberhasilan |
-
-### Typography
-| Level | Font | Karakter |
-|-------|------|----------|
-| Heading | **Nunito** | Soft, rounded, friendly |
-| Body | **Plus Jakarta Sans** | Modern, readable, Indonesia-origin |
-
-## 4.1. Dinamis Model AI Selector & Aliran Data
-Aplikasi mobile menyediakan fitur pemilihan model AI secara real-time:
-*   **Antarmuka Pengguna (UI)**: Ditempatkan pada Modal Bottom Sheet ketika pengguna menekan tombol `+` di sebelah input composer halaman `ChatPage`.
-*   **State Management (BLoC)**:
-    1.  Pengguna memilih model pada UI. Model ID disimpan di state lokal halaman Chat (`_selectedModel`).
-    2.  Saat mengirim pesan, event `SendMessageRequested(message: _controller.text, model: _selectedModel)` dikirim ke `ChatBloc`.
-    3.  `ChatBloc` memanggil `ChatRepository` yang diteruskan ke `ChatRemoteDataSource`.
-*   **Payload Dio Interceptor**:
-    `ChatRemoteDataSource` mengirimkan data ke backend NestJS `/chat/stream` (SSE) dengan menyertakan kunci `"model"` di dalam JSON body request:
-    ```json
-    {
-      "message": "Apa isi Pasal 28H UUD 1945?",
-      "model": "google/gemini-2.5-pro"
-    }
-    ```
+Aplikasi menggunakan pendekatan terpusat untuk mendeteksi dan menampilkan error:
+- **`AppException`**: Struktur `sealed class` yang mengkategorikan kesalahan menjadi `NetworkException`, `ServerException`, `AuthException`, `DeviceException`, dan `UnexpectedException`.
+- **`ErrorHandler`**: Mengkonversi error pustaka eksternal (seperti `DioException` atau `SocketException`) menjadi `AppException` yang ramah bagi pengguna.
+- **`GenesisErrorWidget`**: Antarmuka visual yang menggantikan "Red Screen of Death" bawaan Flutter ketika terjadi kegagalan rendering widget di layar.
+- **`GenesisSnackBar`**: Ekstensi `BuildContext` untuk menampilkan pemberitahuan mengambang (*floating*) yang rapi (`context.showErrorSnackBar`, `context.showSuccessSnackBar`).
 
 ---
 
-## 5. Cara Menjalankan Aplikasi
+## 5. Design System & Typography
 
-```bash
-# 1. Masuk ke direktori mobile
-cd mobile
-
-# 2. Install dependencies
-flutter pub get
-
-# 3. Konfigurasi Supabase (edit file)
-#    lib/core/config/supabase_config.dart
-#    Isi URL dan Publishable Key proyek Supabase Anda
-
-# 4. Jalankan di Android emulator/device
-flutter run
-
-# 5. Pastikan kode bersih
-flutter analyze
-```
-
-> **⚠️ Catatan**: Fokus saat ini adalah **Android**. Pastikan emulator Android atau device fisik terhubung saat menjalankan `flutter run`.
+- **Nunito**: Digunakan untuk elemen tulisan besar (*display* dan *headline*) karena bentuknya yang melengkung lembut (*rounded*), memberikan kesan ramah dan modern.
+- **Plus Jakarta Sans**: Digunakan untuk teks isi (*body*) karena memiliki keterbacaan (*readability*) yang sangat tinggi pada layar gawai.
+- **Palet Warna**:
+  - **Navy** (`#0A1628` - `#1B3A76`): Warna primer, memberikan kesan profesional.
+  - **Burgundy** (`#800020` - `#A3324B`): Warna sekunder untuk maskot.
+  - **Gold** (`#C8922A`): Warna aksen untuk XP, Koin, Lencana, dan Peringkat.
+  - **Emerald** (`#1B7A4E`): Warna aksen lingkungan, status berhasil, dan streak harian.
 
 ---
 
-## 6. Aset & Placeholder
+## 6. Persiapan & Cara Menjalankan
 
-```
-mobile/assets/
-├── images/              # Ilustrasi statis (intro, auth, setup)
-├── icons/               # Ikon kustom (SVG/PNG)
-└── animations/          # Lottie JSON (maskot, achievement, transisi)
-    ├── mascot/          # Placeholder → akan diganti animasi JSON
-    ├── achievements/    # Streak fire, level up, badge unlock
-    └── transitions/     # Loading globe, page transition
-```
+### Prasyarat
+- Flutter SDK (v3.19+)
+- Perangkat Android fisik atau Emulator Android dengan API level 29+
 
-> Maskot saat ini menggunakan ikon placeholder. Akan digantikan dengan animasi Lottie JSON.
+### Langkah-langkah Menjalankan
+
+1. Masuk ke direktori proyek mobile:
+   ```bash
+   cd mobile
+   ```
+
+2. Unduh paket dependensi Flutter:
+   ```bash
+   flutter pub get
+   ```
+
+3. Konfigurasi Kredensial Supabase:
+   Buka file [supabase_config.dart](file:///d:/PROJECT%20ARIEF/LKS%20Dikdasmen/mobile/lib/core/config/supabase_config.dart) dan sesuaikan URL serta Publishable Key dengan proyek Supabase Anda:
+   ```dart
+   class SupabaseConfig {
+     static const String url = 'YOUR_SUPABASE_URL';
+     static const String anonKey = 'YOUR_SUPABASE_ANON_KEY';
+   }
+   ```
+
+4. Jalankan kode generator untuk parser spesifikasi API (jika ada perubahan kontrak API):
+   ```bash
+   flutter pub run build_runner build --delete-conflicting-outputs
+   ```
+
+5. Hubungkan perangkat Android dan jalankan aplikasi dalam mode pengembangan:
+   ```bash
+   flutter run
+   ```
+
+6. Lakukan analisis kualitas kode untuk memastikan kepatuhan terhadap aturan penulisan:
+   ```bash
+   flutter analyze
+   ```
 
 ---
 
-## 7. Panduan Clean Code
+## 7. Pengambilan & Penyematan Screenshots
 
-| Aturan | Deskripsi |
-|--------|-----------|
-| **No Magic Numbers** | Semua konstanta di `AppConstants` |
-| **No Ad-hoc Colors** | Semua dari `AppColors` / `Theme.of(context)` |
-| **No Dynamic Types** | Parsing JSON via class model (strict type safety) |
-| **No Logic in Widgets** | UI hanya render dari BLoC State |
-| **Immutable Models** | Semua properti `final`, perubahan via `copyWith` |
-| **Centralized Validators** | Selaras dengan backend DTO (NestJS class-validator) |
+Setiap halaman utama aplikasi harus memiliki screenshot panduan yang ditaruh pada folder aset dokumentasi.
 
-📖 Selengkapnya:
-- **[FLUTTER_CLEAN_CODE.md](../docs/FLUTTER_CLEAN_CODE.md)** — Standar kode Dart
-- **[MOBILE_ARCHITECTURE.md](../docs/MOBILE_ARCHITECTURE.md)** — Arsitektur lengkap
-- **[CLEAN_CODE_GUIDELINES.md](../docs/CLEAN_CODE_GUIDELINES.md)** — Standar global
+### Cara Pengambilan Screenshot Berkualitas:
+1. Jalankan aplikasi pada Emulator Android (disarankan menggunakan resolusi standar Pixel 5 atau Pixel 6).
+2. Gunakan perintah pintasan emulator atau jalankan:
+   ```bash
+   adb shell screencap -p /sdcard/screen.png
+   adb pull /sdcard/screen.png ./docs/assets/screenshots/mobile/nama_halaman.png
+   ```
+3. Letakkan semua gambar screenshot ke direktori `docs/assets/screenshots/mobile/` dengan penamaan:
+   - `splash.png`: Halaman splash screen pembuka.
+   - `intro.png`: Halaman slider pengenalan.
+   - `login.png`: Halaman login utama.
+   - `setup_location.png`: Halaman perizinan lokasi onboarding.
+   - `home.png`: Beranda utama dashboard warga.
+   - `report_camera.png`: Pratinjau pengambilan foto laporan.
+   - `chat_geni.png`: Aliran chat RAG dengan asisten Geni.
+   - `leaderboard.png`: Tampilan peringkat kontribusi kota.
+
+Penyematan gambar di dalam dokumentasi menggunakan format:
+```markdown
+<img src="../docs/assets/screenshots/mobile/nama_file.png" width="280" alt="Deskripsi Halaman" />
+```
