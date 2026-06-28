@@ -76,10 +76,12 @@ class _SplashLogoState extends State<SplashLogo>
               width: 1.5,
             ),
           ),
-          child: const Icon(
-            Icons.eco_rounded,
-            size: 56,
-            color: AppColors.emerald,
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Image.asset(
+              'assets/images/logo.png',
+              fit: BoxFit.contain,
+            ),
           ),
         ),
       ),

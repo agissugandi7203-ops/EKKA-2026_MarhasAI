@@ -101,10 +101,12 @@ class PreOnboardingPage extends StatelessWidget {
                             width: 1.5,
                           ),
                         ),
-                        child: const Icon(
-                          Icons.eco_rounded,
-                          size: 40,
-                          color: Colors.white,
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Image.asset(
+                            'assets/images/logo.png',
+                            fit: BoxFit.contain,
+                          ),
                         ),
                       ),
                     ),
