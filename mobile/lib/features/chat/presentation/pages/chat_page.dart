@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:record/record.dart';
@@ -1450,6 +1451,14 @@ class _MarkdownStreamRendererState extends State<_MarkdownStreamRenderer> with S
     return MarkdownBody(
       data: text,
       selectable: true,
+      onTapLink: (text, href, title) async {
+        if (href != null) {
+          final uri = Uri.parse(href);
+          if (await canLaunchUrl(uri)) {
+            await launchUrl(uri, mode: LaunchMode.externalApplication);
+          }
+        }
+      },
       styleSheet: MarkdownStyleSheet(
         p: AppTextStyles.bodyLarge.copyWith(
           color: AppColors.navy900,
