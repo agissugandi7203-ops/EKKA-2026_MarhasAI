@@ -305,14 +305,14 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
     final String displayName = _profile?.fullName ?? _profile?.username ?? 'Eco Warrior';
     final int level = _profile?.level ?? 3;
     final int xp = _profile?.xp ?? 340;
-    final int maxXp = level * 150 + 50; 
     final int completedReports = _profile?.reportCount ?? 15;
     final int activeStreak = _profile?.currentStreak ?? 7;
     final String location = _profile?.cityOrDistrict != null 
         ? '${_profile!.cityOrDistrict}, ${_profile!.province ?? ""}'
         : 'Bandung, Jawa Barat';
 
-    final double progressPercent = (xp / maxXp).clamp(0.0, 1.0);
+    // Progress within current level (aligned with backend: 1 level = 1000 XP)
+    final double progressPercent = ((xp - (level - 1) * 1000) / 1000.0).clamp(0.0, 1.0);
 
     return Stack(
       children: [
@@ -389,9 +389,6 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
                       const SizedBox(height: 20),
                       // Compact Activity Statistics Ring
                       _buildDataStatisticsCard(completedReports, activeStreak),
-                      const SizedBox(height: 20),
-                      // Bento Grid Card Timbul & Variatif
-                      _buildBentoMetrics(activeStreak, completedReports),
                       const SizedBox(height: 24),
                       _buildMascotSpeechBubble(displayName),
                       const SizedBox(height: 28),
@@ -527,7 +524,11 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          gradient: const LinearGradient(
+            colors: [Colors.white, Color(0xFFF8FAFC)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
           borderRadius: BorderRadius.circular(24.0),
           border: Border.all(
             color: const Color(0xFFE2E8F0),
@@ -546,7 +547,7 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Glowing circular level progress ring
+                // Glowing circular level progress ring (Left)
                 SizedBox(
                   width: 76,
                   height: 76,
@@ -578,14 +579,13 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 20),
-                // Stats & progress metrics
+                const SizedBox(width: 16),
+                // Center expanded column (Center)
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -603,12 +603,16 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
                               ),
                             ),
                           ),
-                          Text(
-                            'Pahlawan Hijau',
-                            style: AppTextStyles.labelSmall.copyWith(
-                              color: AppColors.textSecondary,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              'Pahlawan Hijau',
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTextStyles.labelSmall.copyWith(
+                                color: AppColors.textSecondary,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                         ],
@@ -620,7 +624,7 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
                             lottiePath: 'assets/animations/achievements/strike_fire.json',
                             text: '$activeStreak Hari',
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 6),
                           _buildLevelStatBadge(
                             svgContent: AppSvgs.miniCamera,
                             text: '$completedReports Lapor',
@@ -630,6 +634,7 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
                     ],
                   ),
                 ),
+
               ],
             ),
             const SizedBox(height: 14),
@@ -856,7 +861,7 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
                       _buildLegendItem(
                         color: const Color(0xFF1D4ED8),
                         title: 'Lapor Selesai',
-                        value: '${(reportsRatio * 100).toInt()}% ($completedReports/20)',
+                        value: '${(completedReports / 20.0 * 100).clamp(0.0, 100.0).toInt()}% ($completedReports/20)',
                         icon: Icons.check_circle_rounded,
                         pillBgColor: const Color(0xFFEFF6FF),
                       ),
@@ -864,7 +869,7 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
                       _buildLegendItem(
                         color: const Color(0xFFE11D48),
                         title: 'Streak Harian',
-                        value: '${(streakRatio * 100).toInt()}% ($activeStreak/7 Hari)',
+                        value: '${(activeStreak / 7.0 * 100).clamp(0.0, 100.0).toInt()}% ($activeStreak/7 Hari)',
                         icon: Icons.local_fire_department_rounded,
                         pillBgColor: const Color(0xFFFFF1F2),
                       ),
@@ -872,7 +877,7 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
                       _buildLegendItem(
                         color: const Color(0xFFD97706),
                         title: 'Lencana Didapat',
-                        value: '${(badgesRatio * 100).toInt()}% ($badgeCount/5 Terbuka)',
+                        value: '${(badgeCount / 5.0 * 100).clamp(0.0, 100.0).toInt()}% ($badgeCount/5 Terbuka)',
                         icon: Icons.emoji_events_rounded,
                         pillBgColor: const Color(0xFFFFFBEB),
                       ),
@@ -931,122 +936,7 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
     );
   }
 
-  Widget _buildBentoMetrics(int activeStreak, int completedReports) {
-    final String rankLabel = _profile?.rank != null ? '#${_profile!.rank}' : '#1';
 
-    return FadeSlideEntrance(
-      delay: const Duration(milliseconds: 200),
-      child: Row(
-        children: [
-          Expanded(
-            child: _buildBentoCard(
-              icon: Icons.local_fire_department_rounded,
-              title: 'Streak Aktif',
-              value: '$activeStreak Hari',
-              iconColor: const Color(0xFFF97316),
-              textColor: const Color(0xFFC2410C),
-              gradientColors: [const Color(0xFFFFF7ED), const Color(0xFFFFEDD5)],
-              lottieAsset: 'assets/animations/achievements/strike_fire.json',
-              lottieRepeat: true,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _buildBentoCard(
-              icon: Icons.photo_library_rounded,
-              title: 'Laporan',
-              value: '$completedReports Selesai',
-              iconColor: const Color(0xFF3B82F6),
-              textColor: const Color(0xFF1D4ED8),
-              gradientColors: [const Color(0xFFEFF6FF), const Color(0xFFDBEAFE)],
-              lottieAsset: 'assets/animations/achievements/Image.json',
-              lottieRepeat: false,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: GestureDetector(
-              onTap: widget.onNavigateToLeaderboard,
-              child: _buildBentoCard(
-                icon: Icons.emoji_events_rounded,
-                title: 'Peringkat',
-                value: '$rankLabel Wilayah',
-                iconColor: const Color(0xFF10B981),
-                textColor: const Color(0xFF047857),
-                gradientColors: [const Color(0xFFECFDF5), const Color(0xFFD1FAE5)],
-                lottieAsset: 'assets/animations/achievements/trophy.json',
-                lottieRepeat: false,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBentoCard({
-    required IconData icon,
-    required String title,
-    required String value,
-    required Color iconColor,
-    required Color textColor,
-    required List<Color> gradientColors,
-    String? lottieAsset,
-    bool lottieRepeat = true,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 16),
-      decoration: BoxDecoration(
-        color: gradientColors[0],
-        borderRadius: BorderRadius.circular(24.0),
-        border: Border.all(
-          color: iconColor.withValues(alpha: 0.12),
-          width: 1.0,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: iconColor.withValues(alpha: 0.08),
-            offset: const Offset(0, 6),
-            blurRadius: 12,
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          if (lottieAsset != null)
-            SizedBox(
-              width: 44,
-              height: 44,
-              child: Lottie.asset(lottieAsset, repeat: lottieRepeat),
-            )
-          else
-            Icon(icon, color: iconColor, size: 24),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            textAlign: TextAlign.center,
-            style: AppTextStyles.headlineSmall.copyWith(
-              fontWeight: FontWeight.bold,
-              fontSize: 13,
-              color: textColor,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.textSecondary,
-              fontSize: 9,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildMascotSpeechBubble(String displayName) {
     return FadeSlideEntrance(
@@ -1609,6 +1499,12 @@ class ConcentricProgressPainter extends CustomPainter {
   final double track2; 
   final double track3; 
 
+  // Cached shaders to avoid recreating every paint call (Flutter Web perf)
+  Shader? _shader1;
+  Shader? _shader2;
+  Shader? _shader3;
+  Size? _lastSize;
+
   ConcentricProgressPainter({
     required this.track1,
     required this.track2,
@@ -1634,31 +1530,47 @@ class ConcentricProgressPainter extends CustomPainter {
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round;
 
+    // Cache shaders only when size changes
+    if (_lastSize != size) {
+      _lastSize = size;
+      final radius1 = maxRadius - strokeWidth;
+      final rect1 = Rect.fromCircle(center: center, radius: radius1);
+      _shader1 = const LinearGradient(
+        colors: [Color(0xFF1D4ED8), Color(0xFF60A5FA)],
+      ).createShader(rect1);
+
+      final radius2 = radius1 - spacing;
+      final rect2 = Rect.fromCircle(center: center, radius: radius2);
+      _shader2 = const LinearGradient(
+        colors: [Color(0xFFE11D48), Color(0xFFFB7185)],
+      ).createShader(rect2);
+
+      final radius3 = radius2 - spacing;
+      final rect3 = Rect.fromCircle(center: center, radius: radius3);
+      _shader3 = const LinearGradient(
+        colors: [Color(0xFFD97706), Color(0xFFFBBF24)],
+      ).createShader(rect3);
+    }
+
     // Track 1: Lapor Selesai (Royal Blue Gradient)
     final radius1 = maxRadius - strokeWidth;
     canvas.drawCircle(center, radius1, paintBg);
     final rect1 = Rect.fromCircle(center: center, radius: radius1);
-    paintFill.shader = const LinearGradient(
-      colors: [Color(0xFF1D4ED8), Color(0xFF60A5FA)],
-    ).createShader(rect1);
+    paintFill.shader = _shader1;
     canvas.drawArc(rect1, -1.5708, track1 * 6.28319, false, paintFill);
 
     // Track 2: Streak Harian (Rose Fire Gradient)
     final radius2 = radius1 - spacing;
     canvas.drawCircle(center, radius2, paintBg);
     final rect2 = Rect.fromCircle(center: center, radius: radius2);
-    paintFill.shader = const LinearGradient(
-      colors: [Color(0xFFE11D48), Color(0xFFFB7185)],
-    ).createShader(rect2);
+    paintFill.shader = _shader2;
     canvas.drawArc(rect2, -1.5708, track2 * 6.28319, false, paintFill);
 
     // Track 3: Lencana (Gold Trophy Gradient)
     final radius3 = radius2 - spacing;
     canvas.drawCircle(center, radius3, paintBg);
     final rect3 = Rect.fromCircle(center: center, radius: radius3);
-    paintFill.shader = const LinearGradient(
-      colors: [Color(0xFFD97706), Color(0xFFFBBF24)],
-    ).createShader(rect3);
+    paintFill.shader = _shader3;
     canvas.drawArc(rect3, -1.5708, track3 * 6.28319, false, paintFill);
   }
 
@@ -1671,6 +1583,10 @@ class ConcentricProgressPainter extends CustomPainter {
 // Circular progress ring painter for level
 class LevelProgressPainter extends CustomPainter {
   final double progress;
+
+  // Cached shader to avoid recreating every paint call (Flutter Web perf)
+  Shader? _cachedShader;
+  Size? _lastSize;
 
   LevelProgressPainter({required this.progress});
 
@@ -1687,16 +1603,23 @@ class LevelProgressPainter extends CustomPainter {
 
     final Paint paintFill = Paint()
       ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round;
 
     canvas.drawCircle(center, radius, paintBg);
 
     final rect = Rect.fromCircle(center: center, radius: radius);
-    paintFill.shader = const LinearGradient(
-      colors: [AppColors.gold, Color(0xFFFBBF24)],
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-    ).createShader(rect);
+
+    // Cache shader only when size changes
+    if (_lastSize != size) {
+      _lastSize = size;
+      _cachedShader = const LinearGradient(
+        colors: [AppColors.gold, Color(0xFFFBBF24)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ).createShader(rect);
+    }
+    paintFill.shader = _cachedShader;
 
     canvas.drawArc(
       rect,

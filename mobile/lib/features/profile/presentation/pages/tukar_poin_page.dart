@@ -55,31 +55,31 @@ class _TukarPoinPageState extends State<TukarPoinPage> {
       {
         'title': 'Minyak Goreng Sawit Premium 1L',
         'points': 150,
-        'image': 'https://images.unsplash.com/photo-1622484211148-154109867941?auto=format&fit=crop&q=80&w=400',
+        'image': 'assets/images/rewards/minyak_goreng.png',
         'description': 'Minyak goreng kelapa sawit bermutu tinggi, bersih dan jernih.',
       },
       {
         'title': 'Beras Sembako Premium 2kg',
         'points': 300,
-        'image': 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&q=80&w=400',
+        'image': 'assets/images/rewards/beras_premium.png',
         'description': 'Beras poles kualitas super, pulen dan beraroma harum alami.',
       },
       {
         'title': 'Gula Pasir Kristal 1kg',
         'points': 100,
-        'image': 'https://images.unsplash.com/photo-1581441363689-1f3c3c414635?auto=format&fit=crop&q=80&w=400',
+        'image': 'assets/images/rewards/gula_pasir.png',
         'description': 'Gula tebu murni pilihan, manis alami tanpa pengawet.',
       },
       {
         'title': 'Paket Sembako Lengkap',
         'points': 500,
-        'image': 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=400',
+        'image': 'assets/images/rewards/paket_sembako.png',
         'description': 'Paket ekonomis berisi beras 2kg, minyak 1L, dan gula 1kg.',
       },
       {
         'title': 'Voucher Belanja Indomaret Rp 50.000',
         'points': 250,
-        'image': 'https://images.unsplash.com/photo-1549463515-205abc068215?auto=format&fit=crop&q=80&w=400',
+        'image': 'assets/images/rewards/voucher_belanja.png',
         'description': 'Voucher belanja digital yang dapat digunakan di seluruh gerai Indomaret.',
       },
     ];
@@ -116,7 +116,7 @@ class _TukarPoinPageState extends State<TukarPoinPage> {
           backgroundColor: Colors.white,
           onRefresh: _fetchProfile,
           child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
+            physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
             padding: const EdgeInsets.all(AppConstants.spacing20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -153,18 +153,12 @@ class _TukarPoinPageState extends State<TukarPoinPage> {
                         Container(
                           width: 56,
                           height: 56,
-                          decoration: BoxDecoration(
-                            color: AppColors.gold.withValues(alpha: 0.15),
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
                             shape: BoxShape.circle,
-                            border: Border.all(
-                              color: AppColors.gold,
-                              width: 2,
-                            ),
-                          ),
-                          child: const Center(
-                            child: Text(
-                              '🪙',
-                              style: TextStyle(fontSize: 28),
+                            image: DecorationImage(
+                              image: AssetImage('assets/images/logo.png'),
+                              fit: BoxFit.contain,
                             ),
                           ),
                         ),
@@ -265,7 +259,7 @@ class _TukarPoinPageState extends State<TukarPoinPage> {
                                     topLeft: Radius.circular(22),
                                     bottomLeft: Radius.circular(22),
                                   ),
-                                  child: Image.network(
+                                  child: Image.asset(
                                     item['image'] as String,
                                     fit: BoxFit.cover,
                                     errorBuilder: (context, error, stackTrace) => Container(
@@ -276,16 +270,6 @@ class _TukarPoinPageState extends State<TukarPoinPage> {
                                         size: 28,
                                       ),
                                     ),
-                                    loadingBuilder: (context, child, loadingProgress) {
-                                      if (loadingProgress == null) return child;
-                                      return Shimmer.fromColors(
-                                        baseColor: Colors.grey[300]!,
-                                        highlightColor: Colors.grey[100]!,
-                                        child: Container(
-                                          color: Colors.white,
-                                        ),
-                                      );
-                                    },
                                   ),
                                 ),
                               ),

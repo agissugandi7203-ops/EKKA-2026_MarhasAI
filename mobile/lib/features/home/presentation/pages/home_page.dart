@@ -11,6 +11,7 @@ import '../../../profile/presentation/pages/profile_page.dart';
 import '../../../reports/presentation/pages/reports_page.dart';
 import '../widgets/genesis_bottom_nav_bar.dart';
 import '../widgets/home_dashboard_view.dart';
+import '../../../../core/widgets/genesis_error_widget.dart';
 
 /// Halaman Utama (Home Shell) Genesis.id.
 ///
@@ -98,14 +99,7 @@ class _HomePageState extends State<HomePage> {
         if (_lastPressedAt == null ||
             now.difference(_lastPressedAt!) > const Duration(seconds: 2)) {
           _lastPressedAt = now;
-          ScaffoldMessenger.of(context).clearSnackBars();
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Tekan sekali lagi untuk keluar dari aplikasi'),
-              backgroundColor: AppColors.navy800,
-              duration: Duration(seconds: 2),
-            ),
-          );
+          context.showInfoSnackBar('Tekan sekali lagi untuk keluar dari aplikasi');
           return;
         }
 
@@ -122,49 +116,78 @@ class _HomePageState extends State<HomePage> {
                 index: _currentIndex,
                 children: [
                   // Tab 0: Home/Dashboard
-                  _activatedTabs[0]
-                      ? HomeDashboardView(
-                          onNavigateToLeaderboard: () => setState(() {
-                            _currentIndex = 3;
-                            _activatedTabs[3] = true;
-                          }),
-                          onNavigateToProfile: () => setState(() {
-                            _currentIndex = 4;
-                            _activatedTabs[4] = true;
-                          }),
-                          onNavigateToCamera: () => setState(() {
-                            _currentIndex = 2;
-                            _activatedTabs[2] = true;
-                          }),
-                          onNavigateToChat: () => setState(() {
-                            _currentIndex = 1;
-                            _activatedTabs[1] = true;
-                          }),
-                        )
-                      : const SizedBox.shrink(),
+                  Visibility(
+                    visible: _currentIndex == 0,
+                    maintainState: true,
+                    child: _activatedTabs[0]
+                        ? HomeDashboardView(
+                            onNavigateToLeaderboard: () => setState(() {
+                              _currentIndex = 3;
+                              _activatedTabs[3] = true;
+                            }),
+                            onNavigateToProfile: () => setState(() {
+                              _currentIndex = 4;
+                              _activatedTabs[4] = true;
+                            }),
+                            onNavigateToCamera: () => setState(() {
+                              _currentIndex = 2;
+                              _activatedTabs[2] = true;
+                            }),
+                            onNavigateToChat: () => setState(() {
+                              _currentIndex = 1;
+                              _activatedTabs[1] = true;
+                            }),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
                   // Tab 1: Chatbot AI
-                  _activatedTabs[1]
-                      ? ChatPage(
-                          onClose: () => setState(() {
-                            _currentIndex = 0;
-                            _activatedTabs[0] = true;
-                          }),
-                        )
-                      : const SizedBox.shrink(),
+                  Visibility(
+                    visible: _currentIndex == 1,
+                    maintainState: true,
+                    child: _activatedTabs[1]
+                        ? ChatPage(
+                            onClose: () => setState(() {
+                              _currentIndex = 0;
+                              _activatedTabs[0] = true;
+                            }),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
                   // Tab 2: Camera/Report Viewfinder
-                  _activatedTabs[2]
-                      ? ReportsPage(
-                          onClose: () => setState(() {
-                            _currentIndex = 0;
-                            _activatedTabs[0] = true;
-                          }),
-                          isActive: _currentIndex == 2,
-                        )
-                      : const SizedBox.shrink(),
+                  Visibility(
+                    visible: _currentIndex == 2,
+                    maintainState: true,
+                    child: _activatedTabs[2]
+                        ? ReportsPage(
+                            onClose: () => setState(() {
+                              _currentIndex = 0;
+                              _activatedTabs[0] = true;
+                            }),
+                            isActive: _currentIndex == 2,
+                          )
+                        : const SizedBox.shrink(),
+                  ),
                   // Tab 3: Leaderboard Podium
-                  _activatedTabs[3] ? const LeaderboardPage() : const SizedBox.shrink(),
+                  Visibility(
+                    visible: _currentIndex == 3,
+                    maintainState: true,
+                    child: _activatedTabs[3]
+                        ? const LeaderboardPage()
+                        : const SizedBox.shrink(),
+                  ),
                   // Tab 4: Profile & Badges
-                  _activatedTabs[4] ? const ProfilePage() : const SizedBox.shrink(),
+                  Visibility(
+                    visible: _currentIndex == 4,
+                    maintainState: true,
+                    child: _activatedTabs[4]
+                        ? ProfilePage(
+                            onClose: () => setState(() {
+                              _currentIndex = 0;
+                              _activatedTabs[0] = true;
+                            }),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
                 ],
               ),
               

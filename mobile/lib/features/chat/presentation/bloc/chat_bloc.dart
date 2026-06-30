@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/errors/error_handler.dart';
 import '../../data/datasources/chat_remote_data_source.dart';
 import '../../data/models/chat_message_model.dart';
@@ -12,6 +14,8 @@ abstract class ChatEvent extends Equatable {
   @override
   List<Object?> get props => [];
 }
+
+class LoadChatHistoryRequested extends ChatEvent {}
 
 class SendMessageRequested extends ChatEvent {
   final ChatMessageModel message;
@@ -25,6 +29,8 @@ class SendMessageRequested extends ChatEvent {
 }
 
 class ClearChatRequested extends ChatEvent {}
+
+class CancelStreamRequested extends ChatEvent {}
 
 // Event internal untuk update chunk teks stream
 class _StreamChunkReceived extends ChatEvent {
@@ -83,11 +89,48 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   StreamSubscription<String>? _streamSubscription;
 
   ChatBloc(this._chatRemoteDataSource) : super(const ChatState()) {
+    on<LoadChatHistoryRequested>(_onLoadChatHistoryRequested);
     on<SendMessageRequested>(_onSendMessageRequested);
     on<ClearChatRequested>(_onClearChatRequested);
+    on<CancelStreamRequested>(_onCancelStreamRequested);
     on<_StreamChunkReceived>(_onStreamChunkReceived);
     on<_StreamCompleted>(_onStreamCompleted);
     on<_StreamFailed>(_onStreamFailed);
+
+    add(LoadChatHistoryRequested());
+  }
+
+  Future<void> _onLoadChatHistoryRequested(
+    LoadChatHistoryRequested event,
+    Emitter<ChatState> emit,
+  ) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final historyStr = prefs.getString('chat_history');
+      if (historyStr != null) {
+        final List<dynamic> decoded = jsonDecode(historyStr) as List<dynamic>;
+        final messages = decoded
+            .map((item) => ChatMessageModel.fromLocalJson(item as Map<String, dynamic>))
+            .toList();
+        emit(state.copyWith(messages: messages));
+      }
+    } catch (e) {
+      // safe catch
+    }
+  }
+
+  Future<void> _saveChatHistory(List<ChatMessageModel> messages) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (messages.isEmpty) {
+        await prefs.remove('chat_history');
+      } else {
+        final encoded = jsonEncode(messages.map((msg) => msg.toLocalJson()).toList());
+        await prefs.setString('chat_history', encoded);
+      }
+    } catch (e) {
+      // safe catch
+    }
   }
 
   Future<void> _onSendMessageRequested(
@@ -105,6 +148,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       sender: 'bot',
       message: '',
+      model: event.model,
       timestamp: DateTime.now(),
     );
     updatedMessages.add(botMessagePlaceholder);
@@ -161,6 +205,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     Emitter<ChatState> emit,
   ) {
     emit(state.copyWith(isStreaming: false));
+    _saveChatHistory(state.messages);
   }
 
   void _onStreamFailed(
@@ -171,6 +216,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       isStreaming: false,
       errorMessage: event.error,
     ));
+    _saveChatHistory(state.messages);
   }
 
   void _onClearChatRequested(
@@ -179,6 +225,32 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   ) {
     _streamSubscription?.cancel();
     emit(const ChatState());
+    _saveChatHistory([]);
+  }
+
+  Future<void> _onCancelStreamRequested(
+    CancelStreamRequested event,
+    Emitter<ChatState> emit,
+  ) async {
+    await _streamSubscription?.cancel();
+    _streamSubscription = null;
+
+    if (state.messages.isNotEmpty) {
+      final lastMsg = state.messages.last;
+      if (lastMsg.sender == 'bot' && lastMsg.message.isEmpty) {
+        // Hapus placeholder kosong jika baru mulai stream lalu dibatalkan
+        final updatedMessages = List<ChatMessageModel>.from(state.messages)..removeLast();
+        emit(state.copyWith(
+          messages: updatedMessages,
+          isStreaming: false,
+        ));
+        _saveChatHistory(updatedMessages);
+        return;
+      }
+    }
+
+    emit(state.copyWith(isStreaming: false));
+    _saveChatHistory(state.messages);
   }
 
   @override

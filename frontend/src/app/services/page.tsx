@@ -1,222 +1,172 @@
 "use client";
 
 import React from "react";
-import dynamic from "next/dynamic";
 import BoomerangVideoBg from "@/components/BoomerangVideoBg";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import AnimatedContent from "@/components/reactbits/AnimatedContent";
-import GlareHover from "@/components/reactbits/GlareHover";
-import BorderGlow from "@/components/reactbits/BorderGlow";
-import {
-  ShieldCheck, ArrowRight, Zap, Brain, MapPinned, ScanEye,
-  MessageSquare, LayoutDashboard, Server, Container, BookOpen, Cloud
+import { 
+  ShieldCheck, 
+  ArrowRight, 
+  Webhook, 
+  Sliders, 
+  Terminal, 
+  Activity, 
+  Lock,
+  Cpu,
+  RefreshCw
 } from "lucide-react";
-
-const ScrollFloat = dynamic(() => import("@/components/reactbits/ScrollFloat"), { ssr: false });
-const ScrollReveal = dynamic(() => import("@/components/reactbits/ScrollReveal"), { ssr: false });
-
-const APK_URL = "https://storage.googleapis.com/arisa-opsi-bucket-2026/apps/app-arm64-v8a-release.apk";
 
 export default function Services() {
   return (
-    <main className="relative w-full min-h-screen bg-surface flex flex-col">
-      {/* ═══════════ HERO ═══════════ */}
+    <main className="relative w-full min-h-screen bg-slate-50 flex flex-col font-sans">
+      
+      {/* Hero Section */}
       <div className="relative w-full h-screen overflow-hidden flex flex-col justify-between">
         <BoomerangVideoBg src="/videos/services.mp4" />
-        <div className="absolute inset-0 bg-black/50 z-10 pointer-events-none" />
-
+        {/* Dark overlay specifically requested for readability */}
+        <div className="absolute inset-0 bg-black/55 z-10 pointer-events-none" />
+        
         <div className="relative z-50">
           <Header />
         </div>
-
+        
         <div className="relative z-20 flex-1 flex flex-col items-center text-center justify-center px-4 sm:px-6 max-w-7xl mx-auto w-full pb-24 sm:pb-32">
-          <div className="liquid-glass rounded-lg px-4 py-1.5 text-xs sm:text-sm text-white animate-fade-up delay-1 mb-5 sm:mb-6 select-none" style={{ background: "rgba(255, 255, 255, 0.16)" }}>
-            Services · B2G Integrations
+          <div 
+            className="liquid-glass rounded-full px-4.5 py-1.5 text-xs text-white animate-fade-up delay-1 mb-6 select-none font-medium uppercase tracking-wider" 
+            style={{ background: "rgba(255, 255, 255, 0.12)", border: "1px solid rgba(255, 255, 255, 0.15)" }}
+          >
+            Services . B2G Integrations
           </div>
-          <h1 className="max-w-4xl text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-normal leading-[1.1] text-white tracking-tight animate-fade-up delay-2 select-none drop-shadow-lg">
+          <h1 className="max-w-4xl text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-normal leading-[1.15] text-white tracking-tight animate-fade-up delay-2 select-none drop-shadow-lg">
             Enterprise tools for active governance.
           </h1>
-          <p className="mt-5 sm:mt-6 max-w-xl text-sm sm:text-base md:text-lg leading-relaxed text-white/90 font-light animate-fade-up delay-3 select-none drop-shadow-md">
-            Empower local councils with real-time analytics, automated reporting, and comprehensive OpenAPI endpoints.
+          <p className="mt-5 sm:mt-6 max-w-xl text-sm sm:text-base md:text-lg leading-relaxed text-white/85 font-light animate-fade-up delay-3 select-none drop-shadow-md">
+            Empower local councils with real-time analytics, automated reporting, and secure OpenAPI endpoints.
           </p>
-
-          <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row-reverse items-center justify-center gap-4 animate-fade-up delay-4">
-            <a href={APK_URL} className="flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-semibold text-navy-900 shadow-xl shadow-white/10 hover:scale-105 active:scale-95 transition-transform duration-200 cursor-pointer select-none">
+          
+          {/* Action Buttons */}
+          <div className="mt-8 flex flex-col sm:flex-row justify-center items-center w-full sm:w-auto gap-3.5 sm:gap-4 animate-fade-up delay-4">
+            <a 
+              href="https://storage.googleapis.com/arisa-opsi-bucket-2026/apps/app-arm64-v8a-release.apk" 
+              className="flex items-center gap-2 w-full sm:w-auto rounded-xl bg-white px-7 py-3 text-sm font-semibold text-navy-900 shadow-md hover:scale-105 active:scale-95 transition-transform duration-200 cursor-pointer select-none text-center justify-center"
+            >
               Get the App
               <ShieldCheck className="h-4.5 w-4.5 text-navy-900" />
             </a>
-            <a href="#services" className="flex items-center gap-2 rounded-xl liquid-glass px-6 py-3 text-sm font-medium text-white hover:bg-white/10 border border-white/20 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer select-none">
+            <a 
+              href="#grid" 
+              className="w-full sm:w-auto liquid-glass rounded-xl px-7 py-3 text-sm font-semibold text-white shadow-md hover:scale-105 active:scale-95 transition-transform duration-200 cursor-pointer select-none text-center border border-white/10"
+            >
               Explore Services
-              <ArrowRight className="h-4.5 w-4.5" />
             </a>
           </div>
         </div>
       </div>
 
-      {/* ═══════════ SERVICE GRID ═══════════ */}
-      <section id="services" className="relative w-full bg-surface text-navy-900 py-28 px-4 sm:px-6 md:px-8 border-t border-navy-100 overflow-hidden">
-        <div className="absolute top-0 right-1/4 h-[500px] w-[500px] rounded-full bg-navy-100 blur-[150px] pointer-events-none" />
+      {/* Bento Grid Content Section */}
+      <section 
+        id="grid"
+        className="relative w-full bg-[#dde2ef] text-slate-700 py-24 px-4 sm:px-6 md:px-8 flex flex-col items-center justify-center border-t border-slate-300/40 overflow-hidden"
+      >
+        <div className="absolute top-1/4 left-1/4 h-[450px] w-[450px] rounded-full bg-slate-200/50 blur-[130px] pointer-events-none" />
+        
+        <div className="relative z-10 max-w-6xl w-full mx-auto flex flex-col items-center text-center">
+          <span className="text-xs font-bold tracking-widest text-slate-500 uppercase mb-3">
+            Service Infrastructure
+          </span>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-light text-slate-900 tracking-tight mb-5">
+            Scalable backend capabilities.
+          </h2>
+          <p className="text-slate-500 max-w-2xl text-sm sm:text-base font-light mb-16 leading-relaxed">
+            Genesis leverages enterprise NestJS and Fastify gateways to guarantee extreme transaction throughput and data integrity.
+          </p>
 
-        <div className="relative z-10 max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <span className="text-xs font-semibold tracking-widest text-burgundy-700 uppercase mb-3 block">Services</span>
-            <ScrollFloat containerClassName="!text-3xl sm:!text-4xl md:!text-5xl font-light text-navy-900 tracking-tight mb-4">
-              Managed Cloud Services
-            </ScrollFloat>
-            <p className="text-navy-600 max-w-xl mx-auto text-sm sm:text-base font-light leading-relaxed">
-              Enam layanan inti yang membentuk platform Genesis.id — dari gateway API hingga dashboard analitik.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[
-              {
-                icon: <Zap className="h-6 w-6" />,
-                title: "API Gateway",
-                desc: "NestJS + Fastify adapter menghasilkan ~45,000 req/s throughput. Auto-scaling via Google Cloud Run container. Rate limiting dan request validation built-in.",
-                accent: "from-amber-500 to-orange-600",
-              },
-              {
-                icon: <Brain className="h-6 w-6" />,
-                title: "AI Classification",
-                desc: "Gemini 2.5 Flash via OpenRouter. Pipeline: photo → waste_type + danger_level + validity + confidence_score. Auto-approve >85%, fallback ke moderasi admin.",
-                accent: "from-violet-500 to-purple-600",
-              },
-              {
-                icon: <MapPinned className="h-6 w-6" />,
-                title: "Geo-Spatial Processing",
-                desc: "PostGIS RPC check_duplicate_report(lat, lng) radius 50m. Semua coordinate disimpan sebagai WKT SRID=4326. Spatial indexing untuk query real-time.",
-                accent: "from-cyan-500 to-blue-600",
-              },
-              {
-                icon: <ScanEye className="h-6 w-6" />,
-                title: "PII Redaction",
-                desc: "Google Vision API face + text detection. Sharp library untuk in-memory blur processing sebelum upload ke GCS. Zero personally identifiable data stored.",
-                accent: "from-rose-500 to-pink-600",
-              },
-              {
-                icon: <MessageSquare className="h-6 w-6" />,
-                title: "RAG Knowledge Base",
-                desc: "Chatbot regulasi perda berbasis Retrieval-Augmented Generation. Vector embedding + chunking otomatis untuk akurasi tinggi. Streaming response support.",
-                accent: "from-emerald-500 to-teal-600",
-              },
-              {
-                icon: <LayoutDashboard className="h-6 w-6" />,
-                title: "Admin Dashboard",
-                desc: "Real-time analytics dengan Leaflet interactive map. Multi-tab moderation system: reports, users, badges, gamification controls. Role-based access.",
-                accent: "from-indigo-500 to-blue-600",
-              },
-            ].map((service, i) => (
-              <AnimatedContent key={service.title} delay={i * 0.1} distance={50}>
-                <GlareHover
-                  background="white"
-                  borderRadius="20px"
-                  borderColor="rgba(0,0,0,0.04)"
-                  glareColor="#6366f1"
-                  glareOpacity={0.1}
-                >
-                  <div className="p-7 flex flex-col gap-4 w-full h-full min-h-[220px]">
-                    <div className={`h-12 w-12 rounded-xl bg-gradient-to-br ${service.accent} flex items-center justify-center text-white shadow-md shrink-0`}>
-                      {service.icon}
-                    </div>
-                    <h3 className="text-base font-semibold text-navy-900">{service.title}</h3>
-                    <p className="text-navy-600 text-sm font-light leading-relaxed">{service.desc}</p>
-                  </div>
-                </GlareHover>
-              </AnimatedContent>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════ INFRASTRUCTURE ═══════════ */}
-      <section className="relative w-full bg-navy-950 text-white py-28 px-4 sm:px-6 md:px-8 overflow-hidden">
-        <div className="absolute top-1/3 left-1/4 h-[400px] w-[400px] rounded-full bg-indigo-950/30 blur-[120px] pointer-events-none" />
-
-        <div className="relative z-10 max-w-5xl mx-auto">
-          <div className="text-center mb-16">
-            <span className="text-xs font-semibold tracking-widest text-indigo-400 uppercase mb-3 block">Infrastructure</span>
-            <ScrollFloat containerClassName="!text-3xl sm:!text-4xl md:!text-5xl font-light text-white tracking-tight mb-4">
-              Production Infrastructure
-            </ScrollFloat>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-            {[
-              {
-                icon: <Cloud className="h-5 w-5" />,
-                title: "Google Cloud Run",
-                desc: "Auto-scaling containerized deployment. Pay-per-request pricing. Zero-downtime rolling updates.",
-              },
-              {
-                icon: <Container className="h-5 w-5" />,
-                title: "Docker Multi-Stage",
-                desc: "Backend: NestJS Fastify, non-root user, PORT 8080. Frontend: Next.js standalone output ~100MB image.",
-              },
-              {
-                icon: <Server className="h-5 w-5" />,
-                title: "Supabase PostgreSQL",
-                desc: "Managed PostgreSQL + PostGIS extension. Realtime subscriptions. Row-level security policies.",
-              },
-            ].map((item, i) => (
-              <AnimatedContent key={item.title} delay={i * 0.15} distance={40}>
-                <div className="rounded-2xl bg-white/[0.03] border border-white/5 p-6">
-                  <div className="h-10 w-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 mb-4">
-                    {item.icon}
-                  </div>
-                  <h3 className="text-sm font-semibold text-white mb-2">{item.title}</h3>
-                  <p className="text-xs text-white/40 leading-relaxed">{item.desc}</p>
+          {/* Premium Bento Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full text-left">
+            
+            {/* Box 1 (Col span 1) */}
+            <div className="bg-[#fafbfd] rounded-[32px] p-8 border border-slate-150/70 shadow-[0_8px_30px_rgba(15,23,42,0.01)] hover:shadow-[0_12px_40px_rgba(15,23,42,0.03)] hover:scale-[1.01] transition-all duration-300 flex flex-col justify-between gap-6 relative overflow-hidden group">
+              <div className="flex flex-col gap-4">
+                <div className="h-12 w-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-700 border border-slate-100">
+                  <Webhook className="h-5 w-5" />
                 </div>
-              </AnimatedContent>
-            ))}
-          </div>
-
-          <ScrollReveal
-            enableBlur
-            blurStrength={3}
-            baseOpacity={0.15}
-            containerClassName="max-w-2xl mx-auto !m-0"
-            textClassName="!text-sm !font-light text-white/40 !leading-relaxed text-center"
-          >
-            Semua infrastruktur dikelola dengan praktik DevOps modern. CI/CD pipeline otomatis, monitoring real-time, dan disaster recovery plan memastikan uptime 99.9%.
-          </ScrollReveal>
-        </div>
-      </section>
-
-      {/* ═══════════ INTEGRATION CTA ═══════════ */}
-      <section className="relative w-full bg-surface text-navy-900 py-28 px-4 sm:px-6 md:px-8 overflow-hidden">
-        <div className="relative z-10 max-w-2xl mx-auto text-center">
-          <AnimatedContent distance={60}>
-            <h2 className="text-3xl sm:text-4xl font-light text-navy-900 tracking-tight mb-4">
-              Ready to Integrate?
-            </h2>
-            <p className="text-navy-600 text-sm sm:text-base font-light mb-10 leading-relaxed">
-              Jelajahi dokumentasi API interaktif kami dengan live endpoint testing dan code generation untuk semua bahasa pemrograman.
-            </p>
-            <div className="flex justify-center">
-              <BorderGlow
-                backgroundColor="#f8fafc"
-                borderRadius={20}
-                glowRadius={30}
-                glowColor="250 60 70"
-                colors={["#818cf8", "#6366f1", "#4f46e5"]}
-              >
-                <a
-                  href="/docs"
-                  className="flex items-center justify-center gap-3 px-10 py-4 text-sm font-semibold text-navy-900"
-                >
-                  <BookOpen className="h-5 w-5" />
-                  Explore API Documentation
-                  <ArrowRight className="h-4 w-4" />
-                </a>
-              </BorderGlow>
+                <div>
+                  <h3 className="text-xl font-bold text-slate-900">NestJS Fastify Engine</h3>
+                  <p className="text-slate-600 text-sm leading-relaxed mt-2">
+                    Our high-velocity gateway processes crowdsourced reports with minimal latency, supporting parallel file streaming.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs text-slate-500 font-mono">
+                <Cpu className="h-3.5 w-3.5" />
+                <span>Fastify Gateway</span>
+              </div>
             </div>
-          </AnimatedContent>
+
+            {/* Box 2 (Col span 2) */}
+            <div className="bg-[#fafbfd] rounded-[32px] p-8 border border-slate-200 shadow-[0_4px_20px_rgba(15,23,42,0.08)] hover:shadow-[0_8px_32px_rgba(15,23,42,0.12)] hover:scale-[1.01] transition-all duration-300 md:col-span-2 flex flex-col justify-between gap-6 relative overflow-hidden group">
+              <div className="flex flex-col gap-4">
+                <div className="h-12 w-12 rounded-2xl bg-indigo-50/50 flex items-center justify-center text-indigo-650 border border-indigo-100">
+                  <Lock className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-slate-900">Secure B2G Access Guards</h3>
+                  <p className="text-slate-600 text-sm leading-relaxed mt-2">
+                    Security is central to Genesis. Every API request is checked against strict JSON Web Token (JWT) signatures and authenticated via Role-Based Access Control (RBAC) to ensure citizen privacy.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 mt-2">
+                <span className="text-[10px] bg-slate-100 border border-slate-200 text-slate-600 font-bold uppercase tracking-wider px-3 py-1 rounded-full">JWT Bearer Verification</span>
+                <span className="text-[10px] bg-slate-100 border border-slate-200 text-slate-600 font-bold uppercase tracking-wider px-3 py-1 rounded-full">RBAC Shield</span>
+              </div>
+            </div>
+
+            {/* Box 3 (Col span 2) */}
+            <div className="bg-[#fafbfd] rounded-[32px] p-8 border border-slate-200 shadow-[0_4px_20px_rgba(15,23,42,0.08)] hover:shadow-[0_8px_32px_rgba(15,23,42,0.12)] hover:scale-[1.01] transition-all duration-300 md:col-span-2 flex flex-col justify-between gap-6 relative overflow-hidden group">
+              <div className="flex flex-col gap-4">
+                <div className="h-12 w-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-650 border border-emerald-100">
+                  <Terminal className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-slate-900">Active OpenAPI Sandboxes</h3>
+                  <p className="text-slate-600 text-sm leading-relaxed mt-2">
+                    We host swagger interfaces and live sandbox portals for local governments. Developers can test payloads, track visual confidence logs, and check webhook events dynamically.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-100/85 px-3.5 py-1.5 rounded-xl w-fit text-slate-655 font-bold uppercase tracking-wider text-[10px]">
+                <Activity className="h-3.5 w-3.5 text-slate-650" />
+                <span>Live Test Sandbox</span>
+              </div>
+            </div>
+
+            {/* Box 4 (Col span 1) */}
+            <div className="bg-[#fafbfd] rounded-[32px] p-8 border border-slate-200 shadow-[0_4px_20px_rgba(15,23,42,0.08)] hover:shadow-[0_8px_32px_rgba(15,23,42,0.12)] hover:scale-[1.01] transition-all duration-300 flex flex-col justify-between gap-6 relative overflow-hidden group">
+              <div className="flex flex-col gap-4">
+                <div className="h-12 w-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-700 border border-slate-100">
+                  <Sliders className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-slate-900">Configurable Webhooks</h3>
+                  <p className="text-slate-600 text-sm leading-relaxed mt-2">
+                    Receive instantly triggered notifications on municipal channels when a citizen reports critical events in geofenced regions.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1 text-xs font-semibold text-slate-600">
+                <RefreshCw className="h-3.5 w-3.5 animate-spin-slow" />
+                <span>Webhooks Integration</span>
+              </div>
+            </div>
+
+          </div>
         </div>
       </section>
 
+      {/* Reusable Footer */}
       <Footer />
+
     </main>
   );
 }

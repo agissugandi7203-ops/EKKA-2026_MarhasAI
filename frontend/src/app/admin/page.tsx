@@ -62,6 +62,9 @@ export default function AdminDashboard() {
   // Theme state (Default light, matches design requirements)
   const [theme, setTheme] = useState<"light" | "dark">("light");
   
+  // Mobile responsive sidebar menu trigger state
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
+  
   // Strict connection error state to avoid silent fallback to dummy data
   const [connectionError, setConnectionError] = useState<string | null>(null);
 
@@ -1239,6 +1242,29 @@ export default function AdminDashboard() {
         </>
       )}
 
+      {/* Mobile Top Navbar Header */}
+      <div className={`md:hidden flex items-center justify-between px-6 py-4 border-b z-20 shrink-0 sticky top-0 ${
+        theme === "dark" ? "bg-black border-zinc-900 text-white" : "bg-white border-slate-100 text-slate-800 shadow-sm"
+      }`}>
+        <div className="flex items-center gap-3">
+          <img src="/logo.png" alt="Genesis Logo" className="h-7 w-auto object-contain" />
+          <span className="font-extrabold text-sm tracking-tight">Genesis Admin</span>
+        </div>
+        <button 
+          onClick={() => setIsMobileMenuOpen(true)}
+          className={`p-2 rounded-xl border focus:outline-none transition-colors cursor-pointer ${
+            theme === "dark" 
+              ? "border-zinc-800 text-slate-400 hover:bg-zinc-900 hover:text-white" 
+              : "border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-850"
+          }`}
+          aria-label="Open navigation menu"
+        >
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      </div>
+
       {/* --- SIDEBAR PANEL --- */}
       <Sidebar
         adminName={adminName}
@@ -1255,6 +1281,8 @@ export default function AdminDashboard() {
         theme={theme}
         onToggleTheme={handleToggleTheme}
         onToggleMode={handleToggleMode}
+        isOpenMobile={isMobileMenuOpen}
+        onCloseMobile={() => setIsMobileMenuOpen(false)}
       />
 
       {/* --- MAIN CONTENT CONTAINER --- */}
@@ -1324,6 +1352,7 @@ export default function AdminDashboard() {
             handleCreateBadge={handleCreateBadge}
             handleDeleteBadge={handleDeleteBadge}
             actionLoading={actionLoading}
+            theme={theme}
           />
         )}
 
@@ -1341,6 +1370,7 @@ export default function AdminDashboard() {
             setRagContent={setRagContent}
             handleAddRagDoc={handleAddRagDoc}
             handleDeleteRagDoc={handleDeleteRagDoc}
+            theme={theme}
           />
         )}
 
@@ -1354,6 +1384,7 @@ export default function AdminDashboard() {
             handleAddEvent={handleAddEvent}
             handleDeleteEvent={handleDeleteEvent}
             actionLoading={actionLoading}
+            theme={theme}
           />
         )}
 
@@ -1363,6 +1394,7 @@ export default function AdminDashboard() {
             broadcastLogs={broadcastLogs}
             handleSendBroadcast={handleSendBroadcast}
             actionLoading={actionLoading}
+            theme={theme}
           />
         )}
 
@@ -1371,6 +1403,7 @@ export default function AdminDashboard() {
           <AuditTab
             auditLogs={auditLogs}
             handleClearAuditLogs={handleClearAuditLogs}
+            theme={theme}
           />
         )}
 

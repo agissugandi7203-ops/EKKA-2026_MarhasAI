@@ -64,6 +64,7 @@ flutter:
     - assets/images/intro/
     - assets/images/auth/
     - assets/images/setup/
+    - assets/images/rewards/
 
     # Ikon kustom (SVG/PNG)
     - assets/icons/

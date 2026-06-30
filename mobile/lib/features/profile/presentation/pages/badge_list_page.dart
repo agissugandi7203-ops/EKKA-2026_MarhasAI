@@ -8,6 +8,7 @@ import '../../../../core/constants/app_svgs.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/fade_slide_entrance.dart';
+import '../../../../core/widgets/genesis_error_widget.dart';
 import '../../../profile/domain/repositories/profile_repository.dart';
 import '../../../profile/data/models/profile_model.dart';
 
@@ -137,23 +138,7 @@ class _BadgeListPageState extends State<BadgeListPage> {
       setState(() {
         _equippedBadgeCode = code;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.check_circle_rounded, color: Colors.white),
-              const SizedBox(width: 12),
-              Text(
-                'Lencana berhasil dipasang!',
-                style: AppTextStyles.bodyMedium.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-          backgroundColor: AppColors.emerald,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        ),
-      );
+      context.showSuccessSnackBar('Lencana berhasil dipasang!');
     }
   }
 
@@ -164,23 +149,7 @@ class _BadgeListPageState extends State<BadgeListPage> {
       setState(() {
         _equippedBadgeCode = null;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.info_rounded, color: Colors.white),
-              const SizedBox(width: 12),
-              Text(
-                'Lencana dilepas.',
-                style: AppTextStyles.bodyMedium.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-          backgroundColor: AppColors.navy700,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        ),
-      );
+      context.showInfoSnackBar('Lencana dilepas.');
     }
   }
 
@@ -439,26 +408,48 @@ class _BadgeListPageState extends State<BadgeListPage> {
                     child: Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            AppColors.gold.withValues(alpha: 0.08),
-                            AppColors.gold.withValues(alpha: 0.02),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: AppColors.gold.withValues(alpha: 0.2)),
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0xFFE2E8F0),
+                            offset: Offset(0, 4),
+                            blurRadius: 0,
+                          ),
+                        ],
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.stars_rounded, color: AppColors.gold, size: 28),
-                          const SizedBox(width: 12),
+                          Image.asset(
+                            'assets/images/logo.png',
+                            width: 54,
+                            height: 54,
+                            fit: BoxFit.contain,
+                          ),
+                          const SizedBox(width: 14),
                           Expanded(
-                            child: Text(
-                              'Pilih dan pasang lencana terbaikmu untuk ditampilkan di halaman profil dan beranda!',
-                              style: AppTextStyles.bodyMedium.copyWith(
-                                color: AppColors.navy900,
-                                fontWeight: FontWeight.w500,
-                              ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Tips Geni',
+                                  style: AppTextStyles.labelSmall.copyWith(
+                                    color: AppColors.gold,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  'Pilih dan pasang lencana terbaikmu untuk ditampilkan di halaman profil dan beranda!',
+                                  style: AppTextStyles.bodyMedium.copyWith(
+                                    color: AppColors.navy900,
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],

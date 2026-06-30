@@ -7,6 +7,7 @@ class ChatMessageModel extends Equatable {
   final String? imageBase64; // base64 string
   final String? pdfBase64;   // base64 string
   final String? audioBase64; // base64 string
+  final String? model;       // AI model ID used
   final DateTime timestamp;
 
   const ChatMessageModel({
@@ -16,6 +17,7 @@ class ChatMessageModel extends Equatable {
     this.imageBase64,
     this.pdfBase64,
     this.audioBase64,
+    this.model,
     required this.timestamp,
   });
 
@@ -26,6 +28,7 @@ class ChatMessageModel extends Equatable {
     String? imageBase64,
     String? pdfBase64,
     String? audioBase64,
+    String? model,
     DateTime? timestamp,
   }) {
     return ChatMessageModel(
@@ -35,6 +38,7 @@ class ChatMessageModel extends Equatable {
       imageBase64: imageBase64 ?? this.imageBase64,
       pdfBase64: pdfBase64 ?? this.pdfBase64,
       audioBase64: audioBase64 ?? this.audioBase64,
+      model: model ?? this.model,
       timestamp: timestamp ?? this.timestamp,
     );
   }
@@ -45,7 +49,34 @@ class ChatMessageModel extends Equatable {
       if (imageBase64 != null) 'image': imageBase64,
       if (pdfBase64 != null) 'pdf': pdfBase64,
       if (audioBase64 != null) 'audio': audioBase64,
+      if (model != null) 'model': model,
     };
+  }
+
+  Map<String, dynamic> toLocalJson() {
+    return {
+      'id': id,
+      'sender': sender,
+      'message': message,
+      'imageBase64': imageBase64,
+      'pdfBase64': pdfBase64,
+      'audioBase64': audioBase64,
+      'model': model,
+      'timestamp': timestamp.toIso8601String(),
+    };
+  }
+
+  factory ChatMessageModel.fromLocalJson(Map<String, dynamic> json) {
+    return ChatMessageModel(
+      id: json['id'] as String,
+      sender: json['sender'] as String,
+      message: json['message'] as String,
+      imageBase64: json['imageBase64'] as String?,
+      pdfBase64: json['pdfBase64'] as String?,
+      audioBase64: json['audioBase64'] as String?,
+      model: json['model'] as String?,
+      timestamp: DateTime.parse(json['timestamp'] as String),
+    );
   }
 
   @override
@@ -56,6 +87,7 @@ class ChatMessageModel extends Equatable {
         imageBase64,
         pdfBase64,
         audioBase64,
+        model,
         timestamp,
       ];
 }

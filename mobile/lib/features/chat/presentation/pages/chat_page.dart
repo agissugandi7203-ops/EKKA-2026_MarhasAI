@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -43,7 +45,8 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
   late Animation<double> _orbScaleAnimation;
 
   String _selectedModel = 'google/gemini-2.5-flash';
-  String? _attachedFilePath;
+  String? _attachedFileName;
+  Uint8List? _attachedFileBytes;
   bool _isTyping = false;
   bool _isVoiceRecording = false;
   bool _isTranscribing = false;
@@ -52,6 +55,8 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
 
   final AudioRecorder _audioRecorder = AudioRecorder();
   String _lastWords = '';
+  final FocusNode _focusNode = FocusNode();
+  bool _wasMulti = false;
 
   @override
   void initState() {
@@ -75,6 +80,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
     _topToastOverlayEntry = null;
     _textController.removeListener(_onTextChanged);
     _textController.dispose();
+    _focusNode.dispose();
     _scrollController.dispose();
     _orbAnimationController.dispose();
     _audioRecorder.dispose();
@@ -83,12 +89,21 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
 
   void _onTextChanged() {
     final text = _textController.text.trim();
-    final hasInput = text.isNotEmpty || _attachedFilePath != null;
-    if (hasInput != _isTyping) {
-      setState(() {
-        _isTyping = hasInput;
+    final hasInput = text.isNotEmpty || _attachedFileBytes != null;
+    
+    final isMulti = _textController.text.contains('\n') || _textController.text.length > 40;
+    if (isMulti != _wasMulti) {
+      _wasMulti = isMulti;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_focusNode.canRequestFocus) {
+          _focusNode.requestFocus();
+        }
       });
     }
+
+    setState(() {
+      _isTyping = hasInput;
+    });
   }
 
   void _scrollToBottom({bool force = false}) {
@@ -108,33 +123,21 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
 
   void _sendMessage([String? customText]) async {
     final query = customText ?? _textController.text.trim();
-    if (query.isEmpty && _attachedFilePath == null) return;
+    if (query.isEmpty && _attachedFileBytes == null) return;
 
     String? imageBase64;
     String? pdfBase64;
 
-    if (_attachedFilePath != null) {
+    if (_attachedFileBytes != null && _attachedFileName != null) {
       try {
-        final file = File(_attachedFilePath!);
-        if (await file.exists()) {
-          final bytes = await file.readAsBytes();
-          final encoded = base64Encode(bytes);
-          if (_attachedFilePath!.endsWith('.pdf')) {
-            pdfBase64 = encoded;
-          } else {
-            imageBase64 = encoded;
-          }
+        final encoded = base64Encode(_attachedFileBytes!);
+        if (_attachedFileName!.toLowerCase().endsWith('.pdf')) {
+          pdfBase64 = encoded;
         } else {
-          // Fallback dummy base64 for simulation if file does not exist
-          const dummyBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
-          if (_attachedFilePath!.endsWith('.pdf')) {
-            pdfBase64 = dummyBase64;
-          } else {
-            imageBase64 = dummyBase64;
-          }
+          imageBase64 = encoded;
         }
       } catch (e) {
-        debugPrint('Error reading attached file: $e');
+        debugPrint('Error encoding attached file: $e');
       }
     }
 
@@ -144,6 +147,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
       message: query.isEmpty ? 'Mengirim lampiran berkas.' : query,
       imageBase64: imageBase64,
       pdfBase64: pdfBase64,
+      model: _selectedModel,
       timestamp: DateTime.now(),
     );
 
@@ -158,7 +162,8 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
       DioClient.completeChallenge('chat_ai');
 
       setState(() {
-        _attachedFilePath = null;
+        _attachedFileName = null;
+        _attachedFileBytes = null;
         _isTyping = false;
       });
 
@@ -213,6 +218,8 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
     final sources = _extractSources(text);
     if (sources.isEmpty) return const SizedBox.shrink();
 
+    const Color burgundyColor = Color(0xFF800020);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -222,13 +229,13 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
             const Icon(
               Icons.language_rounded,
               size: 14,
-              color: AppColors.gold,
+              color: burgundyColor,
             ),
             const SizedBox(width: 6),
             Text(
               'Sumber Referensi Terkait:',
               style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.navy700,
+                color: burgundyColor.withValues(alpha: 0.8),
                 fontWeight: FontWeight.bold,
                 fontSize: 11,
               ),
@@ -241,40 +248,63 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
           physics: const BouncingScrollPhysics(),
           child: Row(
             children: sources.map((source) {
-              final domain = Uri.tryParse(source['url'] ?? '')?.host ?? source['title'] ?? 'web';
+              final url = source['url'] ?? '';
+              final domain = Uri.tryParse(url)?.host ?? source['title'] ?? 'web';
+              final cleanDomain = domain.replaceFirst('www.', '');
+              final faviconUrl = 'https://www.google.com/s2/favicons?sz=64&domain=$domain';
+
               return Padding(
                 padding: const EdgeInsets.only(right: 8.0),
                 child: Tooltip(
-                  message: source['url'] ?? '',
+                  message: url,
                   child: InkWell(
-                    onTap: () {
-                      Clipboard.setData(ClipboardData(text: source['url'] ?? ''));
-                      context.showSuccessSnackBar('Tautan disalin: ${source['url']}');
+                    onTap: () async {
+                      if (url.isNotEmpty) {
+                        final uri = Uri.tryParse(url);
+                        if (uri != null && await canLaunchUrl(uri)) {
+                          await launchUrl(uri, mode: LaunchMode.externalApplication);
+                        } else {
+                          // Fallback to copy if launching fails
+                          Clipboard.setData(ClipboardData(text: url));
+                          if (!mounted) return;
+                          context.showInfoSnackBar('Tautan disalin (gagal membuka browser): $url');
+                        }
+                      }
                     },
                     borderRadius: BorderRadius.circular(20),
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
-                        color: AppColors.gold.withValues(alpha: 0.08),
+                        color: burgundyColor.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: AppColors.gold.withValues(alpha: 0.25),
+                          color: burgundyColor.withValues(alpha: 0.25),
                           width: 1,
                         ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(
-                            Icons.link_rounded,
-                            size: 11,
-                            color: AppColors.gold,
+                          // Website Favicon or Fallback Icon
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: Image.network(
+                              faviconUrl,
+                              width: 12,
+                              height: 12,
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) => const Icon(
+                                Icons.language_rounded,
+                                size: 12,
+                                color: burgundyColor,
+                              ),
+                            ),
                           ),
-                          const SizedBox(width: 4),
+                          const SizedBox(width: 6),
                           Text(
-                            domain.replaceFirst('www.', ''),
+                            cleanDomain,
                             style: AppTextStyles.bodySmall.copyWith(
-                              color: AppColors.gold,
+                              color: burgundyColor,
                               fontWeight: FontWeight.bold,
                               fontSize: 11,
                             ),
@@ -290,6 +320,117 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
         ),
         const SizedBox(height: 4),
       ],
+    );
+  }
+
+  void _showClearChatConfirmDialog() {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.25),
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(
+              color: const Color(0xFFE2E8F0),
+              width: 1.5,
+            ),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0xFFE2E8F0),
+                offset: Offset(0, 4),
+                blurRadius: 0,
+              )
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: AppColors.error.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.delete_forever_rounded,
+                  color: AppColors.error,
+                  size: 32,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Hapus Riwayat Obrolan',
+                style: AppTextStyles.titleMedium.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.navy900,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Apakah Anda yakin ingin menghapus seluruh riwayat obrolan dengan Geni AI?',
+                textAlign: TextAlign.center,
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        side: const BorderSide(color: Color(0xFFCBD5E1)),
+                      ),
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(
+                        'Batal',
+                        style: AppTextStyles.labelMedium.copyWith(
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.error,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      onPressed: () {
+                        Navigator.pop(context);
+                        context.read<ChatBloc>().add(ClearChatRequested());
+                      },
+                      child: Text(
+                        'Hapus',
+                        style: AppTextStyles.labelMedium.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -334,8 +475,8 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
                   ),
                   child: const CircleAvatar(
                     radius: 13,
-                    backgroundColor: AppColors.navy900,
-                    child: Text('🤖', style: TextStyle(fontSize: 13)),
+                    backgroundColor: Colors.white,
+                    backgroundImage: AssetImage('assets/images/logo.png'),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -353,9 +494,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
                 IconButton(
                   icon: const Icon(Icons.delete_sweep_rounded, color: AppColors.textSecondary),
                   tooltip: 'Hapus Obrolan',
-                  onPressed: () {
-                    context.read<ChatBloc>().add(ClearChatRequested());
-                  },
+                  onPressed: _showClearChatConfirmDialog,
                 ),
             ],
           ),
@@ -583,15 +722,12 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
     }
 
     // Bot/AI Message: ChatGPT style (No bubble wrapper, full width, beautifully parsed Markdown)
-    final activeModel = _selectedModel;
+    final msgModel = msg.model ?? _selectedModel;
     String modelName = 'Geni-Flash';
     Color badgeColor = const Color(0xFF8B5CF6); // Lavender/purple
-    if (activeModel.contains('pro')) {
-      modelName = 'Geni-Pro';
+    if (msgModel.contains('pro')) {
+      modelName = 'Geni-Pro (3.1)';
       badgeColor = const Color(0xFF10B981); // Emerald/Green
-    } else if (activeModel.contains('deepseek')) {
-      modelName = 'DeepSeek-Chat';
-      badgeColor = const Color(0xFF06B6D4); // Cyan
     }
 
     return Column(
@@ -611,8 +747,8 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
               ),
               child: const CircleAvatar(
                 radius: 13,
-                backgroundColor: AppColors.navy900,
-                child: Text('🤖', style: TextStyle(fontSize: 12)),
+                backgroundColor: Colors.white,
+                backgroundImage: AssetImage('assets/images/logo.png'),
               ),
             ),
             const SizedBox(width: 10),
@@ -668,14 +804,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
               msg.message.isEmpty
                   ? (_webSearchEnabled
                       ? const _WebSearchGroundingIndicator()
-                      : SizedBox(
-                          width: 50,
-                          height: 30,
-                          child: Lottie.asset(
-                            'assets/animations/global/ai_thinking.json',
-                            fit: BoxFit.contain,
-                          ),
-                        ))
+                      : const _ThinkingIndicator())
                   : _MarkdownStreamRenderer(
                       data: msg.message,
                       isStreaming: isActiveStreaming,
@@ -731,42 +860,69 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
   }
 
   Future<void> _pickImage(ImageSource source) async {
+    if (_attachedFileBytes != null) {
+      context.showErrorSnackBar('Hanya dapat mengunggah 1 berkas lampiran saja. Silakan hapus lampiran sebelumnya terlebih dahulu.');
+      return;
+    }
     try {
       final picker = ImagePicker();
       final img = await picker.pickImage(source: source, imageQuality: 80);
       if (img != null) {
+        final bytes = await img.readAsBytes();
+        if (bytes.isEmpty) {
+          throw Exception('Berkas gambar kosong / gagal dimuat.');
+        }
+        final double sizeInMb = bytes.lengthInBytes / (1024 * 1024);
+        if (sizeInMb > 10.0) {
+          throw Exception('Ukuran berkas melebihi batas maksimal 10MB (Ukuran file: ${sizeInMb.toStringAsFixed(2)}MB).');
+        }
         setState(() {
-          _attachedFilePath = img.path;
+          _attachedFileName = img.name;
+          _attachedFileBytes = bytes;
         });
         _onTextChanged();
       }
     } catch (e) {
       debugPrint('Error picking image: $e');
       if (mounted) {
-        context.showErrorSnackBar('Gagal mengambil gambar: $e');
+        context.showErrorSnackBar('Gagal mengambil gambar: ${e.toString().replaceAll('Exception: ', '')}');
       }
     }
   }
 
   Future<void> _pickPDF() async {
+    if (_attachedFileBytes != null) {
+      context.showErrorSnackBar('Hanya dapat mengunggah 1 berkas lampiran saja. Silakan hapus lampiran sebelumnya terlebih dahulu.');
+      return;
+    }
     try {
       FilePickerResult? result = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf'],
       );
       if (result != null) {
-        final path = result.files.single.path;
-        if (path != null) {
-          setState(() {
-            _attachedFilePath = path;
-          });
-          _onTextChanged();
+        final file = result.files.single;
+        Uint8List? bytes = file.bytes;
+        if (bytes == null && file.path != null && !kIsWeb) {
+          bytes = File(file.path!).readAsBytesSync();
         }
+        if (bytes == null || bytes.isEmpty) {
+          throw Exception('Berkas PDF kosong / gagal dimuat.');
+        }
+        final double sizeInMb = bytes.lengthInBytes / (1024 * 1024);
+        if (sizeInMb > 10.0) {
+          throw Exception('Ukuran berkas melebihi batas maksimal 10MB (Ukuran file: ${sizeInMb.toStringAsFixed(2)}MB).');
+        }
+        setState(() {
+          _attachedFileName = file.name;
+          _attachedFileBytes = bytes;
+        });
+        _onTextChanged();
       }
     } catch (e) {
       debugPrint('Error picking PDF: $e');
       if (mounted) {
-        context.showErrorSnackBar('Gagal memilih file PDF: $e');
+        context.showErrorSnackBar('Gagal memilih file PDF: ${e.toString().replaceAll('Exception: ', '')}');
       }
     }
   }
@@ -917,9 +1073,8 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
                         ),
                         child: Row(
                           children: [
-                            _buildSheetModelItem('google/gemini-2.5-flash', '⚡ Flash', setSheetState),
-                            _buildSheetModelItem('google/gemini-2.5-pro', '💎 Pro', setSheetState),
-                            _buildSheetModelItem('deepseek/deepseek-chat', '🤖 DeepSeek', setSheetState),
+                            _buildSheetModelItem('google/gemini-2.5-flash', '⚡ Geni Flash', setSheetState),
+                            _buildSheetModelItem('google/gemini-3.1-pro-preview', '💎 Geni Pro (3.1)', setSheetState),
                           ],
                         ),
                       ),
@@ -1061,27 +1216,49 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
 
 
   Widget _buildAttachmentPreviewInline() {
-    final isPdf = _attachedFilePath!.endsWith('.pdf');
-    final filename = _attachedFilePath!.split('/').last;
+    if (_attachedFileName == null || _attachedFileBytes == null) return const SizedBox.shrink();
+
+    final isPdf = _attachedFileName!.toLowerCase().endsWith('.pdf');
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.navy50,
+        color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.divider, width: 1.2),
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            isPdf ? Icons.picture_as_pdf_rounded : Icons.image_rounded,
-            color: isPdf ? Colors.red : AppColors.emerald,
-            size: 20,
-          ),
+          if (isPdf)
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF2F2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.picture_as_pdf_rounded,
+                color: Color(0xFFEF4444),
+                size: 20,
+              ),
+            )
+          else
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: SizedBox(
+                width: 32,
+                height: 32,
+                child: Image.memory(
+                  _attachedFileBytes!,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
           const SizedBox(width: 8),
           Flexible(
             child: Text(
-              filename,
+              _attachedFileName!,
               style: AppTextStyles.bodySmall.copyWith(
                 color: AppColors.textPrimary,
                 fontWeight: FontWeight.bold,
@@ -1094,7 +1271,8 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
           GestureDetector(
             onTap: () {
               setState(() {
-                _attachedFilePath = null;
+                _attachedFileName = null;
+                _attachedFileBytes = null;
               });
               _onTextChanged();
             },
@@ -1200,175 +1378,358 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildNormalInputComposer(bool isStreaming) {
-    return Row(
-      children: [
-        // Plus/Attachment button
-        GestureDetector(
-          onTap: _showAttachmentMenu,
-          child: Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0xFFE2E8F0),
-                  offset: Offset(0, 3),
-                  blurRadius: 0,
-                ),
-              ],
-              border: Border.all(
-                color: AppColors.divider.withValues(alpha: 0.5),
-                width: 1,
+  Widget _buildSendMicButton(bool isStreaming) {
+    final isStopButton = isStreaming;
+
+    return GestureDetector(
+      onTap: () {
+        if (isStopButton) {
+          context.read<ChatBloc>().add(CancelStreamRequested());
+          _showTopToast('Respons dihentikan oleh pengguna.', isSuccess: false);
+        } else {
+          if (_isTyping) {
+            _sendMessage();
+          } else {
+            _startVoiceInput();
+          }
+        }
+      },
+      child: AnimatedScale(
+        scale: 1.0,
+        duration: const Duration(milliseconds: 150),
+        child: Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              colors: isStopButton
+                  ? [AppColors.error, AppColors.error.withValues(alpha: 0.8)]
+                  : [
+                      const Color(0xFF0F2042),
+                      const Color(0xFF0A1628),
+                    ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: isStopButton ? AppColors.error.withValues(alpha: 0.3) : const Color(0xFF0A1628),
+                offset: const Offset(0, 2),
+                blurRadius: 0,
               ),
-            ),
-            child: const Icon(
-              Icons.add_rounded,
-              color: AppColors.navy700,
-              size: 24,
-            ),
+            ],
+          ),
+          child: Icon(
+            isStopButton 
+                ? Icons.stop_rounded 
+                : (_isTyping ? Icons.send_rounded : Icons.mic_none_rounded),
+            color: Colors.white,
+            size: isStopButton ? 20 : 16,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNormalInputComposer(bool isStreaming) {
+    final isMulti = _textController.text.contains('\n') || _textController.text.length > 40;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24.0),
+        border: Border.all(
+          color: const Color(0xFFE2E8F0),
+          width: 1.5,
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0xFFE2E8F0),
+            offset: Offset(0, 4),
+            blurRadius: 0,
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        child: AnimatedSize(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (isMulti) ...[
+                // 1. Text input field (occupies full width!)
+                TextField(
+                  controller: _textController,
+                  focusNode: _focusNode,
+                  enabled: !isStreaming,
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: isStreaming ? AppColors.textDisabled : AppColors.navy900,
+                  ),
+                  keyboardType: TextInputType.multiline,
+                  minLines: 1,
+                  maxLines: 5,
+                  textInputAction: TextInputAction.newline,
+                  decoration: InputDecoration(
+                    hintText: isStreaming ? 'Geni sedang mengetik...' : 'Tanya Geni sesuatu...',
+                    hintStyle: AppTextStyles.bodyMedium.copyWith(color: AppColors.textDisabled),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    disabledBorder: InputBorder.none,
+                    filled: false,
+                  ),
+                ),
+                
+                // 2. Attachment preview (above options, below text field)
+                if (_attachedFileBytes != null) ...[
+                  const SizedBox(height: 6),
+                  _buildAttachmentPreviewInline(),
+                ],
+                
+                const Divider(color: AppColors.divider, height: 12, thickness: 1),
+                
+                // 3. Actions Row below the text input
+                Row(
+                  children: [
+                    // Integrated Plus/Attachment button
+                    GestureDetector(
+                      onTap: isStreaming ? null : _showAttachmentMenu,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        child: Icon(
+                          Icons.add_rounded,
+                          color: isStreaming ? AppColors.textDisabled : AppColors.navy700,
+                          size: 24,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Integrated Web Search button
+                    Tooltip(
+                      message: _webSearchEnabled ? 'Pencarian Web Aktif' : 'Pencarian Web Nonaktif',
+                      child: InkWell(
+                        onTap: isStreaming ? null : () {
+                          setState(() {
+                            _webSearchEnabled = !_webSearchEnabled;
+                          });
+                          if (_webSearchEnabled) {
+                            _showTopToast(
+                              'Pencarian Web Diaktifkan!',
+                              isSuccess: true,
+                            );
+                          } else {
+                            _showTopToast(
+                              'Pencarian Web Dinonaktifkan.',
+                              isSuccess: false,
+                            );
+                          }
+                        },
+                        borderRadius: BorderRadius.circular(20),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: _webSearchEnabled 
+                                ? (isStreaming ? AppColors.disabled : AppColors.gold).withValues(alpha: 0.15) 
+                                : Colors.transparent,
+                            shape: BoxShape.circle,
+                          ),
+                          child: AnimatedRotation(
+                            turns: _webSearchEnabled ? 1.0 : 0.0,
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOutBack,
+                            child: Icon(
+                              Icons.language_rounded,
+                              color: isStreaming
+                                  ? AppColors.textDisabled
+                                  : (_webSearchEnabled ? AppColors.gold : AppColors.textSecondary),
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const Spacer(),
+                    // Mic / Send button (Integrated!)
+                    _buildSendMicButton(isStreaming),
+                  ],
+                ),
+              ] else ...[
+                // Single-line compact row layout
+                Row(
+                  children: [
+                    // Integrated Plus/Attachment button
+                    GestureDetector(
+                      onTap: isStreaming ? null : _showAttachmentMenu,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        child: Icon(
+                          Icons.add_rounded,
+                          color: isStreaming ? AppColors.textDisabled : AppColors.navy700,
+                          size: 24,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Integrated Web Search button
+                    Tooltip(
+                      message: _webSearchEnabled ? 'Pencarian Web Aktif' : 'Pencarian Web Nonaktif',
+                      child: InkWell(
+                        onTap: isStreaming ? null : () {
+                          setState(() {
+                            _webSearchEnabled = !_webSearchEnabled;
+                          });
+                          if (_webSearchEnabled) {
+                            _showTopToast(
+                              'Pencarian Web Diaktifkan!',
+                              isSuccess: true,
+                            );
+                          } else {
+                            _showTopToast(
+                              'Pencarian Web Dinonaktifkan.',
+                              isSuccess: false,
+                            );
+                          }
+                        },
+                        borderRadius: BorderRadius.circular(20),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: _webSearchEnabled 
+                                ? (isStreaming ? AppColors.disabled : AppColors.gold).withValues(alpha: 0.15) 
+                                : Colors.transparent,
+                            shape: BoxShape.circle,
+                          ),
+                          child: AnimatedRotation(
+                            turns: _webSearchEnabled ? 1.0 : 0.0,
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOutBack,
+                            child: Icon(
+                              Icons.language_rounded,
+                              color: isStreaming
+                                  ? AppColors.textDisabled
+                                  : (_webSearchEnabled ? AppColors.gold : AppColors.textSecondary),
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextField(
+                        controller: _textController,
+                        focusNode: _focusNode,
+                        enabled: !isStreaming,
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: isStreaming ? AppColors.textDisabled : AppColors.navy900,
+                        ),
+                        keyboardType: TextInputType.multiline,
+                        minLines: 1,
+                        maxLines: 5,
+                        textInputAction: TextInputAction.newline,
+                        decoration: InputDecoration(
+                          hintText: isStreaming ? 'Geni sedang mengetik...' : 'Tanya Geni sesuatu...',
+                          hintStyle: AppTextStyles.bodyMedium.copyWith(color: AppColors.textDisabled),
+                          contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          disabledBorder: InputBorder.none,
+                          filled: false,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Mic / Send button (Integrated!)
+                    _buildSendMicButton(isStreaming),
+                  ],
+                ),
+                
+                // Attachment preview inside the box (for single-line layout)
+                if (_attachedFileBytes != null) ...[
+                  const SizedBox(height: 6),
+                  _buildAttachmentPreviewInline(),
+                ],
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ThinkingIndicator extends StatefulWidget {
+  const _ThinkingIndicator();
+
+  @override
+  State<_ThinkingIndicator> createState() => _ThinkingIndicatorState();
+}
+
+class _ThinkingIndicatorState extends State<_ThinkingIndicator> {
+  late Timer _timer;
+  int _seconds = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          _seconds++;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    String statusText = 'Geni sedang bersiap...';
+    if (_seconds >= 0 && _seconds < 4) {
+      statusText = 'Menghubungkan ke Geni...';
+    } else if (_seconds >= 4 && _seconds < 9) {
+      statusText = 'Sedang berpikir...';
+    } else if (_seconds >= 9 && _seconds < 15) {
+      statusText = 'Sebentar lagi...';
+    } else {
+      statusText = 'Geni sedang merangkum jawaban terbaik...';
+    }
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        SizedBox(
+          width: 32,
+          height: 32,
+          child: Lottie.asset(
+            'assets/animations/global/ai_thinking.json',
+            fit: BoxFit.contain,
           ),
         ),
         const SizedBox(width: 10),
-        // Expanded text input composer
-        Expanded(
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24.0),
-              border: Border.all(
-                color: const Color(0xFFE2E8F0),
-                width: 1.5,
-              ),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0xFFE2E8F0),
-                  offset: Offset(0, 4),
-                  blurRadius: 0,
-                ),
-              ],
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Attachment preview inside the box (above text input field)
-                      if (_attachedFilePath != null) ...[
-                        _buildAttachmentPreviewInline(),
-                        const SizedBox(height: 6),
-                      ],
-                      
-                      // Text input row
-                      Row(
-                        children: [
-                          Tooltip(
-                            message: _webSearchEnabled ? 'Pencarian Web Aktif' : 'Pencarian Web Nonaktif',
-                            child: InkWell(
-                              onTap: () {
-                                setState(() {
-                                  _webSearchEnabled = !_webSearchEnabled;
-                                });
-                                if (_webSearchEnabled) {
-                                  _showTopToast(
-                                    'Pencarian Web Diaktifkan!',
-                                    isSuccess: true,
-                                  );
-                                } else {
-                                  _showTopToast(
-                                    'Pencarian Web Dinonaktifkan.',
-                                    isSuccess: false,
-                                  );
-                                }
-                              },
-                              borderRadius: BorderRadius.circular(20),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                padding: const EdgeInsets.all(6),
-                                decoration: BoxDecoration(
-                                  color: _webSearchEnabled 
-                                      ? AppColors.gold.withValues(alpha: 0.15) 
-                                      : Colors.transparent,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: AnimatedRotation(
-                                  turns: _webSearchEnabled ? 1.0 : 0.0,
-                                  duration: const Duration(milliseconds: 300),
-                                  curve: Curves.easeInOutBack,
-                                  child: Icon(
-                                    Icons.language_rounded,
-                                    color: _webSearchEnabled ? AppColors.gold : AppColors.textSecondary,
-                                    size: 20,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: TextField(
-                              controller: _textController,
-                              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.navy900),
-                              keyboardType: TextInputType.multiline,
-                              minLines: 1,
-                              maxLines: 5,
-                              textInputAction: TextInputAction.newline,
-                              decoration: InputDecoration(
-                                hintText: isStreaming ? 'Geni sedang mengetik...' : 'Tanya Geni sesuatu...',
-                                hintStyle: AppTextStyles.bodyMedium.copyWith(color: AppColors.textDisabled),
-                                contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                                border: InputBorder.none,
-                                enabledBorder: InputBorder.none,
-                                focusedBorder: InputBorder.none,
-                                filled: false,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-        const SizedBox(width: 10),
-        // Merged Send/Mic button on the right
-        GestureDetector(
-          onTap: isStreaming ? null : (_isTyping ? () => _sendMessage() : _startVoiceInput),
-          child: AnimatedScale(
-            scale: isStreaming ? 0.9 : 1.0,
-            duration: const Duration(milliseconds: 150),
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: isStreaming
-                      ? [AppColors.disabled, AppColors.disabled]
-                      : [
-                          const Color(0xFF0F2042),
-                          const Color(0xFF0A1628),
-                        ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0xFF0A1628),
-                    offset: Offset(0, 3),
-                    blurRadius: 0,
-                  ),
-                ],
-              ),
-              child: Icon(
-                _isTyping ? Icons.send_rounded : Icons.mic_none_rounded,
-                color: Colors.white,
-                size: 18,
-              ),
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          child: Text(
+            statusText,
+            key: ValueKey(statusText),
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.textSecondary,
+              fontStyle: FontStyle.italic,
+              fontSize: 13,
             ),
           ),
         ),
@@ -1377,7 +1738,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
   }
 }
 
-class _MarkdownStreamRenderer extends StatefulWidget {
+class _MarkdownStreamRenderer extends StatelessWidget {
   final String data;
   final bool isStreaming;
 
@@ -1387,58 +1748,8 @@ class _MarkdownStreamRenderer extends StatefulWidget {
   });
 
   @override
-  State<_MarkdownStreamRenderer> createState() => _MarkdownStreamRendererState();
-}
-
-class _MarkdownStreamRendererState extends State<_MarkdownStreamRenderer> with SingleTickerProviderStateMixin {
-  late AnimationController _blinkController;
-  bool _showCursor = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _blinkController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 500),
-    )..addStatusListener((status) {
-        if (status == AnimationStatus.completed) {
-          if (mounted) {
-            setState(() {
-              _showCursor = !_showCursor;
-            });
-            _blinkController.forward(from: 0.0);
-          }
-        }
-      });
-    if (widget.isStreaming) {
-      _blinkController.forward();
-    }
-  }
-
-  @override
-  void didUpdateWidget(_MarkdownStreamRenderer oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.isStreaming && !_blinkController.isAnimating) {
-      _blinkController.forward();
-    } else if (!widget.isStreaming && _blinkController.isAnimating) {
-      _blinkController.stop();
-      if (mounted) {
-        setState(() {
-          _showCursor = false;
-        });
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    _blinkController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final text = widget.isStreaming && _showCursor ? '${widget.data} █' : widget.data;
+    final text = isStreaming ? '$data █' : data;
 
     return MarkdownBody(
       data: text,
@@ -1674,93 +1985,46 @@ class _WebSearchGroundingIndicatorState extends State<_WebSearchGroundingIndicat
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: AppColors.gold.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppColors.gold.withValues(alpha: 0.3),
-          width: 1.2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.gold.withValues(alpha: 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // Spin/Scale transition for a tiny globe icon
           ScaleTransition(
             scale: _scaleAnimation,
             child: FadeTransition(
               opacity: _opacityAnimation,
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppColors.gold.withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.gold.withValues(alpha: 0.2),
-                      blurRadius: 8,
-                      spreadRadius: 1,
-                    )
-                  ]
-                ),
-                child: const Icon(
-                  Icons.language_rounded,
-                  color: AppColors.gold,
-                  size: 20,
-                ),
+              child: const Icon(
+                Icons.language_rounded,
+                color: Color(0xFFD97706),
+                size: 14,
               ),
             ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 8),
+          const SizedBox(
+            width: 8,
+            height: 8,
+            child: CircularProgressIndicator(
+              strokeWidth: 1.0,
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFD97706)),
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Elegant minimal loading text
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      'Pencarian Web Aktif',
-                      style: AppTextStyles.labelSmall.copyWith(
-                        color: AppColors.gold,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    const SizedBox(
-                      width: 10,
-                      height: 10,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 1.5,
-                        valueColor: AlwaysStoppedAnimation<Color>(AppColors.gold),
-                      ),
-                    ),
-                  ],
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: Text(
+                _loadingTexts[_currentTextIndex],
+                key: ValueKey<int>(_currentTextIndex),
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 11,
                 ),
-                const SizedBox(height: 4),
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 300),
-                  child: Text(
-                    _loadingTexts[_currentTextIndex],
-                    key: ValueKey<int>(_currentTextIndex),
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.navy900,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 12.5,
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ],

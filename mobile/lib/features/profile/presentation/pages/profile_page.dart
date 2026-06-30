@@ -11,6 +11,7 @@ import '../../../../core/constants/app_svgs.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/fade_slide_entrance.dart';
+import '../../../../core/widgets/genesis_network_image.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
@@ -18,7 +19,9 @@ import '../../../profile/domain/repositories/profile_repository.dart';
 import '../../../profile/data/models/profile_model.dart';
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key});
+  final VoidCallback? onClose;
+
+  const ProfilePage({super.key, this.onClose});
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -247,6 +250,17 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
           backgroundColor: Colors.transparent,
           elevation: 0,
           centerTitle: true,
+          leading: widget.onClose != null
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+                  onPressed: widget.onClose,
+                )
+              : Navigator.canPop(context)
+                  ? IconButton(
+                      icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+                      onPressed: () => Navigator.pop(context),
+                    )
+                  : null,
           title: Text(
             'Profil Eco Warrior',
             style: AppTextStyles.headlineSmall.copyWith(
@@ -293,7 +307,7 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
     final String fullName = _profile?.fullName ?? 'Eco Warrior';
     final int level = _profile?.level ?? 3;
     final int xp = _profile?.xp ?? 340;
-    final int maxXp = level * 150 + 50;
+    final int maxXp = level * 1000;
     final int completedReports = _profile?.reportCount ?? 15;
     final int activeStreak = _profile?.currentStreak ?? 7;
     final String location = _profile?.cityOrDistrict != null
@@ -322,6 +336,17 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
+        leading: widget.onClose != null
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary, size: 20),
+                onPressed: widget.onClose,
+              )
+            : Navigator.canPop(context)
+                ? IconButton(
+                    icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary, size: 20),
+                    onPressed: () => Navigator.pop(context),
+                  )
+                : null,
         title: Text(
           'Profil Eco Warrior',
           style: AppTextStyles.headlineSmall.copyWith(
@@ -345,8 +370,10 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
         children: [
           // Subtle blueprint grid pattern background to add premium character/texture
           Positioned.fill(
-            child: CustomPaint(
-              painter: const GridBackgroundPainter(),
+            child: RepaintBoundary(
+              child: CustomPaint(
+                painter: const GridBackgroundPainter(),
+              ),
             ),
           ),
 
@@ -407,21 +434,25 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                                         colors: [AppColors.gold, AppColors.burgundy500],
                                       ),
                                     ),
-                                    child: CircleAvatar(
-                                      radius: 36,
-                                      backgroundColor: AppColors.navy900,
-                                      backgroundImage: _profile?.avatarUrl != null
-                                          ? NetworkImage(_profile!.avatarUrl!)
-                                          : null,
-                                      child: _profile?.avatarUrl == null
-                                          ? ClipOval(
-                                              child: SvgPicture.string(
+                                    child: Container(
+                                      width: 72,
+                                      height: 72,
+                                      decoration: const BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: AppColors.navy900,
+                                      ),
+                                      child: ClipOval(
+                                        child: _profile?.avatarUrl != null
+                                            ? GenesisNetworkImage(
+                                                url: _profile!.avatarUrl!,
+                                                fit: BoxFit.cover,
+                                              )
+                                            : SvgPicture.string(
                                                 AppSvgs.defaultAvatar,
                                                 width: 72,
                                                 height: 72,
                                               ),
-                                            )
-                                          : null,
+                                      ),
                                     ),
                                   ),
                                   Positioned(
@@ -552,7 +583,8 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                               children: [
                                 LayoutBuilder(
                                   builder: (context, constraints) {
-                                    final progressWidth = (xp / maxXp).clamp(0.0, 1.0) * constraints.maxWidth;
+                                    final double progressVal = ((xp - (level - 1) * 1000) / 1000.0).clamp(0.0, 1.0);
+                                    final progressWidth = progressVal * constraints.maxWidth;
                                     return Container(
                                       width: progressWidth,
                                       decoration: BoxDecoration(
@@ -591,47 +623,12 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                           ),
                         ),
                         const SizedBox(height: AppConstants.spacing12),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildStatCard(
-                                title: 'Laporan Selesai',
-                                value: '$completedReports',
-                                icon: Icons.check_circle_rounded,
-                                iconColor: const Color(0xFF059669),
-                                bgColor: const Color(0xFFECFDF5),
-                                textColor: const Color(0xFF065F46),
-                                lottieAsset: 'assets/animations/achievements/Image.json',
-                                lottieRepeat: false,
-                              ),
-                            ),
-                            const SizedBox(width: AppConstants.spacing12),
-                            Expanded(
-                              child: _buildStatCard(
-                                title: 'Total Point',
-                                value: '${xp * 3}',
-                                icon: Icons.monetization_on_rounded,
-                                iconColor: const Color(0xFFD97706),
-                                bgColor: const Color(0xFFFFFBEB),
-                                textColor: const Color(0xFF78350F),
-                                lottieAsset: 'assets/animations/achievements/badge.json',
-                                lottieRepeat: false,
-                              ),
-                            ),
-                            const SizedBox(width: AppConstants.spacing12),
-                            Expanded(
-                              child: _buildStatCard(
-                                title: 'Streak Aktif',
-                                value: '$activeStreak Hari',
-                                icon: Icons.local_fire_department_rounded,
-                                iconColor: const Color(0xFFE11D48),
-                                bgColor: const Color(0xFFFFF1F2),
-                                textColor: const Color(0xFF9F1239),
-                                lottieAsset: 'assets/animations/achievements/strike_fire.json',
-                                lottieRepeat: true,
-                              ),
-                            ),
-                          ],
+                        _buildBentoStats(
+                          level: level,
+                          xp: xp,
+                          maxXp: maxXp,
+                          completedReports: completedReports,
+                          activeStreak: activeStreak,
                         ),
                       ],
                     ),
@@ -684,21 +681,27 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                             ],
                           ),
                           const SizedBox(height: AppConstants.spacing12),
-                          GridView.count(
-                            crossAxisCount: 4,
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            mainAxisSpacing: AppConstants.spacing16,
-                            crossAxisSpacing: AppConstants.spacing16,
+                          Row(
                             children: [
-                              _buildBadgeItem(AppSvgs.badgePioneer, 'Perintis', _hasBadge('first_report')),
-                              _buildBadgeItem(AppSvgs.badgeEnthusiast, 'Pecinta', _hasBadge('streak_3')),
-                              _buildBadgeItem(AppSvgs.badgeRiverHero, 'Eco Warrior', _hasBadge('streak_7')),
-                              _buildBadgeItem(AppSvgs.badgeCleanup, 'Anti Limbah', _hasBadge('toxic_buster')),
-                              _buildBadgeItem(AppSvgs.badgeActivist, 'Hero Genesis', _hasBadge('green_hero')),
-                              _buildBadgeItem(AppSvgs.badgeSpotter, 'Detektor', _hasBadge('spotter')),
-                              _buildBadgeItem(AppSvgs.badgeForester, 'Rimbawan', _hasBadge('forester')),
-                              _buildBadgeItem(AppSvgs.badgeFaunaGuard, 'Saksi Satwa', _hasBadge('fauna_guard')),
+                              Expanded(child: _buildBadgeItem(AppSvgs.badgePioneer, 'Perintis', _hasBadge('first_report'))),
+                              const SizedBox(width: AppConstants.spacing16),
+                              Expanded(child: _buildBadgeItem(AppSvgs.badgeEnthusiast, 'Pecinta', _hasBadge('streak_3'))),
+                              const SizedBox(width: AppConstants.spacing16),
+                              Expanded(child: _buildBadgeItem(AppSvgs.badgeRiverHero, 'Eco Warrior', _hasBadge('streak_7'))),
+                              const SizedBox(width: AppConstants.spacing16),
+                              Expanded(child: _buildBadgeItem(AppSvgs.badgeCleanup, 'Anti Limbah', _hasBadge('toxic_buster'))),
+                            ],
+                          ),
+                          const SizedBox(height: AppConstants.spacing16),
+                          Row(
+                            children: [
+                              Expanded(child: _buildBadgeItem(AppSvgs.badgeActivist, 'Hero Genesis', _hasBadge('green_hero'))),
+                              const SizedBox(width: AppConstants.spacing16),
+                              Expanded(child: _buildBadgeItem(AppSvgs.badgeSpotter, 'Detektor', _hasBadge('spotter'))),
+                              const SizedBox(width: AppConstants.spacing16),
+                              Expanded(child: _buildBadgeItem(AppSvgs.badgeForester, 'Rimbawan', _hasBadge('forester'))),
+                              const SizedBox(width: AppConstants.spacing16),
+                              Expanded(child: _buildBadgeItem(AppSvgs.badgeFaunaGuard, 'Saksi Satwa', _hasBadge('fauna_guard'))),
                             ],
                           ),
                         ],
@@ -782,66 +785,253 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
     );
   }
 
-  Widget _buildStatCard({
-    required String title,
-    required String value,
-    required IconData icon,
-    required Color iconColor,
-    required Color bgColor,
-    required Color textColor,
-    String? lottieAsset,
-    bool lottieRepeat = true,
+  Widget _buildBentoStats({
+    required int level,
+    required int xp,
+    required int maxXp,
+    required int completedReports,
+    required int activeStreak,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 16),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: const Color(0xFFE2E8F0),
-          width: 1.0,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Column 1: Left large card (Total Point & Level progress)
+        Expanded(
+          flex: 5,
+          child: Container(
+            height: 156,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24.0),
+              border: Border.all(
+                color: const Color(0xFFE2E8F0),
+                width: 1.5,
+              ),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0xFFE2E8F0),
+                  offset: Offset(0, 4),
+                  blurRadius: 0,
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Total Point',
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 11,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${xp * 3} Pts',
+                          style: AppTextStyles.headlineMedium.copyWith(
+                            color: const Color(0xFFD97706),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 22,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Spacer(),
+                    SizedBox(
+                      width: 52,
+                      height: 52,
+                      child: Lottie.asset(
+                        'assets/animations/achievements/badge.json',
+                        repeat: false,
+                      ),
+                    ),
+                  ],
+                ),
+                const Spacer(),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          'Level $level',
+                          style: AppTextStyles.bodySmall.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.navy900,
+                            fontSize: 11,
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          '$xp / $maxXp XP',
+                          style: AppTextStyles.bodySmall.copyWith(
+                            fontSize: 10,
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(3),
+                      child: LinearProgressIndicator(
+                        value: ((xp - (level - 1) * 1000) / 1000.0).clamp(0.0, 1.0),
+                        backgroundColor: const Color(0xFFF1F5F9),
+                        color: AppColors.gold,
+                        minHeight: 6,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.05),
-            offset: const Offset(0, 6),
-            blurRadius: 12,
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          if (lottieAsset != null)
-            SizedBox(
-              width: 48,
-              height: 48,
-              child: Lottie.asset(lottieAsset, repeat: lottieRepeat),
-            )
-          else
-            Icon(icon, color: iconColor, size: 28),
-          const SizedBox(height: AppConstants.spacing12),
-          Text(
-            value,
-            textAlign: TextAlign.center,
-            style: AppTextStyles.headlineMedium.copyWith(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-              color: AppColors.textPrimary,
+        const SizedBox(width: 12),
+        // Column 2: Right stacked cards
+        Expanded(
+          flex: 4,
+          child: SizedBox(
+            height: 156,
+            child: Column(
+              children: [
+                // Top card: Laporan Selesai
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20.0),
+                      border: Border.all(
+                        color: const Color(0xFFE2E8F0),
+                        width: 1.5,
+                      ),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0xFFE2E8F0),
+                          offset: Offset(0, 4),
+                          blurRadius: 0,
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 44,
+                          height: 44,
+                          child: Lottie.asset(
+                            'assets/animations/achievements/Image.json',
+                            repeat: false,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Laporan',
+                                style: AppTextStyles.bodySmall.copyWith(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                '$completedReports Selesai',
+                                style: AppTextStyles.bodySmall.copyWith(
+                                  color: const Color(0xFF059669),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // Bottom card: Streak Aktif
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20.0),
+                      border: Border.all(
+                        color: const Color(0xFFE2E8F0),
+                        width: 1.5,
+                      ),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0xFFE2E8F0),
+                          offset: Offset(0, 4),
+                          blurRadius: 0,
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 44,
+                          height: 44,
+                          child: Lottie.asset(
+                            'assets/animations/achievements/strike_fire.json',
+                            repeat: true,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Streak Aktif',
+                                style: AppTextStyles.bodySmall.copyWith(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                '$activeStreak Hari',
+                                style: AppTextStyles.bodySmall.copyWith(
+                                  color: const Color(0xFFE11D48),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: AppTextStyles.bodySmall.copyWith(
-              fontSize: 10,
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -849,40 +1039,40 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: unlocked
-                  ? AppColors.gold.withValues(alpha: 0.08)
-                  : AppColors.disabled.withValues(alpha: 0.5),
-              border: Border.all(
-                color: unlocked ? AppColors.gold : AppColors.divider,
-                width: unlocked ? 2.0 : 1.2,
-              ),
-              boxShadow: unlocked
-                  ? const [
-                      BoxShadow(
-                        color: Color(0xFFFEF3C7),
-                        offset: Offset(0, 2),
-                        blurRadius: 0,
-                      ),
-                    ]
-                  : null,
+        Container(
+          width: 52,
+          height: 52,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: unlocked
+                ? AppColors.gold.withValues(alpha: 0.08)
+                : AppColors.disabled.withValues(alpha: 0.5),
+            border: Border.all(
+              color: unlocked ? AppColors.gold : AppColors.divider,
+              width: unlocked ? 2.0 : 1.2,
             ),
-            child: Center(
-              child: SvgPicture.string(
-                svgContent,
-                colorFilter: unlocked
-                    ? null
-                    : const ColorFilter.matrix(<double>[
-                        0.2126, 0.7152, 0.0722, 0, 0,
-                        0.2126, 0.7152, 0.0722, 0, 0,
-                        0.2126, 0.7152, 0.0722, 0, 0,
-                        0,      0,      0,      0.6, 0,
-                      ]),
-              ),
+            boxShadow: unlocked
+                ? const [
+                    BoxShadow(
+                      color: Color(0xFFFEF3C7),
+                      offset: Offset(0, 2),
+                      blurRadius: 0,
+                    ),
+                  ]
+                : null,
+          ),
+          child: Center(
+            child: SvgPicture.string(
+              svgContent,
+              colorFilter: unlocked
+                  ? null
+                  : const ColorFilter.matrix(<double>[
+                      0.2126, 0.7152, 0.0722, 0, 0,
+                      0.2126, 0.7152, 0.0722, 0, 0,
+                      0.2126, 0.7152, 0.0722, 0, 0,
+                      0,      0,      0,      0.6, 0,
+                    ]),
             ),
           ),
         ),

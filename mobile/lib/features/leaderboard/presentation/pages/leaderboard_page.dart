@@ -1,4 +1,4 @@
-import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -10,6 +10,8 @@ import '../../../../core/constants/app_svgs.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/fade_slide_entrance.dart';
+import '../../../../core/widgets/genesis_error_widget.dart';
+import '../../../../core/widgets/genesis_network_image.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
@@ -201,14 +203,16 @@ class _LeaderboardPageState extends State<LeaderboardPage> with AutomaticKeepAli
     final String cityLabel = _userCity ?? 'Lokasi';
     final String provinceLabel = _userProvince ?? 'Provinsi';
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      body: Stack(
+    return Material(
+      color: const Color(0xFFF8FAFC),
+      child: Stack(
         children: [
           // Subtle blueprint grid pattern background to add premium character/texture
           Positioned.fill(
-            child: CustomPaint(
-              painter: const GridBackgroundPainter(),
+            child: RepaintBoundary(
+              child: CustomPaint(
+                painter: const GridBackgroundPainter(),
+              ),
             ),
           ),
 
@@ -231,7 +235,14 @@ class _LeaderboardPageState extends State<LeaderboardPage> with AutomaticKeepAli
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const SizedBox(width: 48),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.arrow_back_ios_new_rounded,
+                              color: AppColors.navy900,
+                              size: 20,
+                            ),
+                            onPressed: () => Navigator.of(context).maybePop(),
+                          ),
                           Text(
                             'Papan Peringkat',
                             style: AppTextStyles.headlineSmall.copyWith(
@@ -242,15 +253,8 @@ class _LeaderboardPageState extends State<LeaderboardPage> with AutomaticKeepAli
                           IconButton(
                             icon: const Icon(Icons.info_outline_rounded, color: AppColors.textSecondary),
                             onPressed: () {
-                              ScaffoldMessenger.of(context).clearSnackBars();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    '🏆 XP didapatkan dari penyelesaian pelaporan dan tantangan harian di wilayahmu.',
-                                    style: AppTextStyles.labelSmall.copyWith(color: Colors.white),
-                                  ),
-                                  backgroundColor: AppColors.navy800,
-                                ),
+                              context.showInfoSnackBar(
+                                '🏆 XP didapatkan dari penyelesaian pelaporan dan tantangan harian di wilayahmu.',
                               );
                             },
                           ),
@@ -274,12 +278,54 @@ class _LeaderboardPageState extends State<LeaderboardPage> with AutomaticKeepAli
                     )
                   else if (_errorMessage != null)
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
-                      child: Center(
-                        child: Text(
-                          'Gagal memuat leaderboard: $_errorMessage',
-                          style: const TextStyle(color: Colors.white70),
-                          textAlign: TextAlign.center,
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
+                      child: Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0xFFE2E8F0),
+                              offset: Offset(0, 4),
+                              blurRadius: 0,
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 56,
+                              height: 56,
+                              decoration: BoxDecoration(
+                                color: AppColors.error.withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.error_outline_rounded,
+                                color: AppColors.error,
+                                size: 28,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Gagal Memuat Data',
+                              style: AppTextStyles.titleMedium.copyWith(
+                                color: AppColors.navy900,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              _errorMessage ?? 'Terjadi kesalahan sistem.',
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
                         ),
                       ),
                     )
@@ -378,7 +424,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> with AutomaticKeepAli
                                   ),
                                   child: ClipOval(
                                     child: currentUserEntry.avatarUrl != null
-                                        ? Image.network(currentUserEntry.avatarUrl!, fit: BoxFit.cover)
+                                        ? GenesisNetworkImage(url: currentUserEntry.avatarUrl!, fit: BoxFit.cover)
                                         : SvgPicture.string(
                                             AppSvgs.defaultAvatar,
                                             width: 46,
@@ -597,7 +643,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> with AutomaticKeepAli
                     shape: BoxShape.circle,
                   ),
                   child: ClipOval(
-                    child: Image.network(user.avatarUrl!, fit: BoxFit.cover),
+                    child: GenesisNetworkImage(url: user.avatarUrl!, fit: BoxFit.cover),
                   ),
                 )
               : CircleAvatar(
@@ -676,120 +722,106 @@ class _LeaderboardPageState extends State<LeaderboardPage> with AutomaticKeepAli
     showDialog(
       context: context,
       barrierDismissible: true,
+      barrierColor: Colors.black.withValues(alpha: 0.25),
       builder: (context) {
-        return BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-          child: Dialog(
-            backgroundColor: Colors.transparent,
-            insetPadding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: const Color(0xFF0F172A), // Dark Slate color matching the premium style
-                borderRadius: BorderRadius.circular(32),
-                border: Border.all(
-                  color: const Color(0xFFD4AF37), // Golden bezel
-                  width: 2.0,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFFD4AF37).withValues(alpha: 0.24), // Golden glow
-                    blurRadius: 24,
-                    offset: const Offset(0, 8),
-                  ),
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.4),
-                    blurRadius: 16,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(
+                color: const Color(0xFFE2E8F0),
+                width: 1.5,
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Celebration Lottie Animation
-                  SizedBox(
-                    width: 180,
-                    height: 180,
-                    child: Lottie.asset(
-                      'assets/animations/leaderboard/first_place.json',
-                      repeat: true,
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0xFFE2E8F0),
+                  offset: Offset(0, 4),
+                  blurRadius: 0,
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Celebration Lottie Animation
+                SizedBox(
+                  width: 180,
+                  height: 180,
+                  child: Lottie.asset(
+                    'assets/animations/leaderboard/first_place.json',
+                    repeat: true,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Rank Label
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEF3C7),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFFF59E0B), width: 1.5),
+                  ),
+                  child: Text(
+                    rankTitle,
+                    style: AppTextStyles.labelSmall.copyWith(
+                      color: const Color(0xFF92400E),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  // Rank Label
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFEF3C7), // Amber 100
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFFF59E0B), width: 1.5),
+                ),
+                const SizedBox(height: 16),
+                // Congratulations Title
+                Text(
+                  'Selamat Warga Hebat!',
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.headlineSmall.copyWith(
+                    color: AppColors.navy900,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 22,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // Warm Personalized Message
+                Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppColors.textSecondary,
+                    fontSize: 14,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                // Action Button — Soft 3D Flat style
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.navy900,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                         borderRadius: BorderRadius.circular(16),
+                      ),
+                      elevation: 0,
                     ),
                     child: Text(
-                      rankTitle,
+                      'Terima Kasih!',
                       style: AppTextStyles.labelSmall.copyWith(
-                        color: const Color(0xFF92400E), // Amber 800
                         fontWeight: FontWeight.bold,
-                        fontSize: 12,
+                        fontSize: 14,
+                        color: Colors.white,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  // Congratulations Title
-                  Text(
-                    'Selamat Warga Hebat!',
-                    textAlign: TextAlign.center,
-                    style: AppTextStyles.headlineSmall.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 22,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  // Warm Personalized Message
-                  Text(
-                    message,
-                    textAlign: TextAlign.center,
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: Colors.white70,
-                      fontSize: 14,
-                      height: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  // Action Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF10B981), // Emerald green
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                           borderRadius: BorderRadius.circular(16),
-                        ),
-                        elevation: 0,
-                      ).copyWith(
-                        side: WidgetStateProperty.all(
-                          BorderSide(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            width: 1.5,
-                          ),
-                        ),
-                      ),
-                      child: Text(
-                        'Terima Kasih!',
-                        style: AppTextStyles.labelSmall.copyWith(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         );
@@ -881,7 +913,9 @@ class _AnimatedPodiumPositionState extends State<AnimatedPodiumPosition>
   Widget build(BuildContext context) {
     final name = widget.user?.fullName ?? widget.fallbackName;
     final xp = widget.user != null ? '${widget.user!.xp} XP' : '- XP';
-    final initial = widget.user != null ? widget.user!.fullName.substring(0, 1).toUpperCase() : '?';
+    final initial = widget.user != null && widget.user!.fullName.isNotEmpty
+        ? widget.user!.fullName.substring(0, 1).toUpperCase()
+        : '?';
 
     return AnimatedBuilder(
       animation: _controller,
@@ -927,8 +961,8 @@ class _AnimatedPodiumPositionState extends State<AnimatedPodiumPosition>
                   child: Center(
                     child: widget.user?.avatarUrl != null
                         ? ClipOval(
-                            child: Image.network(
-                              widget.user!.avatarUrl!,
+                            child: GenesisNetworkImage(
+                              url: widget.user!.avatarUrl!,
                               width: double.infinity,
                               height: double.infinity,
                               fit: BoxFit.cover,

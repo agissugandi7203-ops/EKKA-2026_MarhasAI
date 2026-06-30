@@ -83,7 +83,7 @@ class _FadeSlideEntranceState extends State<FadeSlideEntrance>
       animation: _controller,
       builder: (context, child) {
         return Opacity(
-          opacity: _opacityAnimation.value,
+          opacity: _opacityAnimation.value.clamp(0.0, 1.0),
           child: Transform.translate(
             offset: _slideAnimation.value,
             child: child,

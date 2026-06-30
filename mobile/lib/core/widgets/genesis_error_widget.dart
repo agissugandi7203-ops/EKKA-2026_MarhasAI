@@ -277,33 +277,140 @@ extension GenesisSnackBar on BuildContext {
     required Color backgroundColor,
     required Duration duration,
   }) {
-    // Hapus snackbar sebelumnya agar tidak menumpuk
-    ScaffoldMessenger.of(this).hideCurrentSnackBar();
+    _activeGenesisToast?.remove();
+    _activeGenesisToast = null;
 
-    ScaffoldMessenger.of(this).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(icon, color: Colors.white, size: 20),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                message,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
+    final overlay = Overlay.of(this);
+
+    final entry = OverlayEntry(
+      builder: (context) => _TopToastWidget(
+        message: message,
+        icon: icon,
+        backgroundColor: backgroundColor,
+        duration: duration,
+        onDismiss: () {
+          _activeGenesisToast = null;
+        },
+      ),
+    );
+
+    _activeGenesisToast = entry;
+    overlay.insert(entry);
+  }
+}
+
+OverlayEntry? _activeGenesisToast;
+
+class _TopToastWidget extends StatefulWidget {
+  final String message;
+  final IconData icon;
+  final Color backgroundColor;
+  final Duration duration;
+  final VoidCallback onDismiss;
+
+  const _TopToastWidget({
+    required this.message,
+    required this.icon,
+    required this.backgroundColor,
+    required this.duration,
+    required this.onDismiss,
+  });
+
+  @override
+  State<_TopToastWidget> createState() => _TopToastWidgetState();
+}
+
+class _TopToastWidgetState extends State<_TopToastWidget> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<Offset> _offsetAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 350),
+      vsync: this,
+    );
+
+    _offsetAnimation = Tween<Offset>(
+      begin: const Offset(0.0, -1.5),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOutBack,
+    ));
+
+    _controller.forward();
+
+    Future.delayed(widget.duration, () {
+      if (mounted) {
+        _controller.reverse().then((_) {
+          widget.onDismiss();
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+          child: SlideTransition(
+            position: _offsetAnimation,
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: widget.backgroundColor,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: widget.backgroundColor.withValues(alpha: 0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    width: 1.5,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      widget.icon,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    Flexible(
+                      child: Text(
+                        widget.message,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          decoration: TextDecoration.none,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-          ],
+          ),
         ),
-        backgroundColor: backgroundColor,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        duration: duration,
-        dismissDirection: DismissDirection.horizontal,
       ),
     );
   }

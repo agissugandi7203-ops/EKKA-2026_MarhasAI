@@ -3,11 +3,12 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ShieldCheck, Mail, Lock, Eye, EyeOff, AlertCircle, ArrowLeft, Terminal } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, AlertCircle, ArrowLeft, Loader2, Sparkles } from "lucide-react";
 
 export default function AdminLogin() {
   const router = useRouter();
-
+  
+  // State variables with strict types
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [loginMode, setLoginMode] = useState<"live" | "simulator">("live");
@@ -20,6 +21,7 @@ export default function AdminLogin() {
     setLoading(true);
     setError(null);
 
+    // Basic Validation
     if (!email || !password) {
       setError("Email dan password wajib diisi.");
       setLoading(false);
@@ -29,7 +31,7 @@ export default function AdminLogin() {
     try {
       const backendUrl = "https://genesisHub.my.id";
 
-      // SIMULATOR MODE
+      // 1. SIMULATOR MODE
       if (loginMode === "simulator") {
         const dummyToken = "dummy_admin_jwt_token_2026_val";
         localStorage.setItem("genesis_admin_token", dummyToken);
@@ -37,17 +39,17 @@ export default function AdminLogin() {
         localStorage.setItem("genesis_admin_name", email === "arief@genesis.id" ? "Arief Fajar" : "Genesis Admin");
         localStorage.setItem("genesis_admin_role", "admin");
         localStorage.setItem("genesis_admin_mode", "simulator");
-
+        
         setTimeout(() => {
           router.push("/admin");
         }, 800);
         return;
       }
 
-      // LIVE MODE (Direct Supabase Connection)
+      // 2. LIVE MODE (Direct Supabase Connection)
       const supabaseProjectUrl = "https://abmypsvfuplxmyblerhv.supabase.co";
       const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFibXlwc3ZmdXBseG15Ymxlcmh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxOTM1MTUsImV4cCI6MjA5Nzc2OTUxNX0.PmBk7SfG_uIR2fnVER__qvK3zr4X2IByLNXTNfd5c4A";
-
+      
       const response = await fetch(`${supabaseProjectUrl}/auth/v1/token?grant_type=password`, {
         method: "POST",
         headers: {
@@ -61,6 +63,7 @@ export default function AdminLogin() {
         const authData = await response.json();
         const token = authData.access_token;
 
+        // Verify admin role via NestJS Profiles API
         const verifyRes = await fetch(`${backendUrl}/profiles/me`, {
           method: "GET",
           headers: {
@@ -89,7 +92,7 @@ export default function AdminLogin() {
         const errorData = await response.json().catch(() => ({}));
         setError(`Gagal Masuk: ${errorData.error_description || "Email atau kata sandi Anda salah."}`);
       }
-    } catch (err: unknown) {
+    } catch (err: any) {
       console.error("Login error:", err);
       setError("Gagal menghubungi server. Periksa koneksi internet Anda atau coba lagi.");
     } finally {
@@ -98,183 +101,154 @@ export default function AdminLogin() {
   };
 
   return (
-    <main className="relative min-h-screen w-full flex bg-navy-950 overflow-hidden">
-      {/* ═══════════ LEFT PANEL — Branding ═══════════ */}
-      <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-between p-12 overflow-hidden">
-        {/* Ambient glows */}
-        <div className="absolute top-1/4 left-1/4 h-[500px] w-[500px] rounded-full bg-indigo-900/20 blur-[150px] pointer-events-none" />
-        <div className="absolute bottom-0 right-0 h-[400px] w-[400px] rounded-full bg-violet-900/15 blur-[120px] pointer-events-none" />
+    <main className="relative min-h-screen w-full bg-slate-50 flex flex-col justify-center items-center px-4 overflow-hidden font-sans">
+      
+      {/* Premium Subtle Ambient Gradients */}
+      <div className="absolute top-0 right-0 h-[600px] w-[600px] rounded-full bg-slate-200/50 blur-[140px] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 h-[600px] w-[600px] rounded-full bg-slate-300/30 blur-[140px] pointer-events-none" />
+      
+      {/* Decorative Grid Overlay */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-30 pointer-events-none" />
 
-        {/* Top — Back link */}
-        <Link
-          href="/"
-          className="relative z-10 flex items-center gap-2 text-sm text-white/40 hover:text-white/80 font-medium transition-colors duration-200 w-fit"
+      {/* Back button */}
+      <div className="absolute top-6 left-6 z-50">
+        <Link 
+          href="/" 
+          className="flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors duration-200"
         >
           <ArrowLeft className="h-4 w-4" />
-          Kembali ke Beranda
+          Beranda
         </Link>
-
-        {/* Center — Logo & tagline */}
-        <div className="relative z-10 flex flex-col gap-6">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg">
-              <ShieldCheck className="h-6 w-6 text-white" />
-            </div>
-            <span className="text-2xl font-bold text-white tracking-tight">
-              Genesis<span className="text-indigo-400">.id</span>
-            </span>
-          </div>
-          <h2 className="text-4xl xl:text-5xl font-light text-white tracking-tight leading-[1.15]">
-            Control center for<br />
-            <span className="text-indigo-400">smart city</span> governance.
-          </h2>
-          <p className="text-white/40 text-sm font-light max-w-md leading-relaxed">
-            Dashboard administratif dengan moderasi laporan real-time, analytics geospasial, dan manajemen gamifikasi warga.
-          </p>
-        </div>
-
-        {/* Bottom — Stats */}
-        <div className="relative z-10 flex gap-8">
-          {[
-            { value: "~45k", label: "req/s throughput" },
-            { value: "RBAC", label: "Role-based access" },
-            { value: "E2E", label: "JWT encrypted" },
-          ].map((stat) => (
-            <div key={stat.label}>
-              <p className="text-lg font-semibold text-white">{stat.value}</p>
-              <p className="text-xs text-white/30">{stat.label}</p>
-            </div>
-          ))}
-        </div>
       </div>
 
-      {/* ═══════════ RIGHT PANEL — Form ═══════════ */}
-      <div className="w-full lg:w-1/2 flex flex-col justify-center items-center px-4 sm:px-8 lg:px-16 bg-surface relative">
-        {/* Mobile-only back button */}
-        <div className="absolute top-6 left-6 z-50 lg:hidden">
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-sm text-navy-500 hover:text-navy-900 font-semibold transition-colors duration-200"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Kembali
-          </Link>
-        </div>
+      {/* Login Card Container */}
+      <div className="relative w-full max-w-[420px] z-10 animate-fade-up">
+        
+        {/* Shadow glow base */}
+        <div className="absolute -inset-1 bg-gradient-to-r from-slate-200 to-slate-300/50 rounded-[32px] blur-lg opacity-40 pointer-events-none" />
 
-        {/* Mobile-only branded header */}
-        <div className="lg:hidden flex flex-col items-center text-center mb-8 mt-16">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg mb-3">
-            <ShieldCheck className="h-6 w-6 text-white" />
-          </div>
-          <span className="text-xl font-bold text-navy-900 tracking-tight">
-            Genesis<span className="text-indigo-500">.id</span> Admin
-          </span>
-        </div>
-
-        <div className="w-full max-w-md animate-fade-up">
-          {/* Heading — desktop only */}
-          <div className="hidden lg:block mb-8">
-            <h1 className="text-2xl font-bold text-navy-900 tracking-tight">
-              Admin Portal
+        <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-[0_25px_60px_rgba(15,23,42,0.06)] relative overflow-hidden">
+          
+          {/* Top subtle highlight */}
+          <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-slate-900 to-slate-700" />
+          
+          {/* Brand Logo & Heading */}
+          <div className="flex flex-col items-center text-center mb-8 select-none">
+            <div className="h-16 w-16 rounded-2xl bg-slate-50 flex items-center justify-center border border-slate-100 shadow-sm mb-4">
+              <img src="/logo.png" alt="Genesis Logo" className="h-10 w-auto object-contain" />
+            </div>
+            <h1 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-1.5">
+              Genesis Admin <Sparkles className="h-4 w-4 text-amber-500 shrink-0 fill-amber-500" />
             </h1>
-            <p className="text-sm text-navy-500 font-light mt-1.5">
-              Masuk untuk mengakses dashboard pengelolaan kota ekologis
+            <p className="text-xs text-slate-500 font-light mt-1 max-w-xs leading-relaxed">
+              Consolidated control portal and ecological governance console.
             </p>
           </div>
 
           {/* Alert Error Box */}
           {error && (
-            <div className="mb-6 flex items-start gap-2.5 p-3.5 rounded-xl bg-burgundy-50 border border-burgundy-100 text-burgundy-700 text-xs animate-fade-up">
+            <div className="mb-6 flex items-start gap-2.5 p-3.5 rounded-xl bg-red-50 border border-red-100 text-red-700 text-xs animate-fade-up font-medium">
               <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
-              <span className="leading-normal font-medium">{error}</span>
+              <span className="leading-relaxed">{error}</span>
             </div>
           )}
 
           {/* Mode Switcher */}
-          <div className="flex p-1.5 bg-navy-50/70 border border-navy-100 rounded-2xl mb-6">
+          <div className="flex p-1 bg-slate-50 border border-slate-100 rounded-xl mb-6">
             <button
               type="button"
-              onClick={() => { setLoginMode("live"); setError(null); }}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold rounded-xl transition-all duration-300 cursor-pointer ${
+              onClick={() => {
+                setLoginMode("live");
+                setError(null);
+              }}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold rounded-lg transition-all duration-200 cursor-pointer ${
                 loginMode === "live"
-                  ? "bg-white text-navy-900 shadow-sm border border-navy-100/30"
-                  : "text-navy-400 hover:text-navy-700"
+                  ? "bg-white text-slate-950 shadow-sm border border-slate-100"
+                  : "text-slate-500 hover:text-slate-800"
               }`}
             >
-              <span className={`h-2 w-2 rounded-full ${loginMode === "live" ? "bg-emerald-500 animate-pulse" : "bg-navy-300"}`} />
-              Koneksi Live
+              <span className={`h-1.5 w-1.5 rounded-full ${loginMode === "live" ? "bg-emerald-500 animate-pulse" : "bg-slate-300"}`} />
+              Live Mode
             </button>
             <button
               type="button"
-              onClick={() => { setLoginMode("simulator"); setError(null); }}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold rounded-xl transition-all duration-300 cursor-pointer ${
+              onClick={() => {
+                setLoginMode("simulator");
+                setError(null);
+              }}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold rounded-lg transition-all duration-200 cursor-pointer ${
                 loginMode === "simulator"
-                  ? "bg-white text-navy-900 shadow-sm border border-navy-100/30"
-                  : "text-navy-400 hover:text-navy-700"
+                  ? "bg-white text-slate-950 shadow-sm border border-slate-100"
+                  : "text-slate-500 hover:text-slate-800"
               }`}
             >
-              <span className={`h-2 w-2 rounded-full ${loginMode === "simulator" ? "bg-gold animate-pulse" : "bg-navy-300"}`} />
+              <span className={`h-1.5 w-1.5 rounded-full ${loginMode === "simulator" ? "bg-amber-500 animate-pulse" : "bg-slate-300"}`} />
               Simulator
             </button>
           </div>
 
           {/* Form */}
-          <form onSubmit={handleLogin} className="flex flex-col gap-5">
+          <form onSubmit={handleLogin} className="flex flex-col gap-4">
+            {/* Email field */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-navy-600 pl-1 select-none">
-                Email Administrator
+              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600 pl-1 select-none">
+                Email
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-navy-400">
-                  <Mail className="h-4.5 w-4.5" />
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <Mail className="h-4 w-4" />
                 </div>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="admin@genesis.id"
-                  className="w-full bg-navy-50/50 border border-navy-100 rounded-xl py-2.5 pl-10 pr-4 text-sm text-navy-900 placeholder-navy-400 focus:outline-none focus:border-navy-300 focus:bg-white transition-all duration-200"
+                  className="w-full bg-slate-50 border border-slate-100 rounded-xl py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-350 focus:bg-white transition-all duration-150"
                   required
                 />
               </div>
             </div>
 
+            {/* Password field */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-navy-600 pl-1 select-none">
-                Kata Sandi
+              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600 pl-1 select-none">
+                Password
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-navy-400">
-                  <Lock className="h-4.5 w-4.5" />
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <Lock className="h-4 w-4" />
                 </div>
                 <input
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full bg-navy-50/50 border border-navy-100 rounded-xl py-2.5 pl-10 pr-10 text-sm text-navy-900 placeholder-navy-400 focus:outline-none focus:border-navy-300 focus:bg-white transition-all duration-200"
+                  className="w-full bg-slate-50 border border-slate-100 rounded-xl py-2.5 pl-10 pr-10 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-350 focus:bg-white transition-all duration-150"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-navy-400 hover:text-navy-900 transition-colors cursor-pointer"
+                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-450 hover:text-slate-900 transition-colors cursor-pointer"
                 >
-                  {showPassword ? <EyeOff className="h-4.5 w-4.5" /> : <Eye className="h-4.5 w-4.5" />}
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4.5 w-4.5" />}
                 </button>
               </div>
             </div>
 
+            {/* Action submit button */}
             <button
               type="submit"
               disabled={loading}
-              className={`mt-2 w-full rounded-xl text-white py-2.5 text-sm font-semibold shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:scale-100 flex items-center justify-center gap-2 select-none ${
-                loginMode === "live" ? "bg-navy-900 hover:bg-navy-850" : "bg-gold hover:bg-gold/90 text-navy-900"
+              className={`mt-4 w-full rounded-xl py-3 text-sm font-semibold transition-all duration-200 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2 select-none text-white ${
+                loginMode === "live" 
+                  ? "bg-slate-950 hover:bg-slate-900 hover:shadow-lg hover:shadow-slate-950/10" 
+                  : "bg-slate-800 hover:bg-slate-700 hover:shadow-lg hover:shadow-slate-800/10"
               }`}
             >
               {loading ? (
                 <>
-                  <div className={`h-4 w-4 rounded-full border-2 border-t-transparent animate-spin ${loginMode === "live" ? "border-white" : "border-navy-900"}`} />
+                  <Loader2 className="h-4 w-4 animate-spin text-white" />
                   Membuka Otoritas Admin...
                 </>
               ) : (
@@ -282,6 +256,7 @@ export default function AdminLogin() {
               )}
             </button>
           </form>
+
         </div>
       </div>
     </main>

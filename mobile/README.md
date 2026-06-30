@@ -6,9 +6,17 @@
 [![Navigation](https://img.shields.io/badge/Navigation-GoRouter-purple.svg)](#)
 [![Design System](https://img.shields.io/badge/Design-Material%203-teal.svg)](#)
 
-Genesis Mobile adalah aplikasi gawai berbasis Android yang dirancang khusus untuk warga kota Genesis agar dapat melaporkan masalah lingkungan secara spasial, melakukan konsultasi hukum perda melalui asisten cerdas, serta berpartisipasi dalam gamifikasi kebersihan kota.
+<div align="center">
+  <a href="https://storage.googleapis.com/arisa-opsi-bucket-2026/apps/app-arm64-v8a-release.apk">
+    <img src="https://img.shields.io/badge/📥_DOWNLOAD_APK_ANDROID_(arm64)-02569B?style=for-the-badge&logo=android&logoColor=white" alt="Download APK Android" />
+  </a>
+</div>
 
 ---
+
+Genesis Mobile adalah aplikasi gawai berbasis Android yang dirancang khusus untuk warga kota Genesis agar dapat melaporkan masalah lingkungan secara spasial, melakukan konsultasi hukum perda melalui asisten cerdas, serta berpartisipasi dalam gamifikasi kebersihan kota.
+
+**Backend API**: `https://genesisHub.my.id` | **Web Dashboard**: `https://genesisHub.web.id`
 
 ## 1. Fitur Utama & Logika Bisnis
 

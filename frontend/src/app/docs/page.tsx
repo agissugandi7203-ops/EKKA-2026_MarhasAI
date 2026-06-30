@@ -349,54 +349,89 @@ void fetchB2gData() async {
         </div>
       </div>
 
-      {/* 2. Overview cards section */}
-      <section className="relative w-full bg-surface text-navy-900 py-16 px-4 sm:px-8 border-b border-navy-100">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <span className="text-xs uppercase tracking-wider text-primary font-semibold">Enterprise DaaS Features</span>
-            <h2 className="text-3xl sm:text-4xl font-light tracking-tight text-navy-900 mt-2">Infrastruktur Integrasi B2G</h2>
-          </div>
+      {/* 2. Overview cards section (Bento Grid Layout) */}
+      <section className="relative w-full bg-slate-50 text-slate-800 py-24 px-4 sm:px-6 md:px-8 border-b border-slate-100 overflow-hidden">
+        <div className="max-w-6xl w-full mx-auto flex flex-col items-center text-center">
+          <span className="text-xs font-bold tracking-widest text-slate-500 uppercase mb-3">Enterprise DaaS Features</span>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-light text-slate-900 tracking-tight mb-5">Infrastruktur Integrasi B2G</h2>
+          <p className="text-slate-500 max-w-2xl text-sm sm:text-base font-light mb-16 leading-relaxed">
+            Data feeds yang aman dan terstruktur untuk diintegrasikan secara instan ke sistem operasi kota Anda.
+          </p>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white p-6 rounded-2xl border border-navy-100 hover:border-primary/30 shadow-sm transition-all hover:shadow-md duration-300">
-              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-5">
-                <Database className="h-6 w-6" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full text-left">
+            
+            {/* Box 1 (Col span 2) */}
+            <div className="bg-white rounded-[32px] p-8 border border-slate-150/70 shadow-[0_8px_30px_rgba(15,23,42,0.015)] hover:shadow-[0_12px_40px_rgba(15,23,42,0.03)] hover:scale-[1.01] transition-all duration-300 md:col-span-2 flex flex-col justify-between gap-6 relative overflow-hidden group">
+              <div className="flex flex-col gap-4">
+                <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-700 border border-slate-100">
+                  <Database className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-slate-900">Penyajian Geospasial Lanjut</h3>
+                  <p className="text-slate-500 text-sm font-light leading-relaxed mt-2">
+                    Output data laporan yang ramah standar GIS (Point & koordinat desimal) memudahkan impor otomatis ke platform ArcGIS, QGIS, atau Smart City Dashboard untuk pemetaan dinamis dan visualisasi spasial instan.
+                  </p>
+                </div>
               </div>
-              <h3 className="text-lg font-medium text-navy-900 mb-2">Penyajian Geospasial</h3>
-              <p className="text-sm text-navy-600 font-light leading-relaxed">
-                Output data laporan yang ramah standar GIS (Point & koordinat desimal) memudahkan impor otomatis ke platform ArcGIS, QGIS, atau Smart City Dashboard.
-              </p>
+              <div className="flex items-center gap-1 text-xs font-semibold text-slate-655">
+                <span>Standard GIS Point Output</span>
+              </div>
             </div>
             
-            <div className="bg-white p-6 rounded-2xl border border-navy-100 hover:border-primary/30 shadow-sm transition-all hover:shadow-md duration-300">
-              <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 mb-5">
-                <ShieldCheck className="h-6 w-6" />
+            {/* Box 2 (Col span 1) */}
+            <div className="bg-white rounded-[32px] p-8 border border-slate-150/70 shadow-[0_8px_30px_rgba(15,23,42,0.015)] hover:shadow-[0_12px_40px_rgba(15,23,42,0.03)] hover:scale-[1.01] transition-all duration-300 flex flex-col justify-between gap-6 relative overflow-hidden group">
+              <div className="flex flex-col gap-4">
+                <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 border border-emerald-100">
+                  <ShieldCheck className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-slate-900">Autentikasi API Key</h3>
+                  <p className="text-slate-500 text-sm font-light leading-relaxed mt-2">
+                    Pengamanan rute menggunakan header `x-api-key` tersertifikasi yang diisolasi khusus per instansi guna membatasi akses data.
+                  </p>
+                </div>
               </div>
-              <h3 className="text-lg font-medium text-navy-900 mb-2">Autentikasi API Key</h3>
-              <p className="text-sm text-navy-600 font-light leading-relaxed">
-                Pengamanan rute menggunakan header `x-api-key` tersertifikasi yang diisolasi khusus per instansi guna membatasi penyalahgunaan data rahasia.
-              </p>
+              <div className="flex items-center gap-1.5 text-xs text-emerald-655 font-bold">
+                <span>Header x-api-key Protected</span>
+              </div>
             </div>
             
-            <div className="bg-white p-6 rounded-2xl border border-navy-100 hover:border-primary/30 shadow-sm transition-all hover:shadow-md duration-300">
-              <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 mb-5">
-                <Activity className="h-6 w-6" />
+            {/* Box 3 (Col span 1) */}
+            <div className="bg-white rounded-[32px] p-8 border border-slate-150/70 shadow-[0_8px_30px_rgba(15,23,42,0.015)] hover:shadow-[0_12px_40px_rgba(15,23,42,0.03)] hover:scale-[1.01] transition-all duration-300 flex flex-col justify-between gap-6 relative overflow-hidden group">
+              <div className="flex flex-col gap-4">
+                <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 border border-indigo-100">
+                  <Activity className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-slate-900">Agregasi Statistik</h3>
+                  <p className="text-slate-500 text-sm font-light leading-relaxed mt-2">
+                    Endpoint summary membantu menyusun grafik pelaporan mingguan, saringan wilayah, tingkat keparahan, serta jenis limbah otomatis.
+                  </p>
+                </div>
               </div>
-              <h3 className="text-lg font-medium text-navy-900 mb-2">Agregasi Statistik</h3>
-              <p className="text-sm text-navy-600 font-light leading-relaxed">
-                Endpoint summary membantu menyusun grafik pelaporan mingguan, saringan wilayah, tingkat keparahan, serta dominasi jenis limbah otomatis.
-              </p>
+              <div className="flex items-center gap-1.5 text-xs text-indigo-650 font-bold">
+                <span>Live Aggregation summary</span>
+              </div>
             </div>
             
-            <div className="bg-white p-6 rounded-2xl border border-navy-100 hover:border-primary/30 shadow-sm transition-all hover:shadow-md duration-300">
-              <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-orange-600 mb-5">
-                <Layers className="h-6 w-6" />
+            {/* Box 4 (Col span 2) */}
+            <div className="bg-white rounded-[32px] p-8 border border-slate-150/70 shadow-[0_8px_30px_rgba(15,23,42,0.015)] hover:shadow-[0_12px_40px_rgba(15,23,42,0.03)] hover:scale-[1.01] transition-all duration-300 md:col-span-2 flex flex-col justify-between gap-6 relative overflow-hidden group">
+              <div className="flex flex-col gap-4">
+                <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-orange-600 border border-orange-100">
+                  <Layers className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-slate-900">In-Memory AI Sensing & Privacy Guard</h3>
+                  <p className="text-slate-500 text-sm font-light leading-relaxed mt-2">
+                    Data yang didistribusikan telah disensor secara otomatis dari data pribadi sensitif (seperti wajah warga dan plat nomor kendaraan yang diblur secara real-time via Google Vision API) untuk mematuhi UU Pelindungan Data Pribadi (PDP).
+                  </p>
+                </div>
               </div>
-              <h3 className="text-lg font-medium text-navy-900 mb-2">In-Memory AI Sensing</h3>
-              <p className="text-sm text-navy-600 font-light leading-relaxed">
-                Data yang didistribusikan telah disensor dari data pribadi sensitif (plat nomor & wajah diblur via Google Vision API) demi mematuhi UU Pelindungan Data Pribadi (PDP).
-              </p>
+              <div className="flex items-center gap-1 text-xs text-slate-655">
+                <span>UU PDP Compliance Guaranteed</span>
+              </div>
             </div>
+            
           </div>
         </div>
       </section>
@@ -800,23 +835,23 @@ void fetchB2gData() async {
       </section>
 
       {/* 5. SLA & Legal guidelines */}
-      <section className="relative w-full bg-slate-900 text-white py-24 px-4 sm:px-8">
+      <section className="relative w-full bg-slate-100 text-slate-800 py-24 px-4 sm:px-8 border-t border-slate-200/50">
         <div className="max-w-4xl mx-auto flex flex-col md:flex-row gap-12 items-center justify-between">
           <div className="max-w-xl">
-            <span className="text-xs uppercase tracking-wider text-primary font-mono font-bold">B2G Service-Level Agreement</span>
-            <h2 className="text-3xl font-light tracking-tight mt-2 text-white">SLA Ketersediaan 99.9%</h2>
-            <p className="text-sm font-light text-navy-200 mt-4 leading-relaxed">
-              Layanan DaaS Genesis.id berjalan di atas infrastruktur server autoscaling Google Cloud Run yang terintegrasi secara redundan dengan database Supabase, menjamin kecepatan response time rata-rata di bawah 120ms bagi sistem pemantauan darurat perkotaan.
+            <span className="text-xs uppercase tracking-wider text-slate-500 font-mono font-bold">B2G Service-Level Agreement</span>
+            <h2 className="text-3xl font-light tracking-tight mt-2 text-slate-900">SLA Ketersediaan 99.9%</h2>
+            <p className="text-sm font-light text-slate-500 mt-4 leading-relaxed">
+              Layanan DaaS Genesis berjalan di atas infrastruktur server autoscaling Google Cloud Run yang terintegrasi secara redundan dengan database Supabase, menjamin kecepatan response time rata-rata di bawah 120ms bagi sistem pemantauan darurat perkotaan.
             </p>
           </div>
           
-          <div className="flex-shrink-0 bg-navy-800 p-8 rounded-2xl border border-navy-700 w-full md:w-auto md:min-w-[250px] text-center shadow-lg shadow-black/20">
-            <div className="text-primary text-5xl font-mono font-bold tracking-tight">99.9%</div>
-            <div className="text-xs text-navy-300 font-mono tracking-widest uppercase mt-2">Guaranteed Uptime</div>
-            <div className="mt-6 border-t border-navy-700/60 pt-6">
+          <div className="flex-shrink-0 bg-white p-8 rounded-2xl border border-slate-200 w-full md:w-auto md:min-w-[250px] text-center shadow-sm">
+            <div className="text-slate-900 text-5xl font-mono font-bold tracking-tight">99.9%</div>
+            <div className="text-[10px] text-slate-450 font-mono tracking-widest uppercase mt-2">Guaranteed Uptime</div>
+            <div className="mt-6 border-t border-slate-100 pt-6">
               <a 
                 href="mailto:support@genesisHub.web.id"
-                className="inline-block text-xs font-semibold rounded-lg bg-white text-navy-900 px-4 py-2 hover:bg-slate-100 transition-colors cursor-pointer select-none"
+                className="inline-block text-xs font-semibold rounded-lg bg-slate-900 text-white px-4 py-2 hover:bg-slate-800 transition-colors cursor-pointer select-none"
               >
                 Hubungi Support
               </a>
@@ -825,7 +860,9 @@ void fetchB2gData() async {
         </div>
       </section>
 
+      {/* Footer */}
       <Footer />
+
     </main>
   );
 }
