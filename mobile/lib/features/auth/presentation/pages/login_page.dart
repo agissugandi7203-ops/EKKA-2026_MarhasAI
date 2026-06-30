@@ -67,17 +67,17 @@ class _LoginPageState extends State<LoginPage> {
                 width: MediaQuery.of(context).size.width * 0.88,
                 padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 32),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.75), // Frosted glass
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.3),
+                    color: const Color(0xFFE2E8F0),
                     width: 1.5,
                   ),
-                  boxShadow: [
+                  boxShadow: const [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.08),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
+                      color: Color(0xFFE2E8F0),
+                      offset: Offset(0, 6),
+                      blurRadius: 0,
                     ),
                   ],
                 ),

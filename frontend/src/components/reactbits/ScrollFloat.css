@@ -1,0 +1,15 @@
+.scroll-float {
+  overflow: hidden;
+}
+
+.scroll-float-text {
+  display: inline-block;
+  font-size: inherit;
+  font-weight: inherit;
+  text-align: inherit;
+  line-height: 1.5;
+}
+
+.sf-char {
+  display: inline-block;
+}

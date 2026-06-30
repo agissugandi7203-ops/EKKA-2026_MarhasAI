@@ -29,42 +29,27 @@ abstract final class AppDecorations {
   /// Shadow halus — card biasa, container ringan.
   static const List<BoxShadow> shadowSoft = [
     BoxShadow(
-      color: Color(0x0A000000),
-      blurRadius: 8,
-      offset: Offset(0, 2),
-    ),
-    BoxShadow(
-      color: Color(0x05000000),
-      blurRadius: 4,
-      offset: Offset(0, 1),
+      color: Color(0xFFE2E8F0),
+      blurRadius: 0,
+      offset: Offset(0, 3),
     ),
   ];
 
   /// Shadow sedang — card yang terangkat, floating button.
   static const List<BoxShadow> shadowMedium = [
     BoxShadow(
-      color: Color(0x14000000),
-      blurRadius: 16,
+      color: Color(0xFFE2E8F0),
+      blurRadius: 0,
       offset: Offset(0, 4),
-    ),
-    BoxShadow(
-      color: Color(0x0A000000),
-      blurRadius: 6,
-      offset: Offset(0, 2),
     ),
   ];
 
   /// Shadow kuat — modal, bottom sheet, dialog.
   static const List<BoxShadow> shadowStrong = [
     BoxShadow(
-      color: Color(0x1F000000),
-      blurRadius: 24,
-      offset: Offset(0, 8),
-    ),
-    BoxShadow(
-      color: Color(0x0F000000),
-      blurRadius: 10,
-      offset: Offset(0, 4),
+      color: Color(0xFFCBD5E1),
+      blurRadius: 0,
+      offset: Offset(0, 6),
     ),
   ];
 
@@ -75,14 +60,16 @@ abstract final class AppDecorations {
   /// Card standar — rounded corner + soft shadow.
   static BoxDecoration get card => BoxDecoration(
         color: AppColors.cardBackground,
-        borderRadius: radiusMedium,
+        borderRadius: radiusLarge,
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
         boxShadow: shadowSoft,
       );
 
   /// Card elevated — rounded corner + medium shadow (lebih terangkat).
   static BoxDecoration get cardElevated => BoxDecoration(
         color: AppColors.cardBackground,
-        borderRadius: radiusLarge,
+        borderRadius: radiusXLarge,
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
         boxShadow: shadowMedium,
       );
 

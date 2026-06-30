@@ -35,9 +35,9 @@ export default function Header() {
             : "max-w-7xl rounded-2xl bg-transparent border border-transparent py-5 px-4 sm:px-8"
         }`}
       >
-        <div className="flex items-center justify-between w-full">
-          {/* Logo (left) */}
-          <Link href="/" className="flex items-center gap-2 hover:opacity-85 transition-opacity">
+        <div className="flex items-center w-full">
+          {/* Logo (left) — flex-1 for equal distribution */}
+          <Link href="/" className="flex-1 flex items-center gap-2 hover:opacity-85 transition-opacity">
             <svg
               viewBox="0 0 256 256"
               className={`h-5 w-5 ${isScrolled ? 'fill-navy-900' : 'fill-white'}`}
@@ -50,8 +50,8 @@ export default function Header() {
             </span>
           </Link>
 
-          {/* Nav Links (center, hidden on mobile/tablet below md) */}
-          <nav className="hidden md:flex items-center gap-8">
+          {/* Nav Links (center, flex-none for true centering) */}
+          <nav className="hidden md:flex items-center justify-center gap-8">
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
               const textColor = isScrolled 
@@ -73,8 +73,8 @@ export default function Header() {
             })}
           </nav>
 
-          {/* Action Buttons (right) */}
-          <div className="flex items-center gap-2.5">
+          {/* Action Buttons (right) — flex-1 for equal distribution */}
+          <div className="flex-1 flex items-center justify-end gap-2.5">
             {/* Admin Portal CTA */}
             <Link
               href="/admin/login"
@@ -89,7 +89,7 @@ export default function Header() {
 
             {/* Download App CTA button */}
             <a
-              href="#"
+              href="https://storage.googleapis.com/arisa-opsi-bucket-2026/apps/app-arm64-v8a-release.apk"
               className={`flex items-center gap-2 rounded-xl p-1 pr-3 sm:pr-4 shadow-sm hover:scale-105 active:scale-95 transition-transform duration-200 cursor-pointer select-none ${
                 isScrolled ? 'bg-navy-50' : 'bg-white'
               }`}

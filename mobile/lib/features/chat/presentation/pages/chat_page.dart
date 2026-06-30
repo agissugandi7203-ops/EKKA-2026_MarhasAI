@@ -870,17 +870,17 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
               child: Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.95),
+                  color: Colors.white,
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.4),
+                    color: const Color(0xFFE2E8F0),
                     width: 1.5,
                   ),
-                  boxShadow: [
+                  boxShadow: const [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 20,
-                      offset: const Offset(0, -5),
+                      color: Color(0xFFE2E8F0),
+                      offset: Offset(0, -4),
+                      blurRadius: 0,
                     ),
                   ],
                 ),
@@ -1031,9 +1031,9 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: gradientColors[0].withValues(alpha: 0.3),
-                  blurRadius: 12,
+                  color: gradientColors[0].withValues(alpha: 0.25),
                   offset: const Offset(0, 4),
+                  blurRadius: 0,
                 ),
               ],
             ),
@@ -1212,11 +1212,11 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
             decoration: BoxDecoration(
               color: Colors.white,
               shape: BoxShape.circle,
-              boxShadow: [
+              boxShadow: const [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, 3),
+                  color: Color(0xFFE2E8F0),
+                  offset: Offset(0, 3),
+                  blurRadius: 0,
                 ),
               ],
               border: Border.all(
@@ -1236,29 +1236,23 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
         Expanded(
           child: Container(
             decoration: BoxDecoration(
-              boxShadow: [
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24.0),
+              border: Border.all(
+                color: const Color(0xFFE2E8F0),
+                width: 1.5,
+              ),
+              boxShadow: const [
                 BoxShadow(
-                  color: AppColors.navy900.withValues(alpha: 0.04),
-                  blurRadius: 16,
-                  offset: const Offset(0, 4),
+                  color: Color(0xFFE2E8F0),
+                  offset: Offset(0, 4),
+                  blurRadius: 0,
                 ),
               ],
             ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(24.0),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.9),
-                    borderRadius: BorderRadius.circular(24.0),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.5),
-                      width: 1.5,
-                    ),
-                  ),
-                  child: Column(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -1340,8 +1334,6 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
                 ),
               ),
             ),
-          ),
-        ),
         const SizedBox(width: 10),
         // Merged Send/Mic button on the right
         GestureDetector(
@@ -1364,11 +1356,11 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-                boxShadow: [
+                boxShadow: const [
                   BoxShadow(
-                    color: const Color(0xFF0F2042).withValues(alpha: 0.15),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
+                    color: Color(0xFF0A1628),
+                    offset: Offset(0, 3),
+                    blurRadius: 0,
                   ),
                 ],
               ),

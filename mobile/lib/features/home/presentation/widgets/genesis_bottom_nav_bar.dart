@@ -31,84 +31,67 @@ class GenesisBottomNavBar extends StatelessWidget {
         clipBehavior: Clip.none,
         alignment: Alignment.center,
         children: [
-          // ── Glassmorphic Base Bar ──
+          // ── Solid 3D Base Bar ──
           Container(
             height: barHeight,
             decoration: BoxDecoration(
-              boxShadow: [
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24.0),
+              border: Border.all(
+                color: const Color(0xFFE2E8F0),
+                width: 1.5,
+              ),
+              boxShadow: const [
                 BoxShadow(
-                  color: AppColors.navy900.withValues(alpha: 0.12),
-                  blurRadius: 24,
-                  spreadRadius: 1,
-                  offset: const Offset(0, 8),
-                ),
-                BoxShadow(
-                  color: AppColors.navy700.withValues(alpha: 0.04),
-                  blurRadius: 8,
-                  spreadRadius: 0,
-                  offset: const Offset(0, 2),
+                  color: Color(0xFFE2E8F0),
+                  offset: Offset(0, 4),
+                  blurRadius: 0,
                 ),
               ],
             ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(24.0),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 16.0, sigmaY: 16.0),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.85),
-                    borderRadius: BorderRadius.circular(24.0),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.35),
-                      width: 1.5,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      // Tab 0: Home
-                      Expanded(
-                        child: _NavBarItem(
-                          svgString: AppSvgs.navHome,
-                          label: 'Beranda',
-                          isSelected: selectedIndex == 0,
-                          onTap: () => onTabSelected(0),
-                        ),
-                      ),
-                      // Tab 1: Chat
-                      Expanded(
-                        child: _NavBarItem(
-                          svgString: AppSvgs.navChat,
-                          label: 'AI Chat',
-                          isSelected: selectedIndex == 1,
-                          onTap: () => onTabSelected(1),
-                          badgeCount: 0,
-                        ),
-                      ),
-                      // Spacer for Center Camera button (so tabs don't overlap it)
-                      const SizedBox(width: 60.0),
-                      // Tab 3: Leaderboard
-                      Expanded(
-                        child: _NavBarItem(
-                          svgString: AppSvgs.navLeaderboard,
-                          label: 'Peringkat',
-                          isSelected: selectedIndex == 3,
-                          onTap: () => onTabSelected(3),
-                        ),
-                      ),
-                      // Tab 4: Profile
-                      Expanded(
-                        child: _NavBarItem(
-                          svgString: AppSvgs.navProfile,
-                          label: 'Profil',
-                          isSelected: selectedIndex == 4,
-                          onTap: () => onTabSelected(4),
-                        ),
-                      ),
-                    ],
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                // Tab 0: Home
+                Expanded(
+                  child: _NavBarItem(
+                    svgString: AppSvgs.navHome,
+                    label: 'Beranda',
+                    isSelected: selectedIndex == 0,
+                    onTap: () => onTabSelected(0),
                   ),
                 ),
-              ),
+                // Tab 1: Chat
+                Expanded(
+                  child: _NavBarItem(
+                    svgString: AppSvgs.navChat,
+                    label: 'AI Chat',
+                    isSelected: selectedIndex == 1,
+                    onTap: () => onTabSelected(1),
+                    badgeCount: 0,
+                  ),
+                ),
+                // Spacer for Center Camera button (so tabs don't overlap it)
+                const SizedBox(width: 60.0),
+                // Tab 3: Leaderboard
+                Expanded(
+                  child: _NavBarItem(
+                    svgString: AppSvgs.navLeaderboard,
+                    label: 'Peringkat',
+                    isSelected: selectedIndex == 3,
+                    onTap: () => onTabSelected(3),
+                  ),
+                ),
+                // Tab 4: Profile
+                Expanded(
+                  child: _NavBarItem(
+                    svgString: AppSvgs.navProfile,
+                    label: 'Profil',
+                    isSelected: selectedIndex == 4,
+                    onTap: () => onTabSelected(4),
+                  ),
+                ),
+              ],
             ),
           ),
 
@@ -136,18 +119,11 @@ class GenesisBottomNavBar extends StatelessWidget {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
-                      boxShadow: [
+                      boxShadow: const [
                         BoxShadow(
-                          color: AppColors.navy500.withValues(alpha: 0.35),
-                          blurRadius: 18,
-                          spreadRadius: 2,
-                          offset: const Offset(0, 6),
-                        ),
-                        BoxShadow(
-                          color: AppColors.navy700.withValues(alpha: 0.15),
-                          blurRadius: 8,
-                          spreadRadius: 0,
-                          offset: const Offset(0, 2),
+                          color: Color(0xFF1B3A76), // Navy600
+                          offset: Offset(0, 4),
+                          blurRadius: 0,
                         ),
                       ],
                       border: Border.all(

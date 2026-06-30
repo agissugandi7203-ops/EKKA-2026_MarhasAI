@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import BoomerangVideoBg from "@/components/BoomerangVideoBg";
 import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import {
   ShieldCheck,
   ArrowRight,
@@ -824,6 +825,7 @@ void fetchB2gData() async {
         </div>
       </section>
 
+      <Footer />
     </main>
   );
 }

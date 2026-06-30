@@ -547,24 +547,17 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [
-              Color(0xFF0F172A), // Slate 900
-              Color(0xFF1E293B), // Slate 800
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(28.0),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24.0),
           border: Border.all(
-            color: Colors.white.withValues(alpha: 0.1),
+            color: const Color(0xFFE2E8F0),
             width: 1.5,
           ),
-          boxShadow: [
+          boxShadow: const [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.25),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
+              color: Color(0xFFE2E8F0),
+              offset: Offset(0, 4),
+              blurRadius: 0,
             ),
           ],
         ),
@@ -586,7 +579,7 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
                           Text(
                             'LV',
                             style: AppTextStyles.labelSmall.copyWith(
-                              color: Colors.white70,
+                              color: AppColors.textSecondary,
                               fontSize: 9,
                               fontWeight: FontWeight.bold,
                             ),
@@ -594,7 +587,7 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
                           Text(
                             '$level',
                             style: AppTextStyles.headlineMedium.copyWith(
-                              color: Colors.white,
+                              color: AppColors.textPrimary,
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
                               height: 1.1,
@@ -624,7 +617,7 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
                             child: Text(
                               'Eco Guardian',
                               style: AppTextStyles.labelSmall.copyWith(
-                                color: AppColors.goldLight,
+                                color: AppColors.gold,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 9,
                               ),
@@ -633,7 +626,7 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
                           Text(
                             'Pahlawan Hijau',
                             style: AppTextStyles.labelSmall.copyWith(
-                              color: AppColors.navy200,
+                              color: AppColors.textSecondary,
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
                             ),
@@ -660,7 +653,7 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
               ],
             ),
             const SizedBox(height: 14),
-            Container(height: 1, color: Colors.white.withValues(alpha: 0.1)),
+            Container(height: 1, color: const Color(0xFFE2E8F0)),
             const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -671,22 +664,22 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                     decoration: BoxDecoration(
-                      color: AppColors.gold.withValues(alpha: 0.15),
+                      color: const Color(0xFFFEF3C7),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: AppColors.gold.withValues(alpha: 0.5),
+                        color: const Color(0xFFF59E0B),
                         width: 1.2,
                       ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.emoji_events_outlined, color: AppColors.gold, size: 14),
+                        const Icon(Icons.emoji_events_outlined, color: Color(0xFFD97706), size: 14),
                         const SizedBox(width: 6),
                         Text(
                           'Leaderboard',
                           style: AppTextStyles.labelSmall.copyWith(
-                            color: Colors.white,
+                            color: Color(0xFFB45309),
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
                           ),
@@ -703,22 +696,22 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                     decoration: BoxDecoration(
-                      color: AppColors.emerald.withValues(alpha: 0.25),
+                      color: const Color(0xFFD1FAE5),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: AppColors.emerald.withValues(alpha: 0.6),
+                        color: const Color(0xFF10B981),
                         width: 1.2,
                       ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.card_giftcard_rounded, color: AppColors.emeraldLight, size: 14),
+                        const Icon(Icons.card_giftcard_rounded, color: Color(0xFF059669), size: 14),
                         const SizedBox(width: 6),
                         Text(
                           'Tukar Poin',
                           style: AppTextStyles.labelSmall.copyWith(
-                            color: Colors.white,
+                            color: Color(0xFF047857),
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
                           ),
@@ -743,9 +736,9 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.06),
+        color: const Color(0xFFF1F5F9),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1),
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -757,12 +750,12 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
               child: Lottie.asset(lottiePath, repeat: true),
             )
           else if (svgContent != null)
-            SvgPicture.string(svgContent, width: 11, height: 11),
+            SvgPicture.string(svgContent, width: 11, height: 11, colorFilter: const ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn)),
           const SizedBox(width: 4),
           Text(
             text,
             style: AppTextStyles.labelSmall.copyWith(
-              color: Colors.white.withValues(alpha: 0.9),
+              color: AppColors.textPrimary,
               fontSize: 9,
               fontWeight: FontWeight.bold,
             ),
@@ -784,16 +777,16 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(28.0),
+          borderRadius: BorderRadius.circular(24.0),
           border: Border.all(
-            color: AppColors.divider.withValues(alpha: 0.7),
+            color: const Color(0xFFE2E8F0),
             width: 1.5,
           ),
-          boxShadow: [
+          boxShadow: const [
             BoxShadow(
-              color: AppColors.navy900.withValues(alpha: 0.04),
-              blurRadius: 14,
-              offset: const Offset(0, 6),
+              color: Color(0xFFE2E8F0),
+              offset: Offset(0, 4),
+              blurRadius: 0,
             ),
           ],
         ),
@@ -988,21 +981,14 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
         color: gradientColors[0],
         borderRadius: BorderRadius.circular(24.0),
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.55),
+          color: iconColor.withValues(alpha: 0.2),
           width: 1.5,
         ),
         boxShadow: [
-          // Elegant color-matched 3D claymorphic bottom-right depth shadow
           BoxShadow(
-            color: iconColor.withValues(alpha: 0.14),
-            offset: const Offset(0, 8),
-            blurRadius: 12,
-          ),
-          // Clean top-left light source reflection
-          BoxShadow(
-            color: Colors.white.withValues(alpha: 0.65),
-            offset: const Offset(-4, -4),
-            blurRadius: 8,
+            color: iconColor.withValues(alpha: 0.18),
+            offset: const Offset(0, 4),
+            blurRadius: 0,
           ),
         ],
       ),
@@ -1140,27 +1126,18 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
                 width: isHighlighted && !isDone ? 2.2 : 1.5,
               ),
               boxShadow: isDone
-                  ? [
+                  ? const [
                       BoxShadow(
-                        color: AppColors.navy900.withValues(alpha: 0.01),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
+                        color: Color(0xFFCBD5E1),
+                        offset: Offset(0, 2),
+                        blurRadius: 0,
                       )
                     ]
                   : [
-                      // Primary soft-depth bottom shadow
                       BoxShadow(
-                        color: (isHighlighted ? const Color(0xFFFBBF24) : AppColors.navy500).withValues(alpha: 0.12),
-                        offset: const Offset(0, 10),
-                        blurRadius: 20,
-                        spreadRadius: -2,
-                      ),
-                      // Inner-emulated top-left highlight shadow
-                      const BoxShadow(
-                        color: Colors.white,
-                        offset: Offset(0, -4),
-                        blurRadius: 8,
-                        spreadRadius: 1,
+                        color: isHighlighted ? const Color(0xFFFBBF24).withValues(alpha: 0.4) : const Color(0xFFE2E8F0),
+                        offset: const Offset(0, 4),
+                        blurRadius: 0,
                       ),
                     ],
             ),
@@ -1180,15 +1157,9 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: iconColor.withValues(alpha: 0.15),
-                        offset: const Offset(0, 4),
-                        blurRadius: 6,
-                      ),
-                      BoxShadow(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        offset: const Offset(0, -2),
-                        blurRadius: 4,
-                        spreadRadius: -1,
+                        color: iconColor.withValues(alpha: 0.18),
+                        offset: const Offset(0, 2),
+                        blurRadius: 0,
                       ),
                     ],
                   ),
@@ -1625,7 +1596,7 @@ class LevelProgressPainter extends CustomPainter {
 
     final Paint paintBg = Paint()
       ..style = PaintingStyle.stroke
-      ..color = Colors.white.withValues(alpha: 0.08)
+      ..color = const Color(0xFFEEF2F6)
       ..strokeWidth = strokeWidth;
 
     final Paint paintFill = Paint()

@@ -47,22 +47,22 @@ abstract final class AppColors {
   // ══════════════════════════════════════════════════════════════════════
 
   /// Burgundy paling gelap — shadow maskot, gradient bawah.
-  static const Color burgundy900 = Color(0xFF3D0010);
+  static const Color burgundy900 = Color(0xFF1D2660);
 
   /// Burgundy utama — warna maskot primer.
-  static const Color burgundy700 = Color(0xFF800020);
+  static const Color burgundy700 = Color(0xFF2E4095);
 
   /// Burgundy sedang — aksen maskot, tombol branding.
-  static const Color burgundy500 = Color(0xFFA3324B);
+  static const Color burgundy500 = Color(0xFF3F51B5);
 
   /// Burgundy terang — background badge maskot.
-  static const Color burgundy300 = Color(0xFFD4758A);
+  static const Color burgundy300 = Color(0xFF7A96D6);
 
   /// Burgundy paling terang — subtle blush background.
-  static const Color burgundy100 = Color(0xFFF5E0E5);
+  static const Color burgundy100 = Color(0xFFEA869A);
 
   /// Burgundy hampir putih — card background maskot area.
-  static const Color burgundy50 = Color(0xFFFDF2F5);
+  static const Color burgundy50 = Color(0xFFFDF2F4);
 
   // ══════════════════════════════════════════════════════════════════════
   // ACCENT — Gamifikasi & Lingkungan

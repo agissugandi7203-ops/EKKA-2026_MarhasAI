@@ -1,24 +1,38 @@
 "use client";
+
 import React from "react";
+import dynamic from "next/dynamic";
 import BoomerangVideoBg from "@/components/BoomerangVideoBg";
 import Header from "@/components/Header";
-import { ShieldCheck, ArrowRight } from "lucide-react";
+import Footer from "@/components/Footer";
+import AnimatedContent from "@/components/reactbits/AnimatedContent";
+import GlareHover from "@/components/reactbits/GlareHover";
+import BorderGlow from "@/components/reactbits/BorderGlow";
+import {
+  ShieldCheck, ArrowRight, Zap, Brain, MapPinned, ScanEye,
+  MessageSquare, LayoutDashboard, Server, Container, BookOpen, Cloud
+} from "lucide-react";
+
+const ScrollFloat = dynamic(() => import("@/components/reactbits/ScrollFloat"), { ssr: false });
+const ScrollReveal = dynamic(() => import("@/components/reactbits/ScrollReveal"), { ssr: false });
+
+const APK_URL = "https://storage.googleapis.com/arisa-opsi-bucket-2026/apps/app-arm64-v8a-release.apk";
 
 export default function Services() {
   return (
     <main className="relative w-full min-h-screen bg-surface flex flex-col">
+      {/* ═══════════ HERO ═══════════ */}
       <div className="relative w-full h-screen overflow-hidden flex flex-col justify-between">
         <BoomerangVideoBg src="/videos/services.mp4" />
-        {/* Dark overlay specifically requested for readability */}
         <div className="absolute inset-0 bg-black/50 z-10 pointer-events-none" />
-        
+
         <div className="relative z-50">
           <Header />
         </div>
-        
+
         <div className="relative z-20 flex-1 flex flex-col items-center text-center justify-center px-4 sm:px-6 max-w-7xl mx-auto w-full pb-24 sm:pb-32">
           <div className="liquid-glass rounded-lg px-4 py-1.5 text-xs sm:text-sm text-white animate-fade-up delay-1 mb-5 sm:mb-6 select-none" style={{ background: "rgba(255, 255, 255, 0.16)" }}>
-            Services . B2G Integrations
+            Services · B2G Integrations
           </div>
           <h1 className="max-w-4xl text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-normal leading-[1.1] text-white tracking-tight animate-fade-up delay-2 select-none drop-shadow-lg">
             Enterprise tools for active governance.
@@ -26,41 +40,183 @@ export default function Services() {
           <p className="mt-5 sm:mt-6 max-w-xl text-sm sm:text-base md:text-lg leading-relaxed text-white/90 font-light animate-fade-up delay-3 select-none drop-shadow-md">
             Empower local councils with real-time analytics, automated reporting, and comprehensive OpenAPI endpoints.
           </p>
-          
-          {/* Action Buttons */}
+
           <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row-reverse items-center justify-center gap-4 animate-fade-up delay-4">
-            <a href="#" className="flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-semibold text-navy-900 shadow-xl shadow-white/10 hover:scale-105 active:scale-95 transition-transform duration-200 cursor-pointer select-none">
+            <a href={APK_URL} className="flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-semibold text-navy-900 shadow-xl shadow-white/10 hover:scale-105 active:scale-95 transition-transform duration-200 cursor-pointer select-none">
               Get the App
               <ShieldCheck className="h-4.5 w-4.5 text-navy-900" />
             </a>
-            <button className="flex items-center gap-2 rounded-xl liquid-glass px-6 py-3 text-sm font-medium text-white hover:bg-white/10 border border-white/20 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer select-none">
+            <a href="#services" className="flex items-center gap-2 rounded-xl liquid-glass px-6 py-3 text-sm font-medium text-white hover:bg-white/10 border border-white/20 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer select-none">
               Explore Services
               <ArrowRight className="h-4.5 w-4.5" />
-            </button>
+            </a>
           </div>
         </div>
       </div>
 
-      {/* Scrollable content below the fold */}
-      <section className="relative w-full bg-surface text-navy-900 py-24 px-4 sm:px-8 flex flex-col items-center justify-center border-t border-navy-100">
-        <h2 className="text-3xl sm:text-4xl font-light tracking-tight mb-8 text-center">Managed Cloud Infrastructure</h2>
-        <div className="max-w-4xl mx-auto flex flex-col gap-8 text-navy-700 font-light leading-relaxed">
-          <p className="text-center">
-            From spatial data processing to secure JWT routing, explore our fully managed B2G services.
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
-            <div className="bg-white p-8 rounded-2xl shadow-sm border border-navy-50">
-              <h3 className="text-xl font-medium text-navy-900 mb-3">Fastify Backend</h3>
-              <p>Dummy content block for scrolling. We will detail the NestJS + Fastify architecture here.</p>
-            </div>
-            <div className="bg-white p-8 rounded-2xl shadow-sm border border-navy-50">
-              <h3 className="text-xl font-medium text-navy-900 mb-3">Secure B2G Portal</h3>
-              <p>Dummy content block for scrolling. We will detail the robust JWT & RBAC guards here.</p>
-            </div>
+      {/* ═══════════ SERVICE GRID ═══════════ */}
+      <section id="services" className="relative w-full bg-surface text-navy-900 py-28 px-4 sm:px-6 md:px-8 border-t border-navy-100 overflow-hidden">
+        <div className="absolute top-0 right-1/4 h-[500px] w-[500px] rounded-full bg-navy-100 blur-[150px] pointer-events-none" />
+
+        <div className="relative z-10 max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <span className="text-xs font-semibold tracking-widest text-burgundy-700 uppercase mb-3 block">Services</span>
+            <ScrollFloat containerClassName="!text-3xl sm:!text-4xl md:!text-5xl font-light text-navy-900 tracking-tight mb-4">
+              Managed Cloud Services
+            </ScrollFloat>
+            <p className="text-navy-600 max-w-xl mx-auto text-sm sm:text-base font-light leading-relaxed">
+              Enam layanan inti yang membentuk platform Genesis.id — dari gateway API hingga dashboard analitik.
+            </p>
           </div>
-          <div className="h-32"></div> {/* Extra space for scroll testing */}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[
+              {
+                icon: <Zap className="h-6 w-6" />,
+                title: "API Gateway",
+                desc: "NestJS + Fastify adapter menghasilkan ~45,000 req/s throughput. Auto-scaling via Google Cloud Run container. Rate limiting dan request validation built-in.",
+                accent: "from-amber-500 to-orange-600",
+              },
+              {
+                icon: <Brain className="h-6 w-6" />,
+                title: "AI Classification",
+                desc: "Gemini 2.5 Flash via OpenRouter. Pipeline: photo → waste_type + danger_level + validity + confidence_score. Auto-approve >85%, fallback ke moderasi admin.",
+                accent: "from-violet-500 to-purple-600",
+              },
+              {
+                icon: <MapPinned className="h-6 w-6" />,
+                title: "Geo-Spatial Processing",
+                desc: "PostGIS RPC check_duplicate_report(lat, lng) radius 50m. Semua coordinate disimpan sebagai WKT SRID=4326. Spatial indexing untuk query real-time.",
+                accent: "from-cyan-500 to-blue-600",
+              },
+              {
+                icon: <ScanEye className="h-6 w-6" />,
+                title: "PII Redaction",
+                desc: "Google Vision API face + text detection. Sharp library untuk in-memory blur processing sebelum upload ke GCS. Zero personally identifiable data stored.",
+                accent: "from-rose-500 to-pink-600",
+              },
+              {
+                icon: <MessageSquare className="h-6 w-6" />,
+                title: "RAG Knowledge Base",
+                desc: "Chatbot regulasi perda berbasis Retrieval-Augmented Generation. Vector embedding + chunking otomatis untuk akurasi tinggi. Streaming response support.",
+                accent: "from-emerald-500 to-teal-600",
+              },
+              {
+                icon: <LayoutDashboard className="h-6 w-6" />,
+                title: "Admin Dashboard",
+                desc: "Real-time analytics dengan Leaflet interactive map. Multi-tab moderation system: reports, users, badges, gamification controls. Role-based access.",
+                accent: "from-indigo-500 to-blue-600",
+              },
+            ].map((service, i) => (
+              <AnimatedContent key={service.title} delay={i * 0.1} distance={50}>
+                <GlareHover
+                  background="white"
+                  borderRadius="20px"
+                  borderColor="rgba(0,0,0,0.04)"
+                  glareColor="#6366f1"
+                  glareOpacity={0.1}
+                >
+                  <div className="p-7 flex flex-col gap-4 w-full h-full min-h-[220px]">
+                    <div className={`h-12 w-12 rounded-xl bg-gradient-to-br ${service.accent} flex items-center justify-center text-white shadow-md shrink-0`}>
+                      {service.icon}
+                    </div>
+                    <h3 className="text-base font-semibold text-navy-900">{service.title}</h3>
+                    <p className="text-navy-600 text-sm font-light leading-relaxed">{service.desc}</p>
+                  </div>
+                </GlareHover>
+              </AnimatedContent>
+            ))}
+          </div>
         </div>
       </section>
+
+      {/* ═══════════ INFRASTRUCTURE ═══════════ */}
+      <section className="relative w-full bg-navy-950 text-white py-28 px-4 sm:px-6 md:px-8 overflow-hidden">
+        <div className="absolute top-1/3 left-1/4 h-[400px] w-[400px] rounded-full bg-indigo-950/30 blur-[120px] pointer-events-none" />
+
+        <div className="relative z-10 max-w-5xl mx-auto">
+          <div className="text-center mb-16">
+            <span className="text-xs font-semibold tracking-widest text-indigo-400 uppercase mb-3 block">Infrastructure</span>
+            <ScrollFloat containerClassName="!text-3xl sm:!text-4xl md:!text-5xl font-light text-white tracking-tight mb-4">
+              Production Infrastructure
+            </ScrollFloat>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            {[
+              {
+                icon: <Cloud className="h-5 w-5" />,
+                title: "Google Cloud Run",
+                desc: "Auto-scaling containerized deployment. Pay-per-request pricing. Zero-downtime rolling updates.",
+              },
+              {
+                icon: <Container className="h-5 w-5" />,
+                title: "Docker Multi-Stage",
+                desc: "Backend: NestJS Fastify, non-root user, PORT 8080. Frontend: Next.js standalone output ~100MB image.",
+              },
+              {
+                icon: <Server className="h-5 w-5" />,
+                title: "Supabase PostgreSQL",
+                desc: "Managed PostgreSQL + PostGIS extension. Realtime subscriptions. Row-level security policies.",
+              },
+            ].map((item, i) => (
+              <AnimatedContent key={item.title} delay={i * 0.15} distance={40}>
+                <div className="rounded-2xl bg-white/[0.03] border border-white/5 p-6">
+                  <div className="h-10 w-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 mb-4">
+                    {item.icon}
+                  </div>
+                  <h3 className="text-sm font-semibold text-white mb-2">{item.title}</h3>
+                  <p className="text-xs text-white/40 leading-relaxed">{item.desc}</p>
+                </div>
+              </AnimatedContent>
+            ))}
+          </div>
+
+          <ScrollReveal
+            enableBlur
+            blurStrength={3}
+            baseOpacity={0.15}
+            containerClassName="max-w-2xl mx-auto !m-0"
+            textClassName="!text-sm !font-light text-white/40 !leading-relaxed text-center"
+          >
+            Semua infrastruktur dikelola dengan praktik DevOps modern. CI/CD pipeline otomatis, monitoring real-time, dan disaster recovery plan memastikan uptime 99.9%.
+          </ScrollReveal>
+        </div>
+      </section>
+
+      {/* ═══════════ INTEGRATION CTA ═══════════ */}
+      <section className="relative w-full bg-surface text-navy-900 py-28 px-4 sm:px-6 md:px-8 overflow-hidden">
+        <div className="relative z-10 max-w-2xl mx-auto text-center">
+          <AnimatedContent distance={60}>
+            <h2 className="text-3xl sm:text-4xl font-light text-navy-900 tracking-tight mb-4">
+              Ready to Integrate?
+            </h2>
+            <p className="text-navy-600 text-sm sm:text-base font-light mb-10 leading-relaxed">
+              Jelajahi dokumentasi API interaktif kami dengan live endpoint testing dan code generation untuk semua bahasa pemrograman.
+            </p>
+            <div className="flex justify-center">
+              <BorderGlow
+                backgroundColor="#f8fafc"
+                borderRadius={20}
+                glowRadius={30}
+                glowColor="250 60 70"
+                colors={["#818cf8", "#6366f1", "#4f46e5"]}
+              >
+                <a
+                  href="/docs"
+                  className="flex items-center justify-center gap-3 px-10 py-4 text-sm font-semibold text-navy-900"
+                >
+                  <BookOpen className="h-5 w-5" />
+                  Explore API Documentation
+                  <ArrowRight className="h-4 w-4" />
+                </a>
+              </BorderGlow>
+            </div>
+          </AnimatedContent>
+        </div>
+      </section>
+
+      <Footer />
     </main>
   );
 }

@@ -7,8 +7,7 @@ import { ShieldCheck, Mail, Lock, Eye, EyeOff, AlertCircle, ArrowLeft, Terminal 
 
 export default function AdminLogin() {
   const router = useRouter();
-  
-  // State variables with strict types
+
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [loginMode, setLoginMode] = useState<"live" | "simulator">("live");
@@ -21,7 +20,6 @@ export default function AdminLogin() {
     setLoading(true);
     setError(null);
 
-    // Basic Validation
     if (!email || !password) {
       setError("Email dan password wajib diisi.");
       setLoading(false);
@@ -31,7 +29,7 @@ export default function AdminLogin() {
     try {
       const backendUrl = "https://genesisHub.my.id";
 
-      // 1. SIMULATOR MODE
+      // SIMULATOR MODE
       if (loginMode === "simulator") {
         const dummyToken = "dummy_admin_jwt_token_2026_val";
         localStorage.setItem("genesis_admin_token", dummyToken);
@@ -39,17 +37,17 @@ export default function AdminLogin() {
         localStorage.setItem("genesis_admin_name", email === "arief@genesis.id" ? "Arief Fajar" : "Genesis Admin");
         localStorage.setItem("genesis_admin_role", "admin");
         localStorage.setItem("genesis_admin_mode", "simulator");
-        
+
         setTimeout(() => {
           router.push("/admin");
         }, 800);
         return;
       }
 
-      // 2. LIVE MODE (Direct Supabase Connection)
+      // LIVE MODE (Direct Supabase Connection)
       const supabaseProjectUrl = "https://abmypsvfuplxmyblerhv.supabase.co";
       const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFibXlwc3ZmdXBseG15Ymxlcmh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxOTM1MTUsImV4cCI6MjA5Nzc2OTUxNX0.PmBk7SfG_uIR2fnVER__qvK3zr4X2IByLNXTNfd5c4A";
-      
+
       const response = await fetch(`${supabaseProjectUrl}/auth/v1/token?grant_type=password`, {
         method: "POST",
         headers: {
@@ -63,7 +61,6 @@ export default function AdminLogin() {
         const authData = await response.json();
         const token = authData.access_token;
 
-        // Verify admin role via NestJS Profiles API
         const verifyRes = await fetch(`${backendUrl}/profiles/me`, {
           method: "GET",
           headers: {
@@ -92,7 +89,7 @@ export default function AdminLogin() {
         const errorData = await response.json().catch(() => ({}));
         setError(`Gagal Masuk: ${errorData.error_description || "Email atau kata sandi Anda salah."}`);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Login error:", err);
       setError("Gagal menghubungi server. Periksa koneksi internet Anda atau coba lagi.");
     } finally {
@@ -101,41 +98,87 @@ export default function AdminLogin() {
   };
 
   return (
-    <main className="relative min-h-screen w-full bg-surface flex flex-col justify-center items-center px-4 overflow-hidden font-sans">
-      
-      {/* Decorative Warm Cream and Indigo ambient blobs */}
-      <div className="absolute top-1/4 left-1/4 h-[400px] w-[400px] rounded-full bg-gold/5 blur-[100px] pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 h-[400px] w-[400px] rounded-full bg-navy-500/5 blur-[100px] pointer-events-none" />
+    <main className="relative min-h-screen w-full flex bg-navy-950 overflow-hidden">
+      {/* ═══════════ LEFT PANEL — Branding ═══════════ */}
+      <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-between p-12 overflow-hidden">
+        {/* Ambient glows */}
+        <div className="absolute top-1/4 left-1/4 h-[500px] w-[500px] rounded-full bg-indigo-900/20 blur-[150px] pointer-events-none" />
+        <div className="absolute bottom-0 right-0 h-[400px] w-[400px] rounded-full bg-violet-900/15 blur-[120px] pointer-events-none" />
 
-      {/* Back button */}
-      <div className="absolute top-6 left-6 z-50">
-        <Link 
-          href="/" 
-          className="flex items-center gap-2 text-sm text-navy-500 hover:text-navy-900 font-semibold transition-colors duration-200"
+        {/* Top — Back link */}
+        <Link
+          href="/"
+          className="relative z-10 flex items-center gap-2 text-sm text-white/40 hover:text-white/80 font-medium transition-colors duration-200 w-fit"
         >
           <ArrowLeft className="h-4 w-4" />
           Kembali ke Beranda
         </Link>
+
+        {/* Center — Logo & tagline */}
+        <div className="relative z-10 flex flex-col gap-6">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg">
+              <ShieldCheck className="h-6 w-6 text-white" />
+            </div>
+            <span className="text-2xl font-bold text-white tracking-tight">
+              Genesis<span className="text-indigo-400">.id</span>
+            </span>
+          </div>
+          <h2 className="text-4xl xl:text-5xl font-light text-white tracking-tight leading-[1.15]">
+            Control center for<br />
+            <span className="text-indigo-400">smart city</span> governance.
+          </h2>
+          <p className="text-white/40 text-sm font-light max-w-md leading-relaxed">
+            Dashboard administratif dengan moderasi laporan real-time, analytics geospasial, dan manajemen gamifikasi warga.
+          </p>
+        </div>
+
+        {/* Bottom — Stats */}
+        <div className="relative z-10 flex gap-8">
+          {[
+            { value: "~45k", label: "req/s throughput" },
+            { value: "RBAC", label: "Role-based access" },
+            { value: "E2E", label: "JWT encrypted" },
+          ].map((stat) => (
+            <div key={stat.label}>
+              <p className="text-lg font-semibold text-white">{stat.value}</p>
+              <p className="text-xs text-white/30">{stat.label}</p>
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Login Card */}
-      <div className="relative w-full max-w-md z-10 animate-fade-up">
-        
-        {/* Glow accent */}
-        <div className="absolute inset-0 bg-gradient-to-tr from-gold/5 to-navy-500/5 rounded-3xl blur-xl opacity-60 pointer-events-none" />
+      {/* ═══════════ RIGHT PANEL — Form ═══════════ */}
+      <div className="w-full lg:w-1/2 flex flex-col justify-center items-center px-4 sm:px-8 lg:px-16 bg-surface relative">
+        {/* Mobile-only back button */}
+        <div className="absolute top-6 left-6 z-50 lg:hidden">
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-sm text-navy-500 hover:text-navy-900 font-semibold transition-colors duration-200"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Kembali
+          </Link>
+        </div>
 
-        <div className="bg-white rounded-3xl p-8 border border-navy-100 shadow-[0_20px_50px_rgba(10,22,40,0.035)]">
-          
-          {/* Brand Logo & Heading */}
-          <div className="flex flex-col items-center text-center mb-8 select-none">
-            <div className="h-14 w-14 rounded-2xl bg-navy-50 flex items-center justify-center border border-navy-100 shadow-sm mb-4">
-              <ShieldCheck className="h-8 w-8 text-navy-900" />
-            </div>
+        {/* Mobile-only branded header */}
+        <div className="lg:hidden flex flex-col items-center text-center mb-8 mt-16">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg mb-3">
+            <ShieldCheck className="h-6 w-6 text-white" />
+          </div>
+          <span className="text-xl font-bold text-navy-900 tracking-tight">
+            Genesis<span className="text-indigo-500">.id</span> Admin
+          </span>
+        </div>
+
+        <div className="w-full max-w-md animate-fade-up">
+          {/* Heading — desktop only */}
+          <div className="hidden lg:block mb-8">
             <h1 className="text-2xl font-bold text-navy-900 tracking-tight">
-              Genesis.id Admin
+              Admin Portal
             </h1>
-            <p className="text-xs text-navy-500 font-light mt-1.5 max-w-xs leading-normal">
-              Portal Keamanan Terpadu & Kontrol Absolut Kota Ekologis
+            <p className="text-sm text-navy-500 font-light mt-1.5">
+              Masuk untuk mengakses dashboard pengelolaan kota ekologis
             </p>
           </div>
 
@@ -151,10 +194,7 @@ export default function AdminLogin() {
           <div className="flex p-1.5 bg-navy-50/70 border border-navy-100 rounded-2xl mb-6">
             <button
               type="button"
-              onClick={() => {
-                setLoginMode("live");
-                setError(null);
-              }}
+              onClick={() => { setLoginMode("live"); setError(null); }}
               className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold rounded-xl transition-all duration-300 cursor-pointer ${
                 loginMode === "live"
                   ? "bg-white text-navy-900 shadow-sm border border-navy-100/30"
@@ -162,14 +202,11 @@ export default function AdminLogin() {
               }`}
             >
               <span className={`h-2 w-2 rounded-full ${loginMode === "live" ? "bg-emerald-500 animate-pulse" : "bg-navy-300"}`} />
-              Koneksi Live (Supabase)
+              Koneksi Live
             </button>
             <button
               type="button"
-              onClick={() => {
-                setLoginMode("simulator");
-                setError(null);
-              }}
+              onClick={() => { setLoginMode("simulator"); setError(null); }}
               className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold rounded-xl transition-all duration-300 cursor-pointer ${
                 loginMode === "simulator"
                   ? "bg-white text-navy-900 shadow-sm border border-navy-100/30"
@@ -177,13 +214,12 @@ export default function AdminLogin() {
               }`}
             >
               <span className={`h-2 w-2 rounded-full ${loginMode === "simulator" ? "bg-gold animate-pulse" : "bg-navy-300"}`} />
-              Simulator (Lokal)
+              Simulator
             </button>
           </div>
 
           {/* Form */}
           <form onSubmit={handleLogin} className="flex flex-col gap-5">
-            {/* Email field */}
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-bold text-navy-600 pl-1 select-none">
                 Email Administrator
@@ -196,14 +232,13 @@ export default function AdminLogin() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder={loginMode === "live" ? "admin@genesis.id" : "admin@genesis.id"}
+                  placeholder="admin@genesis.id"
                   className="w-full bg-navy-50/50 border border-navy-100 rounded-xl py-2.5 pl-10 pr-4 text-sm text-navy-900 placeholder-navy-400 focus:outline-none focus:border-navy-300 focus:bg-white transition-all duration-200"
                   required
                 />
               </div>
             </div>
 
-            {/* Password field */}
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-bold text-navy-600 pl-1 select-none">
                 Kata Sandi
@@ -230,7 +265,6 @@ export default function AdminLogin() {
               </div>
             </div>
 
-            {/* Action submit button */}
             <button
               type="submit"
               disabled={loading}
@@ -248,9 +282,6 @@ export default function AdminLogin() {
               )}
             </button>
           </form>
-
-          {/* Security sanitized - Credentials help box removed */}
-
         </div>
       </div>
     </main>

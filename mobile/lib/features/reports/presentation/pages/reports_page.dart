@@ -642,11 +642,11 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
                               end: Alignment.bottomRight,
                             ),
                             borderRadius: BorderRadius.circular(23),
-                            boxShadow: [
+                            boxShadow: const [
                               BoxShadow(
-                                color: const Color(0xFFFBBF24).withValues(alpha: 0.3),
-                                blurRadius: 8,
-                                offset: const Offset(0, 3),
+                                color: Color(0xFFB45309),
+                                offset: Offset(0, 3),
+                                blurRadius: 0,
                               ),
                             ],
                           ),
@@ -682,11 +682,11 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
                               end: Alignment.bottomRight,
                             ),
                             borderRadius: BorderRadius.circular(23),
-                            boxShadow: [
+                            boxShadow: const [
                               BoxShadow(
-                                color: const Color(0xFF34D399).withValues(alpha: 0.3),
-                                blurRadius: 8,
-                                offset: const Offset(0, 3),
+                                color: Color(0xFF047857),
+                                offset: Offset(0, 3),
+                                blurRadius: 0,
                               ),
                             ],
                           ),
@@ -749,11 +749,11 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white, width: 4),
-                    boxShadow: [
+                    boxShadow: const [
                       BoxShadow(
-                        color: AppColors.emerald.withValues(alpha: 0.5),
-                        blurRadius: 16,
-                        spreadRadius: 2,
+                        color: Color(0xFF0D5335),
+                        offset: Offset(0, 4),
+                        blurRadius: 0,
                       ),
                     ],
                   ),
