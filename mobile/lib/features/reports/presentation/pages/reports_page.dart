@@ -180,8 +180,7 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
   void _capturePhoto() async {
     if (_isCapturing) return;
     if (_cameraController == null || !_isCameraInitialized) {
-      // Fallback to mock capture if camera package fails (e.g. Emulator)
-      _captureMockPhoto();
+      context.showWarningSnackBar('Kamera sedang memuat, silakan tunggu beberapa saat...');
       return;
     }
 
@@ -204,22 +203,15 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
       context.showSuccessSnackBar('📸 Foto terambil! Analisis dengan AI Scan atau Kirim Laporan.');
     } catch (e) {
       debugPrint('Error capturing photo: $e');
-      _disposeCamera();
+      if (!mounted) return;
       setState(() {
         _isCapturing = false;
       });
-      _captureMockPhoto();
+      context.showErrorSnackBar('Gagal mengambil foto dari kamera hardware. Silakan coba lagi.');
     }
   }
 
-  void _captureMockPhoto() {
-    setState(() {
-      _isCaptured = true;
-      _capturedImagePath = 'https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?auto=format&fit=crop&q=80&w=1000';
-      _isCapturing = false;
-    });
-    context.showSuccessSnackBar('📸 Foto simulator terambil!');
-  }
+
 
   Future<Position?> _getCurrentLocation() async {
     try {
@@ -483,15 +475,6 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
               onPressed: _initializeCamera,
               icon: const Icon(Icons.refresh_rounded, size: 18),
               label: const Text('Coba Lagi', style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
-            const SizedBox(height: 16),
-            TextButton.icon(
-              onPressed: _captureMockPhoto,
-              icon: const Icon(Icons.tablet_android_rounded, color: AppColors.emerald, size: 16),
-              label: const Text(
-                'Gunakan Kamera Simulator',
-                style: TextStyle(color: AppColors.emerald, fontWeight: FontWeight.bold, fontSize: 12),
-              ),
             ),
           ],
         ),

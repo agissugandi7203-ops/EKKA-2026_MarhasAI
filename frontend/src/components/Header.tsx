@@ -40,13 +40,13 @@ export default function Header({ onOpenLogin }: HeaderProps) {
 
   return (
     <div className={`fixed top-0 left-0 w-full z-50 flex justify-center pointer-events-none transition-all duration-300 ${
-      isScrolled ? 'pt-4 px-4' : 'pt-0 px-0'
+      isScrolled ? 'pt-0 px-0 md:pt-4 md:px-4' : 'pt-0 px-0'
     }`}>
       <header 
         className={`pointer-events-auto w-full transition-all duration-300 flex flex-col gap-2 ${
           isScrolled 
-            ? "max-w-5xl rounded-2xl bg-white/95 backdrop-blur-xl border border-black/5 shadow-[0_8px_32px_rgba(0,0,0,0.08)] py-2.5 px-6" 
-            : "max-w-full rounded-none bg-transparent border border-transparent py-5 px-8 sm:px-12 md:px-16"
+            ? "max-w-5xl rounded-none md:rounded-2xl bg-white md:bg-white/95 md:backdrop-blur-xl border-b md:border border-slate-100 md:border-black/5 shadow-md md:shadow-[0_8px_32px_rgba(0,0,0,0.08)] py-3 px-6 md:py-2.5 md:px-6" 
+            : "max-w-full rounded-none bg-transparent border border-transparent py-5 px-6 sm:px-12 md:px-16"
         }`}
       >
         <div className="w-full flex items-center justify-between">
@@ -137,13 +137,13 @@ export default function Header({ onOpenLogin }: HeaderProps) {
           <div className="md:hidden w-full mt-2 animate-fade-up">
             <div className={`rounded-2xl p-2.5 flex flex-col gap-1.5 shadow-xl border ${
               isScrolled 
-                ? 'bg-white/95 border-slate-100' 
+                ? 'bg-white border-slate-100' 
                 : 'bg-navy-900/95 backdrop-blur-md border-white/10'
             }`}>
               {navLinks.map((link) => {
                 const isActive = pathname === link.href;
                 const textColor = isScrolled
-                  ? (isActive ? "text-slate-900 font-bold bg-slate-50" : "text-slate-650 hover:bg-slate-50 font-light")
+                  ? (isActive ? "text-slate-900 font-bold bg-slate-50" : "text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-medium")
                   : (isActive ? "text-white font-bold bg-white/10" : "text-white/80 hover:bg-white/10 font-light");
                   
                 return (
