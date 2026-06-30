@@ -102,47 +102,62 @@ class _LeaderboardPageState extends State<LeaderboardPage> with AutomaticKeepAli
     }
   }
 
-  // --- NEOBRUTALIST DECORATIONS ---
+  // --- ELEGANT & CLEAN MATTE DECORATIONS ---
 
-  Decoration _neobrutalistPodiumDecoration({
+  Decoration _clayDecoration({
     required Color color,
-    double radius = 16,
+    double radius = 24,
     Color? shadowColor,
   }) {
+    final hsl = HSLColor.fromColor(color);
+    final lightColor = hsl.withLightness((hsl.lightness + 0.1).clamp(0.0, 1.0)).toColor();
+    final darkColor = shadowColor ?? hsl.withLightness((hsl.lightness - 0.12).clamp(0.0, 1.0)).toColor();
+
     return BoxDecoration(
       color: color,
       borderRadius: BorderRadius.circular(radius),
       border: Border.all(
-        color: const Color(0xFF0F172A),
+        color: lightColor.withValues(alpha: 0.22),
         width: 1.5,
       ),
-      boxShadow: const [
+      boxShadow: [
+        // Bayangan lembut kedalaman matte kanan-bawah (sangat anggun, no glowing highlight)
         BoxShadow(
-          color: Color(0xFF0F172A),
-          offset: Offset(2, 2),
-          blurRadius: 0,
+          color: darkColor.withValues(alpha: 0.35),
+          blurRadius: 12,
+          offset: const Offset(3, 6),
+        ),
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.08),
+          blurRadius: 6,
+          offset: const Offset(1, 2),
         ),
       ],
     );
   }
 
-  Decoration _neobrutalistCardDecoration({
+  Decoration _clayCardDecoration({
     required Color color,
-    double radius = 20,
+    double radius = 24,
     bool isSelf = false,
   }) {
     return BoxDecoration(
       color: color,
       borderRadius: BorderRadius.circular(radius),
       border: Border.all(
-        color: const Color(0xFF0F172A),
-        width: isSelf ? 2.0 : 1.5,
+        color: isSelf 
+            ? AppColors.gold.withValues(alpha: 0.25) 
+            : AppColors.divider.withValues(alpha: 0.4),
+        width: 1.5,
       ),
       boxShadow: [
+        // Bayangan jatuh matte yang sangat halus
         BoxShadow(
-          color: const Color(0xFF0F172A),
-          offset: isSelf ? const Offset(3, 3) : const Offset(2, 2),
-          blurRadius: 0,
+          color: isSelf 
+              ? AppColors.gold.withValues(alpha: 0.08) 
+              : const Color(0xFF90A4AE).withValues(alpha: 0.12),
+          blurRadius: 12,
+          offset: const Offset(2, 6),
         ),
       ],
     );
@@ -199,17 +214,21 @@ class _LeaderboardPageState extends State<LeaderboardPage> with AutomaticKeepAli
           physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
           child: Stack(
             children: [
-              // Curved Neobrutalist Header Banner
+              // Curved Dark Navy Header Banner
               Container(
-                height: 440,
+                height: 450,
                 decoration: const BoxDecoration(
-                  color: Color(0xFF2E4095), // Mascot Blue
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(32),
-                    bottomRight: Radius.circular(32),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppColors.navy900,
+                      Color(0xFF0F2042),
+                    ],
                   ),
-                  border: Border(
-                    bottom: BorderSide(color: Color(0xFF0F172A), width: 3.0),
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(44),
+                    bottomRight: Radius.circular(44),
                   ),
                 ),
               ),
@@ -280,23 +299,23 @@ class _LeaderboardPageState extends State<LeaderboardPage> with AutomaticKeepAli
                       ),
                     )
                   else ...[
-                    // Podium UI (Neobrutalist White Container)
+                    // Podium UI (Elegant Solid Deep Navy Panel)
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: AppConstants.pagePaddingH),
                       child: Container(
                         padding: const EdgeInsets.fromLTRB(10, 24, 10, 16),
                         decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(24),
+                          color: const Color(0xFF152238), // Elegant solid deep navy
+                          borderRadius: BorderRadius.circular(28),
                           border: Border.all(
-                            color: const Color(0xFF0F172A),
-                            width: 2.0,
+                            color: Colors.white.withValues(alpha: 0.06),
+                            width: 1.5,
                           ),
-                          boxShadow: const [
+                          boxShadow: [
                             BoxShadow(
-                              color: Color(0xFF0F172A),
-                              offset: Offset(4, 4),
-                              blurRadius: 0,
+                              color: Colors.black.withValues(alpha: 0.22),
+                              blurRadius: 18,
+                              offset: const Offset(0, 8),
                             ),
                           ],
                         ),
@@ -314,7 +333,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> with AutomaticKeepAli
                                 color: const Color(0xFF7E8B9B), // Elegant Matte Muted Silver
                                 targetHeight: 85,
                                 startDelay: const Duration(milliseconds: 200),
-                                clayDecorationBuilder: _neobrutalistPodiumDecoration,
+                                clayDecorationBuilder: _clayDecoration,
                               ),
                             ),
                             // Rank 1 (Center)
@@ -328,7 +347,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> with AutomaticKeepAli
                                 targetHeight: 120,
                                 isGold: true,
                                 startDelay: const Duration(milliseconds: 400),
-                                clayDecorationBuilder: _neobrutalistPodiumDecoration,
+                                clayDecorationBuilder: _clayDecoration,
                               ),
                             ),
                             // Rank 3 (Right)
@@ -341,7 +360,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> with AutomaticKeepAli
                                 color: const Color(0xFF9E7C6F), // Elegant Matte Muted Bronze
                                 targetHeight: 65,
                                 startDelay: const Duration(milliseconds: 600),
-                                clayDecorationBuilder: _neobrutalistPodiumDecoration,
+                                clayDecorationBuilder: _clayDecoration,
                               ),
                             ),
                           ],
@@ -358,9 +377,9 @@ class _LeaderboardPageState extends State<LeaderboardPage> with AutomaticKeepAli
                           padding: const EdgeInsets.symmetric(horizontal: AppConstants.pagePaddingH),
                           child: Container(
                             padding: const EdgeInsets.all(18),
-                            decoration: _neobrutalistCardDecoration(
-                              color: const Color(0xFFFFFBEB),
-                              radius: 20,
+                            decoration: _clayCardDecoration(
+                              color: AppColors.gold50,
+                              radius: 24,
                               isSelf: true,
                             ),
                             child: Row(
@@ -475,13 +494,13 @@ class _LeaderboardPageState extends State<LeaderboardPage> with AutomaticKeepAli
   Widget _buildLocationFilter(String cityLabel, String provinceLabel) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B), // Slate 800
-        borderRadius: BorderRadius.circular(16),
+        color: Colors.white.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(0xFF0F172A),
-          width: 2.0,
+          color: Colors.white.withValues(alpha: 0.08),
+          width: 1.2,
         ),
       ),
       child: Row(
@@ -508,21 +527,27 @@ class _LeaderboardPageState extends State<LeaderboardPage> with AutomaticKeepAli
         child: MouseRegion(
           cursor: SystemMouseCursors.click,
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+            duration: const Duration(milliseconds: 250),
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
             decoration: BoxDecoration(
-              color: isSelected ? const Color(0xFFEA869A) : Colors.transparent, // Mascot Pink
-              borderRadius: BorderRadius.circular(12),
-              border: isSelected
-                  ? Border.all(color: const Color(0xFF0F172A), width: 1.5)
+              color: isSelected ? Colors.white : Colors.transparent,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.12),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ]
                   : null,
             ),
             child: Center(
               child: Text(
                 label,
                 style: AppTextStyles.labelSmall.copyWith(
-                  color: isSelected ? const Color(0xFF0F172A) : Colors.white70,
-                  fontWeight: FontWeight.w900,
+                  color: isSelected ? AppColors.navy900 : Colors.white70,
+                  fontWeight: FontWeight.bold,
                   fontSize: 11,
                 ),
                 maxLines: 1,
@@ -544,8 +569,8 @@ class _LeaderboardPageState extends State<LeaderboardPage> with AutomaticKeepAli
     return Container(
       margin: const EdgeInsets.only(bottom: AppConstants.spacing12),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: _neobrutalistCardDecoration(
-        color: isSelf ? const Color(0xFFFFFBEB) : Colors.white,
+      decoration: _clayCardDecoration(
+        color: isSelf ? AppColors.goldLight.withValues(alpha: 0.15) : Colors.white,
         radius: 20,
         isSelf: isSelf,
       ),
@@ -921,8 +946,8 @@ class _AnimatedPodiumPositionState extends State<AnimatedPodiumPosition>
                   name,
                   style: AppTextStyles.labelSmall.copyWith(
                     fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    color: const Color(0xFF0F172A),
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -938,7 +963,7 @@ class _AnimatedPodiumPositionState extends State<AnimatedPodiumPosition>
                 xp,
                 style: AppTextStyles.bodySmall.copyWith(
                   fontSize: 8.5,
-                  color: AppColors.textSecondary,
+                  color: AppColors.navy200,
                   fontWeight: FontWeight.w600,
                 ),
               ),

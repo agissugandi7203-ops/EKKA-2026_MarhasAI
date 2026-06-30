@@ -228,14 +228,10 @@ class _HomePageState extends State<HomePage> {
                   child: Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Colors.white, Color(0xFFF1FDF7)],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                      ),
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(24),
                       border: Border.all(
-                        color: AppColors.emerald.withValues(alpha: 0.2),
+                        color: const Color(0xFFE2E8F0),
                         width: 1.5,
                       ),
                       boxShadow: const [
@@ -253,16 +249,16 @@ class _HomePageState extends State<HomePage> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            color: AppColors.emeraldLight,
+                            color: const Color(0xFFEFF6FF),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: AppColors.emerald.withValues(alpha: 0.15),
+                              color: const Color(0xFFBFDBFE),
                             ),
                           ),
                           child: Text(
                             'Tutorial $_spotlightStep / 3',
                             style: AppTextStyles.labelSmall.copyWith(
-                              color: AppColors.emerald,
+                              color: const Color(0xFF2E4095),
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
                             ),
@@ -304,10 +300,10 @@ class _HomePageState extends State<HomePage> {
                             ),
                             ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.emerald,
+                                backgroundColor: AppColors.navy500,
                                 foregroundColor: Colors.white,
                                 elevation: 2,
-                                shadowColor: AppColors.emerald.withValues(alpha: 0.3),
+                                shadowColor: AppColors.navy500.withValues(alpha: 0.2),
                                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16),
@@ -340,10 +336,10 @@ class _HomePageState extends State<HomePage> {
                       height: 48,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.emerald, width: 2.5),
+                        border: Border.all(color: AppColors.navy500, width: 2.5),
                         boxShadow: const [
                           BoxShadow(
-                            color: Color(0xFF0D5335),
+                            color: Color(0xFF1B3A76),
                             offset: Offset(0, 3),
                             blurRadius: 0,
                           ),
@@ -351,7 +347,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Icon(Icons.arrow_downward_rounded, color: AppColors.emerald, size: 24),
+                    const Icon(Icons.arrow_downward_rounded, color: AppColors.navy500, size: 24),
                   ],
                 ),
               ),

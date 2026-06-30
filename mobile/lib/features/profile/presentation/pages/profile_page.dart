@@ -94,12 +94,11 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
               color: const Color(0xFFE2E8F0),
               width: 1.5,
             ),
-            boxShadow: [
+            boxShadow: const [
               BoxShadow(
-                color: AppColors.navy900.withValues(alpha: 0.1),
-                blurRadius: 24,
-                spreadRadius: 2,
-                offset: const Offset(0, 8),
+                color: Color(0xFFE2E8F0),
+                offset: Offset(0, 4),
+                blurRadius: 0,
               )
             ],
           ),
@@ -385,19 +384,14 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(28),
                         border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.9),
+                          color: const Color(0xFFE2E8F0),
                           width: 1.5,
                         ),
-                        boxShadow: [
+                        boxShadow: const [
                           BoxShadow(
-                            color: const Color(0xFF0F172A).withValues(alpha: 0.12),
-                            blurRadius: 24,
-                            offset: const Offset(0, 12),
-                          ),
-                          BoxShadow(
-                            color: Colors.white.withValues(alpha: 0.5),
-                            blurRadius: 4,
-                            offset: const Offset(-2, -2),
+                            color: Color(0xFFE2E8F0),
+                            offset: Offset(0, 4),
+                            blurRadius: 0,
                           ),
                         ],
                       ),
@@ -781,11 +775,11 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                 width: unlocked ? 2.0 : 1.2,
               ),
               boxShadow: unlocked
-                  ? [
+                  ? const [
                       BoxShadow(
-                        color: AppColors.gold.withValues(alpha: 0.15),
-                        blurRadius: 10,
-                        spreadRadius: 1,
+                        color: Color(0xFFFEF3C7),
+                        offset: Offset(0, 2),
+                        blurRadius: 0,
                       ),
                     ]
                   : null,

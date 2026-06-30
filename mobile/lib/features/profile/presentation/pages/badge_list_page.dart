@@ -206,11 +206,11 @@ class _BadgeListPageState extends State<BadgeListPage> {
                     color: unlocked ? AppColors.gold.withValues(alpha: 0.3) : const Color(0xFFE2E8F0),
                     width: 2,
                   ),
-                  boxShadow: [
+                  boxShadow: const [
                     BoxShadow(
-                      color: AppColors.navy900.withValues(alpha: 0.15),
-                      blurRadius: 24,
-                      offset: const Offset(0, 8),
+                      color: Color(0xFFE2E8F0),
+                      offset: Offset(0, 4),
+                      blurRadius: 0,
                     ),
                   ],
                 ),
@@ -232,11 +232,11 @@ class _BadgeListPageState extends State<BadgeListPage> {
                           width: unlocked ? 3.0 : 1.5,
                         ),
                         boxShadow: unlocked
-                            ? [
+                            ? const [
                                 BoxShadow(
-                                  color: AppColors.gold.withValues(alpha: 0.2),
-                                  blurRadius: 16,
-                                  spreadRadius: 2,
+                                  color: Color(0xFFFEF3C7),
+                                  offset: Offset(0, 2),
+                                  blurRadius: 0,
                                 ),
                               ]
                             : null,
@@ -498,18 +498,10 @@ class _BadgeListPageState extends State<BadgeListPage> {
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: isEquipped
-                                      ? AppColors.gold.withValues(alpha: 0.12)
-                                      : AppColors.navy900.withValues(alpha: 0.04),
-                                  blurRadius: 10,
+                                  color: isEquipped ? const Color(0xFFFEF3C7) : const Color(0xFFE2E8F0),
                                   offset: const Offset(0, 4),
+                                  blurRadius: 0,
                                 ),
-                                if (unlocked)
-                                  const BoxShadow(
-                                    color: Colors.white,
-                                    blurRadius: 4,
-                                    offset: Offset(-2, -2),
-                                  ),
                               ],
                             ),
                             child: Stack(

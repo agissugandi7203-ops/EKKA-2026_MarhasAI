@@ -33,12 +33,12 @@ class GenesisLoading extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           SizedBox(
-            width: size,
-            height: size,
-            child: Lottie.asset(
-              'assets/animations/global/global_loading.json',
-              fit: BoxFit.contain,
-              frameRate: FrameRate.max,
+            width: size * 0.5,
+            height: size * 0.5,
+            child: const CircularProgressIndicator(
+              strokeWidth: 3.5,
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF2E4095)),
+              backgroundColor: Color(0xFFF1F5F9),
             ),
           ),
           if (message != null) ...[

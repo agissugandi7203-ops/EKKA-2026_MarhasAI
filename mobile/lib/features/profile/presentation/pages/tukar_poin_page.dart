@@ -140,11 +140,11 @@ class _TukarPoinPageState extends State<TukarPoinPage> {
                         color: Colors.white.withValues(alpha: 0.1),
                         width: 1.5,
                       ),
-                      boxShadow: [
+                      boxShadow: const [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.25),
-                          blurRadius: 18,
-                          offset: const Offset(0, 8),
+                          color: Color(0xFFCBD5E1),
+                          offset: Offset(0, 4),
+                          blurRadius: 0,
                         ),
                       ],
                     ),
@@ -245,11 +245,11 @@ class _TukarPoinPageState extends State<TukarPoinPage> {
                             color: const Color(0xFFE2E8F0),
                             width: 1.5,
                           ),
-                          boxShadow: [
+                          boxShadow: const [
                             BoxShadow(
-                              color: AppColors.navy900.withValues(alpha: 0.04),
-                              blurRadius: 14,
-                              offset: const Offset(0, 6),
+                              color: Color(0xFFE2E8F0),
+                              offset: Offset(0, 4),
+                              blurRadius: 0,
                             ),
                           ],
                         ),
@@ -382,17 +382,11 @@ class _TukarPoinPageState extends State<TukarPoinPage> {
                                                   width: 1,
                                                 ),
                                                 boxShadow: canRedeem
-                                                    ? [
+                                                    ? const [
                                                         BoxShadow(
-                                                          color: AppColors.navy500.withValues(alpha: 0.25),
-                                                          offset: const Offset(0, 4),
-                                                          blurRadius: 8,
-                                                        ),
-                                                        BoxShadow(
-                                                          color: Colors.white.withValues(alpha: 0.2),
-                                                          offset: const Offset(0, -2),
-                                                          blurRadius: 4,
-                                                          spreadRadius: -1,
+                                                          color: Color(0xFF1B3A76),
+                                                          offset: Offset(0, 3),
+                                                          blurRadius: 0,
                                                         ),
                                                       ]
                                                     : null,
