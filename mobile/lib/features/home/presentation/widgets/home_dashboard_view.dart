@@ -44,22 +44,15 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
   List<Map<String, dynamic>> _challenges = [];
   bool _isLoadingChallenges = true;
 
-  Timer? _pollTimer;
-
   @override
   void initState() {
     super.initState();
     _fetchRealProfileData();
     _fetchDailyChallenges();
-    // 15-second polling loop
-    _pollTimer = Timer.periodic(const Duration(seconds: 15), (_) {
-      _pollProfileDataSilently();
-    });
   }
 
   @override
   void dispose() {
-    _pollTimer?.cancel();
     _scrollController.dispose();
     super.dispose();
   }
@@ -89,34 +82,6 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
           _isLoadingChallenges = false;
         });
       }
-    }
-  }
-
-  Future<void> _pollProfileDataSilently() async {
-    try {
-      final profileRepo = context.read<ProfileRepository>();
-      final profile = await profileRepo.getMyProfile();
-      if (!mounted) return;
-      if (_profile != null) {
-        // Level Up popup check
-        if (profile.level > _profile!.level) {
-          _showLevelUpDialog(profile.level);
-        }
-        // New Badge popup check
-        if (profile.badges.length > _profile!.badges.length) {
-          final oldBadgeIds = _profile!.badges.map((b) => b.id).toSet();
-          final newBadges = profile.badges.where((b) => !oldBadgeIds.contains(b.id)).toList();
-          for (final b in newBadges) {
-            _showBadgeUnlockedDialog(b.name, b.description ?? '');
-          }
-        }
-      }
-      setState(() {
-        _profile = profile;
-      });
-      _fetchDailyChallenges();
-    } catch (e) {
-      debugPrint('Error polling profile: $e');
     }
   }
 
@@ -303,12 +268,25 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
     try {
       final profileRepo = context.read<ProfileRepository>();
       final profile = await profileRepo.getMyProfile();
-      if (mounted) {
-        setState(() {
-          _profile = profile;
-          _isLoadingProfile = false;
-        });
+      if (!mounted) return;
+      if (_profile != null) {
+        // Level Up popup check
+        if (profile.level > _profile!.level) {
+          _showLevelUpDialog(profile.level);
+        }
+        // New Badge popup check
+        if (profile.badges.length > _profile!.badges.length) {
+          final oldBadgeIds = _profile!.badges.map((b) => b.id).toSet();
+          final newBadges = profile.badges.where((b) => !oldBadgeIds.contains(b.id)).toList();
+          for (final b in newBadges) {
+            _showBadgeUnlockedDialog(b.name, b.description ?? '');
+          }
+        }
       }
+      setState(() {
+        _profile = profile;
+        _isLoadingProfile = false;
+      });
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -414,6 +392,8 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
                       const SizedBox(height: 20),
                       // Bento Grid Card Timbul & Variatif
                       _buildBentoMetrics(activeStreak, completedReports),
+                      const SizedBox(height: 24),
+                      _buildMascotSpeechBubble(displayName),
                       const SizedBox(height: 28),
                       // Tantangan Harian Quests
                       _buildDailyQuestsHeader(),
@@ -1025,6 +1005,73 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildMascotSpeechBubble(String displayName) {
+    return FadeSlideEntrance(
+      delay: const Duration(milliseconds: 220),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: const Color(0xFF0F172A), width: 2.0),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0xFF0F172A),
+              offset: Offset(4, 4),
+              blurRadius: 0,
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Image.asset(
+              'assets/images/logo.png',
+              width: 72,
+              height: 72,
+              fit: BoxFit.contain,
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Pesan Geni',
+                    style: AppTextStyles.labelSmall.copyWith(
+                      color: AppColors.navy600,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  RichText(
+                    text: TextSpan(
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.textPrimary,
+                        height: 1.45,
+                        fontSize: 12,
+                      ),
+                      children: [
+                        const TextSpan(text: 'Halo, '),
+                        TextSpan(
+                          text: displayName,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        const TextSpan(
+                          text: '! Yuk selesaikan tantangan hari ini untuk menjaga bumi kita tetap hijau dan bersih! 🌟',
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

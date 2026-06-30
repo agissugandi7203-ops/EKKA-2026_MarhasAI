@@ -262,10 +262,6 @@ class AppRouter {
 
   String? _handleRedirect(BuildContext context, GoRouterState state) {
     final currentPath = state.matchedLocation;
-    if (currentPath == Routes.preOnboarding) {
-      return Routes.simpleSignIn;
-    }
-
     final authState = _authBloc.state;
 
     // Cegah redirect saat auth state sedang dimuat (initial / loading)

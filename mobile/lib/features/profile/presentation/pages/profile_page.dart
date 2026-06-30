@@ -375,13 +375,13 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(28),
                         border: Border.all(
-                          color: const Color(0xFFE2E8F0),
-                          width: 1.5,
+                          color: const Color(0xFF0F172A),
+                          width: 2.0,
                         ),
                         boxShadow: const [
                           BoxShadow(
-                            color: Color(0xFFE2E8F0),
-                            offset: Offset(0, 4),
+                            color: Color(0xFF0F172A),
+                            offset: Offset(4, 4),
                             blurRadius: 0,
                           ),
                         ],
@@ -567,6 +567,10 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                     ),
                   ),
                   const SizedBox(height: AppConstants.spacing24),
+                  
+                  // Mascot encouragement bubble (free-floating style)
+                  _buildProfileMascotBubble(fullName, level),
+                  const SizedBox(height: AppConstants.spacing24),
 
                   // ── Stats Section ──
                   FadeSlideEntrance(
@@ -589,11 +593,9 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                                 title: 'Laporan Selesai',
                                 value: '$completedReports',
                                 icon: Icons.check_circle_rounded,
-                                iconColor: AppColors.navy500,
-                                bgColor: const Color(0xFFEFF6FF),
-                                borderColor: const Color(0xFFBFDBFE),
-                                shadowColor: const Color(0xFF93C5FD),
-                                textColor: const Color(0xFF1E3A8A),
+                                iconColor: const Color(0xFF059669),
+                                bgColor: const Color(0xFFECFDF5),
+                                textColor: const Color(0xFF065F46),
                                 lottieAsset: 'assets/animations/achievements/Image.json',
                                 lottieRepeat: false,
                               ),
@@ -604,10 +606,8 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                                 title: 'Total Point',
                                 value: '${xp * 3}',
                                 icon: Icons.monetization_on_rounded,
-                                iconColor: AppColors.gold,
-                                bgColor: const Color(0xFFFEF3C7),
-                                borderColor: const Color(0xFFFDE68A),
-                                shadowColor: const Color(0xFFFCD34D),
+                                iconColor: const Color(0xFFD97706),
+                                bgColor: const Color(0xFFFFFBEB),
                                 textColor: const Color(0xFF78350F),
                                 lottieAsset: 'assets/animations/achievements/badge.json',
                                 lottieRepeat: false,
@@ -621,8 +621,6 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                                 icon: Icons.local_fire_department_rounded,
                                 iconColor: const Color(0xFFE11D48),
                                 bgColor: const Color(0xFFFFF1F2),
-                                borderColor: const Color(0xFFFECDD3),
-                                shadowColor: const Color(0xFFFDA4AF),
                                 textColor: const Color(0xFF9F1239),
                                 lottieAsset: 'assets/animations/achievements/strike_fire.json',
                                 lottieRepeat: true,
@@ -643,11 +641,11 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
+                        border: Border.all(color: const Color(0xFF0F172A), width: 2.0),
                         boxShadow: const [
                           BoxShadow(
-                            color: Color(0xFFE2E8F0),
-                            offset: Offset(0, 4),
+                            color: Color(0xFF0F172A),
+                            offset: Offset(4, 4),
                             blurRadius: 0,
                           ),
                         ],
@@ -712,14 +710,79 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
   );
 }
 
+  Widget _buildProfileMascotBubble(String displayName, int level) {
+    return FadeSlideEntrance(
+      delay: const Duration(milliseconds: 80),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: const Color(0xFF0F172A), width: 2.0),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0xFF0F172A),
+              offset: Offset(4, 4),
+              blurRadius: 0,
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Image.asset(
+              'assets/images/logo.png',
+              width: 72,
+              height: 72,
+              fit: BoxFit.contain,
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Pesan Geni',
+                    style: AppTextStyles.labelSmall.copyWith(
+                      color: AppColors.gold,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  RichText(
+                    text: TextSpan(
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.textPrimary,
+                        height: 1.4,
+                        fontSize: 12,
+                      ),
+                      children: [
+                        const TextSpan(text: 'Hebat, '),
+                        TextSpan(
+                          text: displayName,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        TextSpan(
+                          text: '! Kamu telah mencapai Level $level. Kumpulkan lebih banyak XP untuk menjadi Eco Warrior Legendaris! 🚀',
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildStatCard({
     required String title,
     required String value,
     required IconData icon,
     required Color iconColor,
     required Color bgColor,
-    required Color borderColor,
-    required Color shadowColor,
     required Color textColor,
     String? lottieAsset,
     bool lottieRepeat = true,
@@ -730,13 +793,13 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
         color: bgColor,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: borderColor,
-          width: 1.5,
+          color: const Color(0xFF0F172A),
+          width: 2.0,
         ),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
-            color: shadowColor,
-            offset: const Offset(0, 4),
+            color: Color(0xFF0F172A),
+            offset: Offset(3, 3),
             blurRadius: 0,
           ),
         ],

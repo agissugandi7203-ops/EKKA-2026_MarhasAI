@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_colors.dart';
-
 /// Widget logo animasi untuk splash screen.
 ///
 /// Menampilkan ikon bumi/lingkungan dengan animasi scale-up + fade-in.
