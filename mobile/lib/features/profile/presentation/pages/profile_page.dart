@@ -317,59 +317,50 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
     }
 
     return Scaffold(
-      backgroundColor: AppColors.surface,
-      extendBodyBehindAppBar: true,
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
         title: Text(
           'Profil Eco Warrior',
           style: AppTextStyles.headlineSmall.copyWith(
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: AppColors.textPrimary,
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout_rounded, color: Colors.white),
+            icon: const Icon(Icons.logout_rounded, color: AppColors.textSecondary),
             tooltip: 'Keluar',
             onPressed: _showLogoutConfirmDialog,
           ),
         ],
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(1.0),
+          child: Divider(color: Color(0xFFE2E8F0), height: 1.0, thickness: 1.5),
+        ),
       ),
-      body: RefreshIndicator(
-        onRefresh: _fetchProfile,
-        color: AppColors.navy900,
-        backgroundColor: Colors.white,
-        edgeOffset: MediaQuery.of(context).padding.top + kToolbarHeight + 10,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-          child: Stack(
-            children: [
-              // Slate-Navy Gradient Header Curve (now inside scroll view!)
-              Container(
-                height: 260,
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Color(0xFF0F172A),
-                      Color(0xFF1E293B),
-                    ],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  ),
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(40),
-                    bottomRight: Radius.circular(40),
-                  ),
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.only(
+      body: Stack(
+        children: [
+          // Subtle blueprint grid pattern background to add premium character/texture
+          Positioned.fill(
+            child: CustomPaint(
+              painter: const GridBackgroundPainter(),
+            ),
+          ),
+
+          RefreshIndicator(
+            onRefresh: _fetchProfile,
+            color: AppColors.navy900,
+            backgroundColor: Colors.white,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+              child: Padding(
+                padding: const EdgeInsets.only(
                   left: AppConstants.pagePaddingH,
                   right: AppConstants.pagePaddingH,
-                  top: MediaQuery.of(context).padding.top + kToolbarHeight + 16,
+                  top: 20,
                   bottom: 110, // Avoid overlapping with floating bottom navbar
                 ),
                 child: Column(
@@ -598,11 +589,11 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                                 title: 'Laporan Selesai',
                                 value: '$completedReports',
                                 icon: Icons.check_circle_rounded,
-                                iconColor: AppColors.emerald,
-                                bgColor: AppColors.emeraldLight,
-                                borderColor: AppColors.emerald.withValues(alpha: 0.35),
-                                shadowColor: AppColors.emerald.withValues(alpha: 0.08),
-                                textColor: const Color(0xFF0F5132),
+                                iconColor: AppColors.navy500,
+                                bgColor: const Color(0xFFEFF6FF),
+                                borderColor: const Color(0xFFBFDBFE),
+                                shadowColor: const Color(0xFF93C5FD),
+                                textColor: const Color(0xFF1E3A8A),
                                 lottieAsset: 'assets/animations/achievements/Image.json',
                                 lottieRepeat: false,
                               ),
@@ -614,10 +605,10 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                                 value: '${xp * 3}',
                                 icon: Icons.monetization_on_rounded,
                                 iconColor: AppColors.gold,
-                                bgColor: AppColors.gold50,
-                                borderColor: AppColors.gold.withValues(alpha: 0.35),
-                                shadowColor: AppColors.gold.withValues(alpha: 0.08),
-                                textColor: const Color(0xFF856404),
+                                bgColor: const Color(0xFFFEF3C7),
+                                borderColor: const Color(0xFFFDE68A),
+                                shadowColor: const Color(0xFFFCD34D),
+                                textColor: const Color(0xFF78350F),
                                 lottieAsset: 'assets/animations/achievements/badge.json',
                                 lottieRepeat: false,
                               ),
@@ -628,11 +619,11 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                                 title: 'Streak Aktif',
                                 value: '$activeStreak Hari',
                                 icon: Icons.local_fire_department_rounded,
-                                iconColor: AppColors.burgundy500,
-                                bgColor: AppColors.burgundy100,
-                                borderColor: AppColors.burgundy500.withValues(alpha: 0.35),
-                                shadowColor: AppColors.burgundy500.withValues(alpha: 0.08),
-                                textColor: AppColors.burgundy700,
+                                iconColor: const Color(0xFFE11D48),
+                                bgColor: const Color(0xFFFFF1F2),
+                                borderColor: const Color(0xFFFECDD3),
+                                shadowColor: const Color(0xFFFDA4AF),
+                                textColor: const Color(0xFF9F1239),
                                 lottieAsset: 'assets/animations/achievements/strike_fire.json',
                                 lottieRepeat: true,
                               ),
@@ -647,60 +638,76 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                   // ── Badges/Lencana Section ──
                   FadeSlideEntrance(
                     delay: const Duration(milliseconds: 120),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Lencana Tersimpan ($unlockedCount/8)',
-                              style: AppTextStyles.headlineSmall.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.navy900,
-                              ),
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                context.push(Routes.badges).then((_) => _loadEquippedBadge());
-                              },
-                              child: Text(
-                                'Lihat Semua',
-                                style: AppTextStyles.labelMedium.copyWith(
-                                  color: AppColors.navy600,
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0xFFE2E8F0),
+                            offset: Offset(0, 4),
+                            blurRadius: 0,
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Lencana Tersimpan ($unlockedCount/8)',
+                                style: AppTextStyles.headlineSmall.copyWith(
                                   fontWeight: FontWeight.bold,
+                                  color: AppColors.navy900,
+                                  fontSize: 16,
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: AppConstants.spacing12),
-                        GridView.count(
-                          crossAxisCount: 4,
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          mainAxisSpacing: AppConstants.spacing16,
-                          crossAxisSpacing: AppConstants.spacing16,
-                          children: [
-                            _buildBadgeItem(AppSvgs.badgePioneer, 'Perintis', _hasBadge('first_report')),
-                            _buildBadgeItem(AppSvgs.badgeEnthusiast, 'Pecinta', _hasBadge('streak_3')),
-                            _buildBadgeItem(AppSvgs.badgeRiverHero, 'Eco Warrior', _hasBadge('streak_7')),
-                            _buildBadgeItem(AppSvgs.badgeCleanup, 'Anti Limbah', _hasBadge('toxic_buster')),
-                            _buildBadgeItem(AppSvgs.badgeActivist, 'Hero Genesis', _hasBadge('green_hero')),
-                            _buildBadgeItem(AppSvgs.badgeSpotter, 'Detektor', _hasBadge('spotter')),
-                            _buildBadgeItem(AppSvgs.badgeForester, 'Rimbawan', _hasBadge('forester')),
-                            _buildBadgeItem(AppSvgs.badgeFaunaGuard, 'Saksi Satwa', _hasBadge('fauna_guard')),
-                          ],
-                        ),
-                      ],
+                              TextButton(
+                                onPressed: () {
+                                  context.push(Routes.badges).then((_) => _loadEquippedBadge());
+                                },
+                                child: Text(
+                                  'Lihat Semua',
+                                  style: AppTextStyles.labelMedium.copyWith(
+                                    color: AppColors.navy600,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: AppConstants.spacing12),
+                          GridView.count(
+                            crossAxisCount: 4,
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            mainAxisSpacing: AppConstants.spacing16,
+                            crossAxisSpacing: AppConstants.spacing16,
+                            children: [
+                              _buildBadgeItem(AppSvgs.badgePioneer, 'Perintis', _hasBadge('first_report')),
+                              _buildBadgeItem(AppSvgs.badgeEnthusiast, 'Pecinta', _hasBadge('streak_3')),
+                              _buildBadgeItem(AppSvgs.badgeRiverHero, 'Eco Warrior', _hasBadge('streak_7')),
+                              _buildBadgeItem(AppSvgs.badgeCleanup, 'Anti Limbah', _hasBadge('toxic_buster')),
+                              _buildBadgeItem(AppSvgs.badgeActivist, 'Hero Genesis', _hasBadge('green_hero')),
+                              _buildBadgeItem(AppSvgs.badgeSpotter, 'Detektor', _hasBadge('spotter')),
+                              _buildBadgeItem(AppSvgs.badgeForester, 'Rimbawan', _hasBadge('forester')),
+                              _buildBadgeItem(AppSvgs.badgeFaunaGuard, 'Saksi Satwa', _hasBadge('fauna_guard')),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-          ],
+          ),
         ),
-      ),
+      ],
     ),
   );
 }
@@ -718,29 +725,41 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
     bool lottieRepeat = true,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-      decoration: const BoxDecoration(
-        color: Colors.transparent,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 16),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: borderColor,
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: shadowColor,
+            offset: const Offset(0, 4),
+            blurRadius: 0,
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           if (lottieAsset != null)
             SizedBox(
-              width: 56,
-              height: 56,
+              width: 48,
+              height: 48,
               child: Lottie.asset(lottieAsset, repeat: lottieRepeat),
             )
           else
-            Icon(icon, color: iconColor, size: 36),
-          const SizedBox(height: AppConstants.spacing8),
+            Icon(icon, color: iconColor, size: 28),
+          const SizedBox(height: AppConstants.spacing12),
           Text(
             value,
             textAlign: TextAlign.center,
             style: AppTextStyles.headlineMedium.copyWith(
               fontWeight: FontWeight.bold,
-              fontSize: 18,
-              color: AppColors.navy900,
+              fontSize: 16,
+              color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 4),
@@ -748,9 +767,9 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
             title,
             textAlign: TextAlign.center,
             style: AppTextStyles.bodySmall.copyWith(
-              fontSize: 11,
+              fontSize: 10,
               color: AppColors.textSecondary,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ],
@@ -1073,4 +1092,27 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
       ),
     );
   }
+}
+
+class GridBackgroundPainter extends CustomPainter {
+  const GridBackgroundPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFFE2E8F0) // Very light slate line for grid pattern
+      ..strokeWidth = 1.0;
+
+    const double step = 28.0; // Distance between grid lines
+
+    for (double x = 0; x < size.width; x += step) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+    for (double y = 0; y < size.height; y += step) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant GridBackgroundPainter oldDelegate) => false;
 }

@@ -45,7 +45,7 @@ class AppRouter {
 
   AppRouter({required AuthBloc authBloc}) : _authBloc = authBloc {
     _router = GoRouter(
-      initialLocation: Routes.simpleSignIn,
+      initialLocation: Routes.splash,
       debugLogDiagnostics: true,
       routes: _buildRoutes(),
       redirect: _handleRedirect,
