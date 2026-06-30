@@ -760,13 +760,18 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
           borderRadius: BorderRadius.circular(24.0),
           border: Border.all(
             color: const Color(0xFFE2E8F0),
-            width: 1.5,
+            width: 1.0,
           ),
-          boxShadow: const [
+          boxShadow: [
             BoxShadow(
-              color: Color(0xFFE2E8F0),
-              offset: Offset(0, 4),
-              blurRadius: 0,
+              color: const Color(0xFF0F172A).withValues(alpha: 0.05),
+              offset: const Offset(0, 10),
+              blurRadius: 20,
+            ),
+            BoxShadow(
+              color: const Color(0xFF0F172A).withValues(alpha: 0.02),
+              offset: const Offset(0, 2),
+              blurRadius: 4,
             ),
           ],
         ),
@@ -805,17 +810,42 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
             const SizedBox(height: 16),
             Row(
               children: [
-                // Concentric circular progress graph (shrunk to 86px)
-                SizedBox(
-                  width: 86,
-                  height: 86,
-                  child: CustomPaint(
-                    painter: ConcentricProgressPainter(
-                      track1: reportsRatio,
-                      track2: streakRatio,
-                      track3: badgesRatio,
+                // Concentric circular progress graph with a soft 3D inner eco badge
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    SizedBox(
+                      width: 96,
+                      height: 96,
+                      child: CustomPaint(
+                        painter: ConcentricProgressPainter(
+                          track1: reportsRatio,
+                          track2: streakRatio,
+                          track3: badgesRatio,
+                        ),
+                      ),
                     ),
-                  ),
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFF1F5F9),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 2,
+                            offset: Offset(0, 1),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.eco_rounded,
+                        color: Color(0xFF10B981),
+                        size: 16,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(width: 18),
                 // Horizontal / compact side-by-side layout for legend items
@@ -824,21 +854,27 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildLegendItem(
-                        color: const Color(0xFF1E3A8A),
+                        color: const Color(0xFF1D4ED8),
                         title: 'Lapor Selesai',
                         value: '${(reportsRatio * 100).toInt()}% ($completedReports/20)',
+                        icon: Icons.check_circle_rounded,
+                        pillBgColor: const Color(0xFFEFF6FF),
                       ),
                       const SizedBox(height: 8),
                       _buildLegendItem(
-                        color: const Color(0xFF6366F1),
+                        color: const Color(0xFFE11D48),
                         title: 'Streak Harian',
                         value: '${(streakRatio * 100).toInt()}% ($activeStreak/7 Hari)',
+                        icon: Icons.local_fire_department_rounded,
+                        pillBgColor: const Color(0xFFFFF1F2),
                       ),
                       const SizedBox(height: 8),
                       _buildLegendItem(
-                        color: const Color(0xFF93C5FD),
+                        color: const Color(0xFFD97706),
                         title: 'Lencana Didapat',
                         value: '${(badgesRatio * 100).toInt()}% ($badgeCount/5 Terbuka)',
+                        icon: Icons.emoji_events_rounded,
+                        pillBgColor: const Color(0xFFFFFBEB),
                       ),
                     ],
                   ),
@@ -851,44 +887,47 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
     );
   }
 
-  Widget _buildLegendItem({required Color color, required String title, required String value}) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          margin: const EdgeInsets.only(top: 4),
-          width: 7,
-          height: 7,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
+  Widget _buildLegendItem({
+    required Color color,
+    required String title,
+    required String value,
+    required IconData icon,
+    required Color pillBgColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: pillBgColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withValues(alpha: 0.1),
+          width: 1.0,
         ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title,
-                style: AppTextStyles.labelSmall.copyWith(
-                  color: AppColors.textSecondary,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                ),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 12),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              title,
+              style: AppTextStyles.labelSmall.copyWith(
+                color: AppColors.textSecondary,
+                fontSize: 9,
+                fontWeight: FontWeight.bold,
               ),
-              Text(
-                value,
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.navy900,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 10,
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
-      ],
+          Text(
+            value,
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppColors.navy900,
+              fontWeight: FontWeight.bold,
+              fontSize: 9,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -961,14 +1000,14 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
         color: gradientColors[0],
         borderRadius: BorderRadius.circular(24.0),
         border: Border.all(
-          color: iconColor.withValues(alpha: 0.2),
-          width: 1.5,
+          color: iconColor.withValues(alpha: 0.12),
+          width: 1.0,
         ),
         boxShadow: [
           BoxShadow(
-            color: iconColor.withValues(alpha: 0.18),
-            offset: const Offset(0, 4),
-            blurRadius: 0,
+            color: iconColor.withValues(alpha: 0.08),
+            offset: const Offset(0, 6),
+            blurRadius: 12,
           ),
         ],
       ),
@@ -1595,30 +1634,30 @@ class ConcentricProgressPainter extends CustomPainter {
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round;
 
-    // Track 1: Lapor Selesai (Royal Navy)
+    // Track 1: Lapor Selesai (Royal Blue Gradient)
     final radius1 = maxRadius - strokeWidth;
     canvas.drawCircle(center, radius1, paintBg);
     final rect1 = Rect.fromCircle(center: center, radius: radius1);
     paintFill.shader = const LinearGradient(
-      colors: [Color(0xFF1E3A8A), Color(0xFF3B82F6)],
+      colors: [Color(0xFF1D4ED8), Color(0xFF60A5FA)],
     ).createShader(rect1);
     canvas.drawArc(rect1, -1.5708, track1 * 6.28319, false, paintFill);
 
-    // Track 2: Streak Harian (Indigo)
+    // Track 2: Streak Harian (Rose Fire Gradient)
     final radius2 = radius1 - spacing;
     canvas.drawCircle(center, radius2, paintBg);
     final rect2 = Rect.fromCircle(center: center, radius: radius2);
     paintFill.shader = const LinearGradient(
-      colors: [Color(0xFF312E81), Color(0xFF6366F1)],
+      colors: [Color(0xFFE11D48), Color(0xFFFB7185)],
     ).createShader(rect2);
     canvas.drawArc(rect2, -1.5708, track2 * 6.28319, false, paintFill);
 
-    // Track 3: Lencana (Ice Blue)
+    // Track 3: Lencana (Gold Trophy Gradient)
     final radius3 = radius2 - spacing;
     canvas.drawCircle(center, radius3, paintBg);
     final rect3 = Rect.fromCircle(center: center, radius: radius3);
     paintFill.shader = const LinearGradient(
-      colors: [Color(0xFF1E1B4B), Color(0xFF93C5FD)],
+      colors: [Color(0xFFD97706), Color(0xFFFBBF24)],
     ).createShader(rect3);
     canvas.drawArc(rect3, -1.5708, track3 * 6.28319, false, paintFill);
   }
