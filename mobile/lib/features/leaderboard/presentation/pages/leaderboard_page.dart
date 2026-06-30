@@ -138,14 +138,23 @@ class _LeaderboardPageState extends State<LeaderboardPage> with AutomaticKeepAli
       color: color,
       borderRadius: BorderRadius.circular(radius),
       border: Border.all(
-        color: isSelf ? AppColors.gold : const Color(0xFFE2E8F0),
-        width: 1.5,
+        color: isSelf ? const Color(0xFFFBBF24) : const Color(0xFFE2E8F0),
+        width: 1.0,
       ),
       boxShadow: [
         BoxShadow(
-          color: isSelf ? const Color(0xFFFEF3C7) : const Color(0xFFE2E8F0),
+          color: isSelf 
+              ? const Color(0xFFD97706).withValues(alpha: 0.08)
+              : const Color(0xFF0F172A).withValues(alpha: 0.04),
           offset: const Offset(0, 4),
-          blurRadius: 0,
+          blurRadius: 10,
+        ),
+        BoxShadow(
+          color: isSelf
+              ? const Color(0xFFD97706).withValues(alpha: 0.04)
+              : const Color(0xFF0F172A).withValues(alpha: 0.02),
+          offset: const Offset(0, 1),
+          blurRadius: 2,
         ),
       ],
     );
@@ -403,22 +412,29 @@ class _LeaderboardPageState extends State<LeaderboardPage> with AutomaticKeepAli
                                   ),
                                 ),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.gold.withValues(alpha: 0.12),
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(color: AppColors.gold.withValues(alpha: 0.2), width: 1.2),
-                                  ),
-                                  child: Text(
-                                    '${currentUserEntry.xp} XP',
-                                    style: AppTextStyles.labelSmall.copyWith(
-                                      color: AppColors.gold,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                   decoration: BoxDecoration(
+                                     color: const Color(0xFFFFFBEB),
+                                     borderRadius: BorderRadius.circular(16),
+                                     border: Border.all(color: const Color(0xFFFDE68A), width: 1.0),
+                                     boxShadow: [
+                                       BoxShadow(
+                                         color: const Color(0xFFD97706).withValues(alpha: 0.05),
+                                         offset: const Offset(0, 2),
+                                         blurRadius: 4,
+                                       ),
+                                     ],
+                                   ),
+                                   child: Text(
+                                     '${currentUserEntry.xp} XP',
+                                     style: AppTextStyles.labelSmall.copyWith(
+                                       color: const Color(0xFFB45309),
+                                       fontWeight: FontWeight.bold,
+                                     ),
+                                   ),
+                                 ),
+                               ],
+                             ),
                           ),
                         ),
                       ),
@@ -601,26 +617,35 @@ class _LeaderboardPageState extends State<LeaderboardPage> with AutomaticKeepAli
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: isSelf
-                  ? AppColors.gold.withValues(alpha: 0.15)
-                  : AppColors.navy50,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isSelf ? AppColors.gold.withValues(alpha: 0.25) : Colors.transparent,
-                width: 1.0,
-              ),
-            ),
-            child: Text(
-              '${user.xp} XP',
-              style: AppTextStyles.labelSmall.copyWith(
-                color: isSelf ? AppColors.gold : AppColors.navy700,
-                fontWeight: FontWeight.bold,
-                fontSize: 10,
-              ),
-            ),
-          ),
+             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+             decoration: BoxDecoration(
+               color: isSelf
+                   ? const Color(0xFFFFFBEB)
+                   : const Color(0xFFF1F5F9),
+               borderRadius: BorderRadius.circular(12),
+               border: Border.all(
+                 color: isSelf ? const Color(0xFFFDE68A) : const Color(0xFFE2E8F0),
+                 width: 1.0,
+               ),
+               boxShadow: [
+                 BoxShadow(
+                   color: isSelf
+                       ? const Color(0xFFD97706).withValues(alpha: 0.05)
+                       : const Color(0xFF0F172A).withValues(alpha: 0.02),
+                   offset: const Offset(0, 2),
+                   blurRadius: 4,
+                 ),
+               ],
+             ),
+             child: Text(
+               '${user.xp} XP',
+               style: AppTextStyles.labelSmall.copyWith(
+                 color: isSelf ? const Color(0xFFB45309) : const Color(0xFF475569),
+                 fontWeight: FontWeight.bold,
+                 fontSize: 10,
+               ),
+             ),
+           ),
         ],
       ),
     );
