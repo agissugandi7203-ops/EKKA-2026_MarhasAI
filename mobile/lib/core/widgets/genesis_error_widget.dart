@@ -282,14 +282,20 @@ extension GenesisSnackBar on BuildContext {
 
     final overlay = Overlay.of(this);
 
-    final entry = OverlayEntry(
+    late final OverlayEntry entry;
+    entry = OverlayEntry(
       builder: (context) => _TopToastWidget(
         message: message,
         icon: icon,
         backgroundColor: backgroundColor,
         duration: duration,
         onDismiss: () {
-          _activeGenesisToast = null;
+          try {
+            entry.remove();
+          } catch (_) {}
+          if (_activeGenesisToast == entry) {
+            _activeGenesisToast = null;
+          }
         },
       ),
     );

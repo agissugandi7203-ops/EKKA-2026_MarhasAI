@@ -17,6 +17,11 @@ export const metadata: Metadata = {
   description: "Official smart city management portal. Connecting citizens and local authorities through AI-powered report classification, gamification, and real-time dashboard analytics.",
   keywords: ["smart city", "genesis.id", "citizen reports", "AI classification", "city dashboard"],
   manifest: "/manifest.json",
+  icons: {
+    icon: "/logo.png",
+    shortcut: "/logo.png",
+    apple: "/logo.png",
+  },
   verification: {
     google: "googlee4a64ab1a21f7c0d",
   },
@@ -49,7 +54,7 @@ export default function RootLayout({
     "@type": "Organization",
     "name": "Genesis.id Hub",
     "url": "https://genesisHub.web.id",
-    "logo": "https://genesisHub.web.id/next.svg",
+    "logo": "https://genesisHub.web.id/logo.png",
     "description": "Genesis.id Hub is a multi-platform smart city portal connecting citizens with administrative dashboards and AI-powered report processing.",
     "sameAs": [
       "https://github.com/agissugandi7203-ops/front_end"

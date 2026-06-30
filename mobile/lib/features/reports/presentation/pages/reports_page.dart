@@ -40,6 +40,8 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
   bool _isCameraPermissionGranted = false;
   bool _isFlashOn = false;
   bool _isGridOn = true;
+  bool _cameraInitializationFailed = false;
+  String _cameraErrorMessage = '';
 
   // Scanner/UI States
   bool _isCaptured = false;
@@ -104,6 +106,11 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
   }
 
   Future<void> _initializeCamera() async {
+    setState(() {
+      _cameraInitializationFailed = false;
+      _cameraErrorMessage = '';
+    });
+
     final status = await Permission.camera.request();
     if (!mounted) return;
 
@@ -126,13 +133,26 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
           if (mounted) {
             setState(() {
               _isCameraInitialized = true;
+              _cameraInitializationFailed = false;
             });
           }
         } else {
           debugPrint('Kamera tidak ditemukan');
+          if (mounted) {
+            setState(() {
+              _cameraInitializationFailed = true;
+              _cameraErrorMessage = 'Perangkat kamera tidak ditemukan pada sistem.';
+            });
+          }
         }
       } catch (e) {
         debugPrint('Error initializing camera: $e');
+        if (mounted) {
+          setState(() {
+            _cameraInitializationFailed = true;
+            _cameraErrorMessage = 'Gagal memuat perangkat kamera. Silakan coba lagi.';
+          });
+        }
       }
     } else {
       setState(() {
@@ -425,6 +445,53 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
               onPressed: () => openAppSettings(),
               icon: const Icon(Icons.settings_rounded, size: 18),
               label: const Text('Buka Pengaturan', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_cameraInitializationFailed && !_isCaptured) {
+      return Container(
+        color: Colors.black87,
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.no_photography_rounded, color: AppColors.error, size: 64),
+            const SizedBox(height: 16),
+            Text(
+              'Gagal Membuka Kamera',
+              style: AppTextStyles.titleMedium.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _cameraErrorMessage.isNotEmpty 
+                  ? _cameraErrorMessage 
+                  : 'Terjadi kesalahan sistem saat mencoba mengakses kamera Anda.',
+              style: AppTextStyles.bodySmall.copyWith(color: Colors.white70, height: 1.5),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.navy700,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+              onPressed: _initializeCamera,
+              icon: const Icon(Icons.refresh_rounded, size: 18),
+              label: const Text('Coba Lagi', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+            const SizedBox(height: 16),
+            TextButton.icon(
+              onPressed: _captureMockPhoto,
+              icon: const Icon(Icons.tablet_android_rounded, color: AppColors.emerald, size: 16),
+              label: const Text(
+                'Gunakan Kamera Simulator',
+                style: TextStyle(color: AppColors.emerald, fontWeight: FontWeight.bold, fontSize: 12),
+              ),
             ),
           ],
         ),
@@ -1098,11 +1165,15 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
   void _scrollToBottom() {
     if (_scrollController.hasClients) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 250),
-          curve: Curves.easeOut,
-        );
+        Future.delayed(const Duration(milliseconds: 50), () {
+          if (_scrollController.hasClients && mounted) {
+            _scrollController.animateTo(
+              _scrollController.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeOut,
+            );
+          }
+        });
       });
     }
   }
@@ -1228,12 +1299,14 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     return Container(
-      height: MediaQuery.of(context).size.height * 0.75,
+      height: MediaQuery.of(context).size.height * 0.82,
       decoration: const BoxDecoration(
         color: AppColors.cardBackground,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
+      padding: EdgeInsets.only(bottom: bottomInset),
       child: Column(
         children: [
           Container(
@@ -1253,7 +1326,20 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.insights_rounded, color: AppColors.emerald, size: 22),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: Image.asset(
+                        'assets/images/logo.png',
+                        width: 22,
+                        height: 22,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => const Icon(
+                          Icons.auto_awesome_rounded,
+                          color: AppColors.emerald,
+                          size: 22,
+                        ),
+                      ),
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       'Analisis AI Scan',
@@ -1273,7 +1359,7 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
           Expanded(
             child: ListView.builder(
               controller: _scrollController,
-              physics: const BouncingScrollPhysics(),
+              physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
               padding: const EdgeInsets.all(20),
               itemCount: _messages.length + (_isTyping ? 1 : 0),
               itemBuilder: (context, index) {
@@ -1338,9 +1424,11 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
               left: 20,
               right: 20,
               top: 10,
-              bottom: MediaQuery.of(context).padding.bottom > 0
-                  ? MediaQuery.of(context).padding.bottom + 10.0
-                  : 20.0,
+              bottom: bottomInset > 0
+                  ? 10.0
+                  : (MediaQuery.of(context).padding.bottom > 0
+                      ? MediaQuery.of(context).padding.bottom + 10.0
+                      : 20.0),
             ),
             child: Row(
               children: [

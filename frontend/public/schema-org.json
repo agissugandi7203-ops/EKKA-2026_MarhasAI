@@ -3,7 +3,7 @@
   "@type": "Organization",
   "name": "Genesis.id Hub",
   "url": "https://genesisHub.web.id",
-  "logo": "https://genesisHub.web.id/next.svg",
+  "logo": "https://genesisHub.web.id/logo.png",
   "description": "Genesis.id Hub is a multi-platform smart city portal connecting citizens with administrative dashboards and AI-powered report processing.",
   "sameAs": [
     "https://github.com/agissugandi7203-ops/front_end"
