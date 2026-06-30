@@ -55,6 +55,7 @@ export default function ReportsTab({
   theme = "light"
 }: ReportsTabProps) {
   const mapInstanceRef = useRef<any>(null);
+  const isDark = theme === "dark";
 
   // Advanced Sorting & Area states
   const [sortBy, setSortBy] = useState<"newest" | "danger" | "lowest_ai">("newest");
@@ -65,7 +66,7 @@ export default function ReportsTab({
   const [batchConfirmAction, setBatchConfirmAction] = useState<{ action: "approved" | "rejected" | "delete"; ids: string[] } | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
-  // Leaflet Map Initialization with CartoDB Voyager/Positron Soft Tiles
+  // Leaflet Map Initialization with CartoDB Voyager/Dark Matter Soft Tiles
   useEffect(() => {
     if (loading) return;
 
@@ -117,8 +118,12 @@ export default function ReportsTab({
         position: "bottomright"
       }).addTo(map);
 
-      // Add CartoDB Voyager tile layer (Soft Light Theme map tiles)
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
+      // Add CartoDB tile layer based on active theme state
+      const tileUrl = isDark
+        ? "https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png"
+        : "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
+
+      L.tileLayer(tileUrl, {
         attribution: '&copy; OpenStreetMap &copy; CartoDB',
         subdomains: "abcd",
         maxZoom: 20
@@ -159,6 +164,7 @@ export default function ReportsTab({
         };
 
         const color = statusColors[rep.status] || "#6b7280";
+        const pinBorder = isDark ? "#09090b" : "#ffffff";
 
         // Pulsing custom divIcon
         const markerIcon = L.divIcon({
@@ -166,7 +172,7 @@ export default function ReportsTab({
           html: `
             <div class="relative flex items-center justify-center">
               <div style="background-color: ${color}20; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center;" class="animate-ping absolute pointer-events-none"></div>
-              <div style="background-color: ${color}; width: 14px; height: 14px; border-radius: 50%; border: 2.5px solid #ffffff; box-shadow: 0 2px 10px ${color}80; cursor: pointer;"></div>
+              <div style="background-color: ${color}; width: 14px; height: 14px; border-radius: 50%; border: 2.5px solid ${pinBorder}; box-shadow: 0 2px 10px ${color}80; cursor: pointer;"></div>
             </div>
           `,
           iconSize: [34, 34],
@@ -176,19 +182,29 @@ export default function ReportsTab({
         const marker = L.marker([lat, lng], { icon: markerIcon }).addTo(map);
 
         const reporterName = rep.profiles?.full_name || rep.profiles?.username || "Warga Anonim";
+        
+        // Popup theme styling
+        const popupBg = isDark ? "#18181b" : "#ffffff";
+        const popupText = isDark ? "#f4f4f5" : "#0f172a";
+        const popupTitle = isDark ? "#ffffff" : "#1e293b";
+        const popupMuted = isDark ? "#a1a1aa" : "#64748b";
+        const popupDesc = isDark ? "#e4e4e7" : "#334155";
+        const popupBtnBg = isDark ? "#4f46e5" : "#0f172a";
+        const popupShadow = isDark ? "0 4px 15px rgba(0,0,0,0.4)" : "0 4px 15px rgba(0,0,0,0.05)";
+
         const contentString = `
-          <div style="color: #0f172a; background-color: #ffffff; font-family: inherit; font-size: 11px; padding: 6px; border-radius: 12px; width: 180px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-            <div style="font-weight: 700; font-size: 12px; margin-bottom: 4px; color: #1e293b;">${rep.waste_type || "Tumpukan Sampah"}</div>
-            <div style="color: #64748b; margin-bottom: 6px; font-weight: 500;">Oleh: ${reporterName}</div>
-            <div style="max-height: 40px; overflow: hidden; text-overflow: ellipsis; margin-bottom: 8px; color: #334155; line-height: 1.4;">${rep.description || "Tanpa rincian deskripsi."}</div>
-            <button onclick="window.openReportFromMap('${rep.id}')" style="background-color: #0f172a; color: #ffffff; border: none; padding: 6px 10px; border-radius: 8px; font-weight: 600; width: 100%; cursor: pointer; transition: transform 0.1s; font-size: 10px;">
+          <div style="color: ${popupText}; background-color: ${popupBg}; font-family: inherit; font-size: 11px; padding: 10px; border-radius: 12px; width: 190px; box-shadow: ${popupShadow};">
+            <div style="font-weight: 700; font-size: 12px; margin-bottom: 4px; color: ${popupTitle};">${rep.waste_type || "Tumpukan Sampah"}</div>
+            <div style="color: ${popupMuted}; margin-bottom: 6px; font-weight: 500;">Oleh: ${reporterName}</div>
+            <div style="max-height: 40px; overflow: hidden; text-overflow: ellipsis; margin-bottom: 8px; color: ${popupDesc}; line-height: 1.4;">${rep.description || "Tanpa rincian deskripsi."}</div>
+            <button onclick="window.openReportFromMap('${rep.id}')" style="background-color: ${popupBtnBg}; color: #ffffff; border: none; padding: 6.5px 10px; border-radius: 8px; font-weight: 600; width: 100%; cursor: pointer; font-size: 10px;">
               Pemeriksaan Absolut
             </button>
           </div>
         `;
 
         marker.bindPopup(contentString, {
-          className: "light-premium-popup",
+          className: isDark ? "dark-premium-popup" : "light-premium-popup",
           closeButton: false,
           minWidth: 190
         });
@@ -204,7 +220,7 @@ export default function ReportsTab({
         mapInstanceRef.current = null;
       }
     };
-  }, [reports, loading]);
+  }, [reports, loading, theme]);
 
   // Handle auto centering / panning to selected report
   useEffect(() => {
@@ -304,14 +320,42 @@ export default function ReportsTab({
     return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
   };
 
+  const getStatusBadgeClass = (status: string) => {
+    if (status === "pending_human") {
+      return isDark 
+        ? "bg-red-500/10 text-red-400 border border-red-500/20" 
+        : "bg-red-50 text-red-700 border border-red-100/50";
+    }
+    if (status === "pending_ai") {
+      return isDark 
+        ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" 
+        : "bg-amber-50 text-amber-700 border border-amber-100/50";
+    }
+    if (status === "approved") {
+      return isDark 
+        ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" 
+        : "bg-emerald-50 text-emerald-700 border border-emerald-100/50";
+    }
+    if (status === "resolved") {
+      return isDark 
+        ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" 
+        : "bg-blue-50 text-blue-600 border border-blue-100";
+    }
+    return isDark 
+      ? "bg-zinc-800 text-zinc-400 border border-zinc-700" 
+      : "bg-slate-100 text-slate-600 border border-slate-200";
+  };
+
   return (
     <div className="flex flex-col gap-6 animate-fade-up h-full relative">
       
       {/* Header section with inline Search/Filters */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-navy-900">Laporan Spasial Lingkungan Warga</h1>
-          <p className="text-xs text-navy-500 font-light mt-1.5">
+          <h1 className={`text-2xl font-semibold ${isDark ? "text-white" : "text-slate-900"}`}>
+            Laporan Spasial Lingkungan Warga
+          </h1>
+          <p className={`text-xs font-light mt-1.5 ${isDark ? "text-slate-400" : "text-slate-500"}`}>
             Kontrol absolut atas penemuan tumpukan sampah, tindakan massal, hapus rujukan spam, dan verifikasi koordinat spasial.
           </p>
         </div>
@@ -320,25 +364,33 @@ export default function ReportsTab({
         <div className="flex flex-wrap items-center gap-3">
           {/* Keyword Search */}
           <div className="relative">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-navy-400" />
+            <Search className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 ${isDark ? "text-zinc-500" : "text-slate-400"}`} />
             <input
               type="text"
               placeholder="Cari kata kunci..."
               value={reportSearch}
               onChange={(e) => setReportSearch(e.target.value)}
-              className="bg-white border border-navy-100 rounded-xl pl-9 pr-4 py-2 text-xs text-navy-900 placeholder-navy-400 focus:outline-none focus:border-navy-300 focus:bg-navy-50/30 transition-colors w-40 shadow-sm"
+              className={`border rounded-xl pl-9 pr-4 py-2 text-xs focus:outline-none transition-colors w-40 shadow-sm ${
+                isDark
+                  ? "bg-zinc-900 border-zinc-800 text-white placeholder-zinc-500 focus:border-zinc-700"
+                  : "bg-white border-slate-200 text-slate-900 placeholder-slate-400 focus:border-slate-350"
+              }`}
             />
           </div>
 
           {/* Area Search */}
           <div className="relative">
-            <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-navy-400" />
+            <MapPin className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 ${isDark ? "text-zinc-500" : "text-slate-400"}`} />
             <input
               type="text"
               placeholder="Filter wilayah..."
               value={areaSearch}
               onChange={(e) => setAreaSearch(e.target.value)}
-              className="bg-white border border-navy-100 rounded-xl pl-9 pr-4 py-2 text-xs text-navy-900 placeholder-navy-400 focus:outline-none focus:border-navy-300 focus:bg-navy-50/30 transition-colors w-40 shadow-sm"
+              className={`border rounded-xl pl-9 pr-4 py-2 text-xs focus:outline-none transition-colors w-40 shadow-sm ${
+                isDark
+                  ? "bg-zinc-900 border-zinc-800 text-white placeholder-zinc-500 focus:border-zinc-700"
+                  : "bg-white border-slate-200 text-slate-900 placeholder-slate-400 focus:border-slate-350"
+              }`}
             />
           </div>
 
@@ -346,7 +398,11 @@ export default function ReportsTab({
           <select
             value={reportFilter}
             onChange={(e) => setReportFilter(e.target.value)}
-            className="bg-white border border-navy-100 rounded-xl px-3 py-2 text-xs text-navy-700 focus:outline-none focus:border-navy-300 cursor-pointer shadow-sm font-medium"
+            className={`border rounded-xl px-3 py-2 text-xs focus:outline-none cursor-pointer shadow-sm font-medium ${
+              isDark
+                ? "bg-zinc-900 border-zinc-800 text-white focus:border-zinc-700"
+                : "bg-white border-slate-200 text-slate-700 focus:border-slate-350"
+            }`}
           >
             <option value="all">Semua Status</option>
             <option value="pending_human">Pending Verifikasi</option>
@@ -357,12 +413,16 @@ export default function ReportsTab({
           </select>
 
           {/* Sorter Dropdown */}
-          <div className="flex items-center gap-1 bg-white border border-navy-100 rounded-xl px-2 py-1.5 shadow-sm">
-            <SlidersHorizontal className="h-3 w-3 text-navy-500" />
+          <div className={`flex items-center gap-1 border rounded-xl px-2 py-1.5 shadow-sm ${
+            isDark ? "bg-zinc-900 border-zinc-800" : "bg-white border-slate-200"
+          }`}>
+            <SlidersHorizontal className={`h-3 w-3 ${isDark ? "text-zinc-500" : "text-slate-400"}`} />
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
-              className="bg-transparent border-none text-[11px] font-bold text-navy-700 focus:outline-none cursor-pointer"
+              className={`bg-transparent border-none text-[11px] font-bold focus:outline-none cursor-pointer ${
+                isDark ? "text-zinc-300" : "text-slate-700"
+              }`}
             >
               <option value="newest">Terbaru</option>
               <option value="danger">Bahaya Tertinggi</option>
@@ -374,21 +434,25 @@ export default function ReportsTab({
 
       {/* Batch Control Header Bar */}
       {filteredReports.length > 0 && (
-        <div className="bg-navy-50/70 border border-navy-100/40 rounded-2xl px-4 py-2.5 flex items-center justify-between select-none">
+        <div className={`border rounded-2xl px-4 py-2.5 flex items-center justify-between select-none ${
+          isDark ? "bg-zinc-900/50 border-zinc-800/80" : "bg-slate-50/70 border-slate-200/40"
+        }`}>
           <button
             onClick={toggleSelectAll}
-            className="flex items-center gap-2 text-xs font-bold text-navy-700 cursor-pointer hover:text-navy-900 transition-colors"
+            className={`flex items-center gap-2 text-xs font-bold cursor-pointer transition-colors ${
+              isDark ? "text-zinc-300 hover:text-white" : "text-slate-700 hover:text-slate-900"
+            }`}
           >
             {selectedIds.length === filteredReports.length ? (
-              <CheckSquare className="h-4 w-4 text-navy-900" />
+              <CheckSquare className={`h-4 w-4 ${isDark ? "text-indigo-400" : "text-slate-900"}`} />
             ) : (
-              <Square className="h-4 w-4 text-navy-400" />
+              <Square className={`h-4 w-4 ${isDark ? "text-zinc-600" : "text-slate-400"}`} />
             )}
             Pilih Semua ({filteredReports.length} Laporan)
           </button>
           
           {selectedIds.length > 0 && (
-            <span className="text-[10px] text-navy-500 font-bold uppercase tracking-wider">
+            <span className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? "text-indigo-400" : "text-slate-550"}`}>
               {selectedIds.length} Terpilih dari {filteredReports.length} daftar
             </span>
           )}
@@ -399,9 +463,11 @@ export default function ReportsTab({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-[500px]">
         
         {/* Left Column: Interactive scroll feed */}
-        <div className="lg:col-span-1 flex flex-col gap-4 overflow-y-auto max-h-[600px] pr-2 scrollbar-thin scrollbar-thumb-navy-100">
+        <div className="lg:col-span-1 flex flex-col gap-4 overflow-y-auto max-h-[600px] pr-2 scrollbar-thin scrollbar-thumb-zinc-800">
           {filteredReports.length === 0 ? (
-            <div className="bg-white border border-navy-100 rounded-3xl p-8 text-center text-navy-400 text-xs italic shadow-sm">
+            <div className={`border rounded-3xl p-8 text-center text-xs italic shadow-sm ${
+              isDark ? "bg-zinc-900 border-zinc-800 text-zinc-500" : "bg-white border-slate-200 text-slate-400"
+            }`}>
               Tidak ada laporan tumpukan sampah yang cocok.
             </div>
           ) : (
@@ -414,8 +480,12 @@ export default function ReportsTab({
                   onClick={() => setSelectedReport(rep)}
                   className={`p-4 rounded-3xl cursor-pointer border transition-all duration-300 flex flex-col gap-3 relative ${
                     isSelected
-                      ? "bg-navy-900 border-navy-900 text-white scale-[1.01] shadow-[0_8px_24px_rgba(5,12,24,0.15)]"
-                      : "bg-white border-navy-100/80 hover:bg-navy-50/50 hover:border-navy-200 text-navy-900 shadow-sm"
+                      ? isDark
+                        ? "bg-indigo-650 border-indigo-600 text-white scale-[1.01] shadow-[0_8px_24px_rgba(79,70,229,0.25)]"
+                        : "bg-slate-900 border-slate-900 text-white scale-[1.01] shadow-[0_8px_24px_rgba(15,23,42,0.15)]"
+                      : isDark
+                        ? "bg-zinc-900 border-zinc-800 hover:bg-zinc-850 hover:border-zinc-700 text-white shadow-sm"
+                        : "bg-white border-slate-200/80 hover:bg-slate-50/50 hover:border-slate-300 text-slate-800 shadow-sm"
                   }`}
                 >
                   <div className="flex gap-3">
@@ -425,42 +495,42 @@ export default function ReportsTab({
                       className="flex items-center justify-center pt-1"
                     >
                       {isChecked ? (
-                        <CheckSquare className={`h-4.5 w-4.5 shrink-0 ${isSelected ? 'text-white' : 'text-navy-900'}`} />
+                        <CheckSquare className={`h-4.5 w-4.5 shrink-0 ${isSelected ? 'text-white' : isDark ? 'text-indigo-400' : 'text-slate-900'}`} />
                       ) : (
-                        <Square className={`h-4.5 w-4.5 shrink-0 ${isSelected ? 'text-white/40' : 'text-navy-300'}`} />
+                        <Square className={`h-4.5 w-4.5 shrink-0 ${isSelected ? 'text-white/40' : isDark ? 'text-zinc-600' : 'text-slate-300'}`} />
                       )}
                     </div>
 
                     <img 
                       src={rep.image_url} 
                       alt={rep.waste_type} 
-                      className="h-14 w-14 rounded-xl object-cover border border-navy-100 shrink-0 shadow-sm" 
+                      className={`h-14 w-14 rounded-xl object-cover shrink-0 shadow-sm border ${
+                        isDark ? "border-zinc-800" : "border-slate-100"
+                      }`} 
                     />
                     <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
                       <div className="flex items-start justify-between gap-1">
-                        <span className={`text-xs font-bold truncate leading-none ${isSelected ? 'text-white' : 'text-navy-900'}`}>
+                        <span className={`text-xs font-bold truncate leading-none ${isSelected ? 'text-white' : isDark ? 'text-zinc-150' : 'text-slate-900'}`}>
                           {rep.waste_type || "Tumpukan Sampah"}
                         </span>
-                        <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded uppercase leading-none shrink-0 ${
-                          rep.status === "pending_human" ? "bg-burgundy-50 text-burgundy-500 border border-burgundy-100/50" :
-                          rep.status === "pending_ai" ? "bg-gold-50 text-gold border border-gold-100/50" :
-                          rep.status === "approved" ? "bg-emerald-light/40 text-emerald border border-emerald-light/60" :
-                          rep.status === "resolved" ? "bg-blue-50 text-blue-600 border border-blue-100" :
-                          "bg-navy-50 text-navy-500 border border-navy-100"
-                        }`}>
+                        <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded uppercase leading-none shrink-0 ${getStatusBadgeClass(rep.status)}`}>
                           {rep.status.replace("_", " ")}
                         </span>
                       </div>
-                      <p className={`text-[10px] leading-relaxed truncate mt-1 ${isSelected ? 'text-white/70' : 'text-navy-500'}`}>
+                      <p className={`text-[10px] leading-relaxed truncate mt-1 ${isSelected ? 'text-white/70' : isDark ? 'text-zinc-400' : 'text-slate-500'}`}>
                         {rep.description}
                       </p>
                       <div className="flex items-center justify-between mt-2 select-none">
-                        <span className={`text-[9px] leading-none font-mono ${isSelected ? 'text-white/40' : 'text-navy-400'}`}>
+                        <span className={`text-[9px] leading-none font-mono ${isSelected ? 'text-white/40' : isDark ? 'text-zinc-500' : 'text-slate-400'}`}>
                           {new Date(rep.created_at).toLocaleDateString("id-ID")}
                         </span>
                         
                         {rep.danger_level === "Tinggi" && (
-                          <span className="flex items-center gap-0.5 text-red-600 font-extrabold text-[8px] uppercase tracking-wider bg-red-50 border border-red-100 px-1.5 py-0.5 rounded">
+                          <span className={`flex items-center gap-0.5 font-extrabold text-[8px] uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                            isDark 
+                              ? "bg-red-500/10 text-red-400 border border-red-500/20" 
+                              : "bg-red-50 text-red-600 border border-red-100"
+                          }`}>
                             <AlertTriangle className="h-2 w-2" />
                             CRITICAL
                           </span>
@@ -475,27 +545,37 @@ export default function ReportsTab({
         </div>
 
         {/* Right Column: Premium Leaflet map */}
-        <div className="lg:col-span-2 flex flex-col gap-4 relative min-h-[400px] h-full rounded-3xl overflow-hidden border border-navy-100 shadow-[0_4px_24px_rgba(10,22,40,0.02)]">
+        <div className={`lg:col-span-2 flex flex-col gap-4 relative min-h-[400px] h-full rounded-3xl overflow-hidden border shadow-sm ${
+          isDark ? "border-zinc-800 bg-zinc-950" : "border-slate-200 bg-white"
+        }`}>
           {/* Visual header overlay */}
           <div className="absolute top-4 left-4 z-[400] select-none pointer-events-none">
-            <div className="bg-white/95 backdrop-blur-md rounded-xl py-2 px-3.5 border border-navy-100 shadow-md flex items-center gap-2">
+            <div className={`backdrop-blur-md rounded-xl py-2 px-3.5 border shadow-md flex items-center gap-2 ${
+              isDark ? "bg-zinc-950/90 border-zinc-800" : "bg-white/95 border-slate-150"
+            }`}>
               <Map className="h-4 w-4 text-emerald" />
-              <span className="text-[10px] font-bold tracking-wider uppercase text-navy-900">Peta Spasial Real-Time</span>
+              <span className={`text-[10px] font-bold tracking-wider uppercase ${isDark ? "text-zinc-200" : "text-slate-800"}`}>
+                Peta Spasial Real-Time
+              </span>
             </div>
           </div>
 
           {/* Map canvas */}
-          <div id="admin-gis-map" className="w-full h-full bg-navy-50 z-0" style={{ minHeight: "500px" }} />
+          <div id="admin-gis-map" className={`w-full h-full z-0 ${isDark ? "bg-zinc-950" : "bg-slate-50"}`} style={{ minHeight: "500px" }} />
         </div>
 
       </div>
 
       {/* FLOATING BATCH ACTION PANEL */}
       {selectedIds.length > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-navy-950/95 backdrop-blur-md border border-navy-800 rounded-3xl py-3.5 px-6 shadow-2xl flex flex-col sm:flex-row items-center gap-5 z-50 animate-fade-up select-none max-w-[95%]">
+        <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 border rounded-3xl py-3.5 px-6 shadow-2xl flex flex-col sm:flex-row items-center gap-5 z-50 animate-fade-up select-none max-w-[95%] ${
+          isDark ? "bg-zinc-950/95 border-zinc-850" : "bg-slate-900/95 border-slate-800"
+        }`}>
           <div className="text-center sm:text-left">
             <div className="text-xs font-bold text-white">{selectedIds.length} Laporan Spasial Terpilih</div>
-            <p className="text-[10px] text-navy-400 font-light mt-0.5">Terapkan tindakan massal absolut secara instan.</p>
+            <p className={`text-[10px] font-light mt-0.5 ${isDark ? "text-zinc-500" : "text-slate-400"}`}>
+              Terapkan tindakan massal absolut secara instan.
+            </p>
           </div>
 
           <div className="flex items-center gap-3 shrink-0">
@@ -507,7 +587,7 @@ export default function ReportsTab({
             </button>
             <button
               onClick={() => triggerBatchAction("rejected")}
-              className="bg-gold text-navy-950 px-3.5 py-2 rounded-xl text-[11px] font-bold hover:bg-yellow-500 transition-all cursor-pointer shadow-md"
+              className="bg-gold text-slate-950 px-3.5 py-2 rounded-xl text-[11px] font-bold hover:bg-yellow-500 transition-all cursor-pointer shadow-md"
             >
               Tolak Massal
             </button>
@@ -519,7 +599,9 @@ export default function ReportsTab({
             </button>
             <button
               onClick={() => setSelectedIds([])}
-              className="text-[11px] font-bold text-navy-300 hover:text-white transition-all cursor-pointer"
+              className={`text-[11px] font-bold transition-all cursor-pointer ${
+                isDark ? "text-zinc-400 hover:text-white" : "text-slate-350 hover:text-white"
+              }`}
             >
               Batal
             </button>
@@ -529,13 +611,21 @@ export default function ReportsTab({
 
       {/* ABSOLUTE REPORT ACTION MODAL */}
       {selectedReport && (
-        <div className="fixed inset-0 bg-navy-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
-          <div className="relative w-full max-w-2xl bg-white border border-navy-100 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div className={`fixed inset-0 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in ${
+          isDark ? "bg-black/60" : "bg-slate-900/40"
+        }`}>
+          <div className={`relative w-full max-w-2xl border rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] ${
+            isDark ? "bg-zinc-950 border-zinc-850 text-white" : "bg-white border-slate-200 text-slate-800"
+          }`}>
             
             {/* Close */}
             <button 
               onClick={() => setSelectedReport(null)}
-              className="absolute top-4 right-4 h-8 w-8 rounded-full bg-navy-50 hover:bg-navy-100 border border-navy-100 flex items-center justify-center cursor-pointer text-navy-600 hover:text-navy-900 transition-colors z-10"
+              className={`absolute top-4 right-4 h-8 w-8 rounded-full flex items-center justify-center cursor-pointer border transition-colors z-10 ${
+                isDark 
+                  ? "bg-zinc-900 border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-white" 
+                  : "bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+              }`}
             >
               <X className="h-4 w-4" />
             </button>
@@ -543,10 +633,14 @@ export default function ReportsTab({
             <div className="overflow-y-auto p-6 md:p-8 flex flex-col gap-6">
               
               {/* Heading */}
-              <div className="border-b border-navy-50 pb-4 select-none flex items-center justify-between gap-4">
+              <div className={`border-b pb-4 select-none flex items-center justify-between gap-4 ${
+                isDark ? "border-zinc-900" : "border-slate-100"
+              }`}>
                 <div>
                   <span className="text-[10px] font-bold text-gold uppercase tracking-wider">Identifikasi Lapangan Absolut</span>
-                  <h2 className="text-xl font-bold text-navy-900 mt-1">Laporan {selectedReport.id}</h2>
+                  <h2 className={`text-xl font-bold mt-1 ${isDark ? "text-white" : "text-slate-900"}`}>
+                    Laporan {selectedReport.id}
+                  </h2>
                 </div>
 
                 {/* Google Maps link & Delete permanently button */}
@@ -575,30 +669,42 @@ export default function ReportsTab({
 
               {/* Photos + Details */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="relative rounded-2xl overflow-hidden border border-navy-100 aspect-video md:aspect-auto md:h-56 shadow-sm">
+                <div className={`relative rounded-2xl overflow-hidden border aspect-video md:aspect-auto md:h-56 shadow-sm ${
+                  isDark ? "border-zinc-850" : "border-slate-100"
+                }`}>
                   <img src={selectedReport.image_url} alt="Waste detection" className="w-full h-full object-cover" />
-                  <div className="absolute bottom-3 left-3 bg-navy-900/80 px-2 py-1 rounded text-[10px] font-mono backdrop-blur-sm text-white shadow-md">
+                  <div className={`absolute bottom-3 left-3 px-2 py-1 rounded text-[10px] font-mono backdrop-blur-sm shadow-md ${
+                    isDark ? "bg-black/80 text-zinc-300" : "bg-slate-900/80 text-white"
+                  }`}>
                     Skor Deteksi AI: {selectedReport.confidence_score ? `${selectedReport.confidence_score.toFixed(1)}%` : "N/A"}
                   </div>
                 </div>
 
                 <div className="flex flex-col justify-between gap-4">
-                  <div className="flex flex-col gap-2.5 text-xs text-navy-700">
+                  <div className={`flex flex-col gap-2.5 text-xs ${isDark ? "text-zinc-300" : "text-slate-700"}`}>
                     <div>
-                      <span className="text-navy-400 block font-semibold text-[10px] uppercase">Pelapor</span>
-                      <span className="font-bold text-navy-900 mt-0.5 block">{selectedReport.profiles?.full_name || selectedReport.profiles?.username || "Warga Anonim"}</span>
+                      <span className={`block font-semibold text-[10px] uppercase ${isDark ? "text-zinc-500" : "text-slate-400"}`}>Pelapor</span>
+                      <span className={`font-bold mt-0.5 block ${isDark ? "text-white" : "text-slate-900"}`}>
+                        {selectedReport.profiles?.full_name || selectedReport.profiles?.username || "Warga Anonim"}
+                      </span>
                     </div>
                     <div>
-                      <span className="text-navy-400 block font-semibold text-[10px] uppercase">Kategori Sampah</span>
-                      <span className="font-bold text-navy-900 mt-0.5 block">{selectedReport.waste_type || "Belum Terdeteksi"}</span>
+                      <span className={`block font-semibold text-[10px] uppercase ${isDark ? "text-zinc-500" : "text-slate-400"}`}>Kategori Sampah</span>
+                      <span className={`font-bold mt-0.5 block ${isDark ? "text-white" : "text-slate-900"}`}>
+                        {selectedReport.waste_type || "Belum Terdeteksi"}
+                      </span>
                     </div>
                     <div>
-                      <span className="text-navy-400 block font-semibold text-[10px] uppercase">Tingkat Bahaya</span>
-                      <span className="font-bold text-navy-900 mt-0.5 block">{selectedReport.danger_level || "Sedang"}</span>
+                      <span className={`block font-semibold text-[10px] uppercase ${isDark ? "text-zinc-500" : "text-slate-400"}`}>Tingkat Bahaya</span>
+                      <span className={`font-bold mt-0.5 block ${isDark ? "text-white" : "text-slate-900"}`}>
+                        {selectedReport.danger_level || "Sedang"}
+                      </span>
                     </div>
                     <div>
-                      <span className="text-navy-400 block font-semibold text-[10px] uppercase">Tanggal Dikirim</span>
-                      <span className="font-bold text-navy-900 mt-0.5 block">{new Date(selectedReport.created_at).toLocaleString("id-ID")}</span>
+                      <span className={`block font-semibold text-[10px] uppercase ${isDark ? "text-zinc-500" : "text-slate-400"}`}>Tanggal Dikirim</span>
+                      <span className={`font-bold mt-0.5 block ${isDark ? "text-white" : "text-slate-900"}`}>
+                        {new Date(selectedReport.created_at).toLocaleString("id-ID")}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -606,30 +712,44 @@ export default function ReportsTab({
 
               {/* Description text */}
               <div className="flex flex-col gap-1.5">
-                <span className="text-xs text-navy-400 font-semibold uppercase tracking-wider">Deskripsi Laporan</span>
-                <p className="bg-navy-50/50 border border-navy-100 rounded-2xl p-4 text-xs text-navy-800 leading-relaxed font-normal">
+                <span className={`text-xs font-semibold uppercase tracking-wider ${isDark ? "text-zinc-500" : "text-slate-400"}`}>Deskripsi Laporan</span>
+                <p className={`border rounded-2xl p-4 text-xs leading-relaxed font-normal ${
+                  isDark ? "bg-zinc-900/50 border-zinc-800/80 text-zinc-350" : "bg-slate-50/50 border-slate-100 text-slate-800"
+                }`}>
                   {selectedReport.description || "Tanpa rincian deskripsi."}
                 </p>
               </div>
 
               {/* Admin comments form */}
               <div className="flex flex-col gap-2">
-                <label className="text-xs text-navy-700 font-bold select-none">Catatan / Feedback Verifikasi Administrator</label>
+                <label className={`text-xs font-bold select-none ${isDark ? "text-zinc-300" : "text-slate-700"}`}>
+                  Catatan / Feedback Verifikasi Administrator
+                </label>
                 <textarea
                   value={adminFeedback}
                   onChange={(e) => setAdminFeedback(e.target.value)}
                   placeholder="Masukkan instruksi khusus atau catatan penolakan..."
                   rows={2}
-                  className="w-full bg-navy-50/50 border border-navy-100 rounded-2xl p-4 text-xs text-navy-900 placeholder-navy-400 focus:outline-none focus:border-navy-300 focus:bg-white transition-all shadow-inner"
+                  className={`w-full border rounded-2xl p-4 text-xs transition-all shadow-inner focus:outline-none ${
+                    isDark
+                      ? "bg-zinc-900/30 border-zinc-800 text-white placeholder-zinc-650 focus:border-zinc-700 focus:bg-zinc-900/60"
+                      : "bg-navy-50/50 border-navy-100 text-navy-900 placeholder-navy-400 focus:border-navy-300 focus:bg-white"
+                  }`}
                 />
               </div>
 
               {/* Actions controllers */}
-              <div className="flex flex-wrap items-center justify-end gap-3 pt-4 border-t border-navy-50">
+              <div className={`flex flex-wrap items-center justify-end gap-3 pt-4 border-t ${
+                isDark ? "border-zinc-900" : "border-navy-50"
+              }`}>
                 <button
                   onClick={() => handleUpdateReportStatus(selectedReport.id, "rejected")}
                   disabled={actionLoading}
-                  className="rounded-xl border border-burgundy-200 bg-burgundy-50 text-burgundy-700 px-4 py-2.5 text-xs font-semibold hover:bg-burgundy-500 hover:text-white hover:border-burgundy-500 transition-all duration-200 cursor-pointer shadow-sm"
+                  className={`rounded-xl border px-4 py-2.5 text-xs font-semibold transition-all duration-200 cursor-pointer shadow-sm ${
+                    isDark
+                      ? "border-red-900/40 bg-red-950/20 text-red-400 hover:bg-red-900 hover:text-white hover:border-red-900"
+                      : "border-red-200 bg-red-50 text-red-700 hover:bg-red-500 hover:text-white hover:border-red-500"
+                  }`}
                 >
                   Tolak Laporan (Fake/Spam)
                 </button>
@@ -638,7 +758,11 @@ export default function ReportsTab({
                   <button
                     onClick={() => handleUpdateReportStatus(selectedReport.id, "approved")}
                     disabled={actionLoading}
-                    className="rounded-xl border border-emerald-light bg-emerald-light/30 text-emerald px-4 py-2.5 text-xs font-semibold hover:bg-emerald hover:text-white hover:border-emerald transition-all duration-200 cursor-pointer shadow-sm"
+                    className={`rounded-xl border px-4 py-2.5 text-xs font-semibold transition-all duration-200 cursor-pointer shadow-sm ${
+                      isDark
+                        ? "border-emerald-900/40 bg-emerald-950/20 text-emerald-400 hover:bg-emerald hover:text-white hover:border-emerald"
+                        : "border-emerald-light bg-emerald-light/30 text-emerald hover:bg-emerald hover:text-white"
+                    }`}
                   >
                     Terima & Setujui Laporan
                   </button>
@@ -648,7 +772,11 @@ export default function ReportsTab({
                   <button
                     onClick={() => handleUpdateReportStatus(selectedReport.id, "resolved")}
                     disabled={actionLoading}
-                    className="rounded-xl border border-blue-100 bg-blue-50 text-blue-600 px-4 py-2.5 text-xs font-semibold hover:bg-blue-500 hover:text-white hover:border-blue-500 transition-all duration-200 cursor-pointer shadow-sm animate-pulse"
+                    className={`rounded-xl border px-4 py-2.5 text-xs font-semibold transition-all duration-200 cursor-pointer shadow-sm animate-pulse ${
+                      isDark
+                        ? "border-blue-900/40 bg-blue-950/20 text-blue-400 hover:bg-blue-600 hover:text-white"
+                        : "border-blue-100 bg-blue-50 text-blue-600 hover:bg-blue-500 hover:text-white"
+                    }`}
                   >
                     Tandai Selesai Ditangani
                   </button>
@@ -662,15 +790,17 @@ export default function ReportsTab({
 
       {/* --- IN-UI CUSTOM INDIVIDUAL DELETE MODAL (Glassmorphic) --- */}
       {deleteConfirmId && (
-        <div className="fixed inset-0 bg-navy-950/40 backdrop-blur-md flex items-center justify-center p-4 z-[1000] animate-fade-in">
-          <div className={`w-full max-w-sm ${theme === "dark" ? "bg-[#131127]/95 border-indigo-900/40 text-slate-100" : "bg-white/95 text-navy-900 border-navy-100"} border backdrop-blur-xl rounded-3xl shadow-2xl p-6 md:p-8 flex flex-col gap-6 text-center select-none`}>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center p-4 z-[1000] animate-fade-in">
+          <div className={`w-full max-w-sm border backdrop-blur-xl rounded-3xl shadow-2xl p-6 md:p-8 flex flex-col gap-6 text-center select-none ${
+            isDark ? "bg-zinc-950 border-zinc-850 text-white" : "bg-white border-slate-200 text-slate-850"
+          }`}>
             <div className="mx-auto h-12 w-12 rounded-2xl flex items-center justify-center bg-red-50 border border-red-100 text-red-600 animate-bounce">
               <AlertTriangle className="h-5.5 w-5.5" />
             </div>
 
             <div>
               <h3 className="text-base font-bold leading-tight">Hapus Laporan Secara Permanen</h3>
-              <p className="text-xs text-navy-500 font-light leading-relaxed mt-2">
+              <p className={`text-xs font-light leading-relaxed mt-2 ${isDark ? "text-zinc-400" : "text-slate-500"}`}>
                 Apakah Anda yakin ingin menghapus laporan <strong className="font-bold">#{deleteConfirmId}</strong> secara permanen dari server? Tindakan ini bersifat irreversible dan tidak dapat dibatalkan!
               </p>
             </div>
@@ -678,7 +808,11 @@ export default function ReportsTab({
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setDeleteConfirmId(null)}
-                className="flex-1 rounded-xl border border-navy-100 text-navy-700 hover:bg-navy-50 py-2.5 text-xs font-bold transition-all cursor-pointer"
+                className={`flex-1 rounded-xl border py-2.5 text-xs font-bold transition-all cursor-pointer ${
+                  isDark 
+                    ? "border-zinc-800 text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200" 
+                    : "border-slate-200 text-slate-650 hover:bg-slate-50"
+                }`}
               >
                 Batal
               </button>
@@ -699,8 +833,10 @@ export default function ReportsTab({
 
       {/* --- IN-UI CUSTOM BATCH ACTION MODAL (Glassmorphic) --- */}
       {batchConfirmAction && (
-        <div className="fixed inset-0 bg-navy-950/40 backdrop-blur-md flex items-center justify-center p-4 z-[1000] animate-fade-in">
-          <div className={`w-full max-w-sm ${theme === "dark" ? "bg-[#131127]/95 border-indigo-900/40 text-slate-100" : "bg-white/95 text-navy-900 border-navy-100"} border backdrop-blur-xl rounded-3xl shadow-2xl p-6 md:p-8 flex flex-col gap-6 text-center select-none`}>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center p-4 z-[1000] animate-fade-in">
+          <div className={`w-full max-w-sm border backdrop-blur-xl rounded-3xl shadow-2xl p-6 md:p-8 flex flex-col gap-6 text-center select-none ${
+            isDark ? "bg-zinc-950 border-zinc-850 text-white" : "bg-white border-slate-250 text-slate-850"
+          }`}>
             <div className={`mx-auto h-12 w-12 rounded-2xl flex items-center justify-center border ${
               batchConfirmAction.action === "delete" ? "bg-red-50 border-red-100 text-red-600" : "bg-gold-50 border-gold-100 text-gold"
             } animate-pulse`}>
@@ -711,7 +847,7 @@ export default function ReportsTab({
               <h3 className="text-base font-bold leading-tight">
                 {batchConfirmAction.action === "delete" ? "Hapus Massal Laporan" : "Verifikasi Massal Laporan"}
               </h3>
-              <p className="text-xs text-navy-500 font-light leading-relaxed mt-2">
+              <p className={`text-xs font-light leading-relaxed mt-2 ${isDark ? "text-zinc-400" : "text-slate-550"}`}>
                 {batchConfirmAction.action === "delete" 
                   ? `⚠️ PERINGATAN: Anda akan menghapus secara permanen ${batchConfirmAction.ids.length} laporan terpilih dari server. Tindakan ini tidak dapat dibatalkan!`
                   : `Apakah Anda yakin ingin memperbarui status ${batchConfirmAction.ids.length} laporan terpilih secara massal menjadi ${batchConfirmAction.action.toUpperCase()}?`}
@@ -721,14 +857,18 @@ export default function ReportsTab({
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setBatchConfirmAction(null)}
-                className="flex-1 rounded-xl border border-navy-100 text-navy-700 hover:bg-navy-50 py-2.5 text-xs font-bold transition-all cursor-pointer"
+                className={`flex-1 rounded-xl border py-2.5 text-xs font-bold transition-all cursor-pointer ${
+                  isDark 
+                    ? "border-zinc-800 text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200" 
+                    : "border-slate-200 text-slate-650 hover:bg-slate-50"
+                }`}
               >
                 Batal
               </button>
               <button
                 onClick={handleConfirmBatchAction}
                 className={`flex-1 rounded-xl py-2.5 text-xs font-bold transition-all cursor-pointer shadow-md text-white ${
-                  batchConfirmAction.action === "delete" ? "bg-red-600 hover:bg-red-700" : "bg-navy-900 hover:bg-navy-850"
+                  batchConfirmAction.action === "delete" ? "bg-red-600 hover:bg-red-700" : "bg-indigo-600 hover:bg-indigo-700"
                 }`}
               >
                 Konfirmasi
