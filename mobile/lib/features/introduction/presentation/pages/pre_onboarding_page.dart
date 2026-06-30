@@ -87,26 +87,15 @@ class PreOnboardingPage extends StatelessWidget {
                   children: [
                     const Spacer(),
 
-                    // Logo & App Name
+                    // Mascot (logo.png) rendered freely and enlarged (extracted from the circle glass)
                     FadeSlideEntrance(
                       delay: const Duration(milliseconds: 200),
-                      child: Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.15),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.3),
-                            width: 1.5,
-                          ),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Image.asset(
-                            'assets/images/logo.png',
-                            fit: BoxFit.contain,
-                          ),
+                      child: SizedBox(
+                        width: 150,
+                        height: 150,
+                        child: Image.asset(
+                          'assets/images/logo.png',
+                          fit: BoxFit.contain,
                         ),
                       ),
                     ),

@@ -42,8 +42,8 @@ class _HomePageState extends State<HomePage> {
     final prefs = await SharedPreferences.getInstance();
     final completed = prefs.getBool('has_completed_tour') ?? false;
     if (!completed) {
-      // Delay slightly for smooth post-onboarding entrance
-      Future.delayed(const Duration(milliseconds: 1500), () {
+      // Delay for 3.5 seconds so the dashboard loads and settles before the tutorial pops up
+      Future.delayed(const Duration(milliseconds: 3500), () {
         if (mounted) {
           setState(() {
             _spotlightStep = 1;
