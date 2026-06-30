@@ -45,7 +45,7 @@ export default function Contact() {
           {/* Action Buttons */}
           <div className="mt-8 flex flex-col sm:flex-row justify-center items-center w-full sm:w-auto gap-3.5 sm:gap-4 animate-fade-up delay-4">
             <a 
-              href="https://storage.googleapis.com/arisa-opsi-bucket-2026/apps/app-arm64-v8a-release.apk" 
+              href="https://storage.googleapis.com/arisa-opsi-bucket-2026/app-arm64-v8a-release.apk" 
               className="flex items-center gap-2 w-full sm:w-auto rounded-xl bg-white px-7 py-3 text-sm font-semibold text-navy-900 shadow-md hover:scale-105 active:scale-95 transition-transform duration-200 cursor-pointer select-none text-center justify-center"
             >
               Get the App

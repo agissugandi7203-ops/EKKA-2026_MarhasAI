@@ -103,7 +103,7 @@ export default function Header({ onOpenLogin }: HeaderProps) {
 
             {/* Download App CTA button */}
             <a
-              href="https://storage.googleapis.com/arisa-opsi-bucket-2026/apps/app-arm64-v8a-release.apk"
+              href="https://storage.googleapis.com/arisa-opsi-bucket-2026/app-arm64-v8a-release.apk"
               className={`flex items-center gap-2 rounded-xl p-1 pr-3 sm:pr-4 shadow-sm hover:scale-105 active:scale-95 transition-transform duration-200 cursor-pointer select-none ${
                 isScrolled ? 'bg-slate-50' : 'bg-white'
               }`}
