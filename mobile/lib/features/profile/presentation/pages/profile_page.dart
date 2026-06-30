@@ -375,14 +375,19 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(28),
                         border: Border.all(
-                          color: const Color(0xFF0F172A),
-                          width: 2.0,
+                          color: const Color(0xFFE2E8F0),
+                          width: 1.0,
                         ),
-                        boxShadow: const [
+                        boxShadow: [
                           BoxShadow(
-                            color: Color(0xFF0F172A),
-                            offset: Offset(4, 4),
-                            blurRadius: 0,
+                            color: const Color(0xFF0F172A).withValues(alpha: 0.06),
+                            offset: const Offset(0, 8),
+                            blurRadius: 16,
+                          ),
+                          BoxShadow(
+                            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+                            offset: const Offset(0, 2),
+                            blurRadius: 4,
                           ),
                         ],
                       ),
@@ -641,12 +646,12 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: const Color(0xFF0F172A), width: 2.0),
-                        boxShadow: const [
+                        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.0),
+                        boxShadow: [
                           BoxShadow(
-                            color: Color(0xFF0F172A),
-                            offset: Offset(4, 4),
-                            blurRadius: 0,
+                            color: const Color(0xFF0F172A).withValues(alpha: 0.06),
+                            offset: const Offset(0, 8),
+                            blurRadius: 16,
                           ),
                         ],
                       ),
@@ -718,12 +723,12 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: const Color(0xFF0F172A), width: 2.0),
-          boxShadow: const [
+          border: Border.all(color: const Color(0xFFE2E8F0), width: 1.0),
+          boxShadow: [
             BoxShadow(
-              color: Color(0xFF0F172A),
-              offset: Offset(4, 4),
-              blurRadius: 0,
+              color: const Color(0xFF0F172A).withValues(alpha: 0.06),
+              offset: const Offset(0, 6),
+              blurRadius: 12,
             ),
           ],
         ),
@@ -793,14 +798,14 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
         color: bgColor,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(0xFF0F172A),
-          width: 2.0,
+          color: const Color(0xFFE2E8F0),
+          width: 1.0,
         ),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: Color(0xFF0F172A),
-            offset: Offset(3, 3),
-            blurRadius: 0,
+            color: const Color(0xFF0F172A).withValues(alpha: 0.05),
+            offset: const Offset(0, 6),
+            blurRadius: 12,
           ),
         ],
       ),
