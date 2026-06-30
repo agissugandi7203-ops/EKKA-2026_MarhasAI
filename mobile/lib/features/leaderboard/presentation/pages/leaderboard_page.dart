@@ -110,27 +110,20 @@ class _LeaderboardPageState extends State<LeaderboardPage> with AutomaticKeepAli
     Color? shadowColor,
   }) {
     final hsl = HSLColor.fromColor(color);
-    final lightColor = hsl.withLightness((hsl.lightness + 0.1).clamp(0.0, 1.0)).toColor();
-    final darkColor = shadowColor ?? hsl.withLightness((hsl.lightness - 0.12).clamp(0.0, 1.0)).toColor();
+    final darkColor = shadowColor ?? hsl.withLightness((hsl.lightness - 0.15).clamp(0.0, 1.0)).toColor();
 
     return BoxDecoration(
       color: color,
       borderRadius: BorderRadius.circular(radius),
       border: Border.all(
-        color: lightColor.withValues(alpha: 0.22),
+        color: Colors.black.withValues(alpha: 0.12),
         width: 1.5,
       ),
       boxShadow: [
-        // Bayangan lembut kedalaman matte kanan-bawah (sangat anggun, no glowing highlight)
         BoxShadow(
-          color: darkColor.withValues(alpha: 0.35),
-          blurRadius: 12,
-          offset: const Offset(3, 6),
-        ),
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.08),
-          blurRadius: 6,
-          offset: const Offset(1, 2),
+          color: darkColor,
+          offset: const Offset(0, 4),
+          blurRadius: 0,
         ),
       ],
     );
@@ -145,19 +138,14 @@ class _LeaderboardPageState extends State<LeaderboardPage> with AutomaticKeepAli
       color: color,
       borderRadius: BorderRadius.circular(radius),
       border: Border.all(
-        color: isSelf 
-            ? AppColors.gold.withValues(alpha: 0.25) 
-            : AppColors.divider.withValues(alpha: 0.4),
+        color: isSelf ? AppColors.gold : const Color(0xFFE2E8F0),
         width: 1.5,
       ),
       boxShadow: [
-        // Bayangan jatuh matte yang sangat halus
         BoxShadow(
-          color: isSelf 
-              ? AppColors.gold.withValues(alpha: 0.08) 
-              : const Color(0xFF90A4AE).withValues(alpha: 0.12),
-          blurRadius: 12,
-          offset: const Offset(2, 6),
+          color: isSelf ? const Color(0xFFFEF3C7) : const Color(0xFFE2E8F0),
+          offset: const Offset(0, 4),
+          blurRadius: 0,
         ),
       ],
     );
@@ -205,35 +193,23 @@ class _LeaderboardPageState extends State<LeaderboardPage> with AutomaticKeepAli
     final String provinceLabel = _userProvince ?? 'Provinsi';
 
     return Scaffold(
-      backgroundColor: AppColors.surface,
-      body: RefreshIndicator(
-        onRefresh: _fetchLeaderboard,
-        color: AppColors.navy900,
-        backgroundColor: Colors.white,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-          child: Stack(
-            children: [
-              // Curved Dark Navy Header Banner
-              Container(
-                height: 450,
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      AppColors.navy900,
-                      Color(0xFF0F2042),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(44),
-                    bottomRight: Radius.circular(44),
-                  ),
-                ),
-              ),
+      backgroundColor: const Color(0xFFF8FAFC),
+      body: Stack(
+        children: [
+          // Subtle blueprint grid pattern background to add premium character/texture
+          Positioned.fill(
+            child: CustomPaint(
+              painter: const GridBackgroundPainter(),
+            ),
+          ),
 
-              Column(
+          RefreshIndicator(
+            onRefresh: _fetchLeaderboard,
+            color: AppColors.navy900,
+            backgroundColor: Colors.white,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: 52),
@@ -250,12 +226,12 @@ class _LeaderboardPageState extends State<LeaderboardPage> with AutomaticKeepAli
                           Text(
                             'Papan Peringkat',
                             style: AppTextStyles.headlineSmall.copyWith(
-                              color: Colors.white,
+                              color: AppColors.textPrimary,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           IconButton(
-                            icon: const Icon(Icons.info_outline_rounded, color: Colors.white70),
+                            icon: const Icon(Icons.info_outline_rounded, color: AppColors.textSecondary),
                             onPressed: () {
                               ScaffoldMessenger.of(context).clearSnackBars();
                               ScaffoldMessenger.of(context).showSnackBar(
@@ -305,17 +281,17 @@ class _LeaderboardPageState extends State<LeaderboardPage> with AutomaticKeepAli
                       child: Container(
                         padding: const EdgeInsets.fromLTRB(10, 24, 10, 16),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF152238), // Elegant solid deep navy
+                          color: Colors.white,
                           borderRadius: BorderRadius.circular(28),
                           border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.06),
+                            color: const Color(0xFFE2E8F0),
                             width: 1.5,
                           ),
-                          boxShadow: [
+                          boxShadow: const [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.22),
-                              blurRadius: 18,
-                              offset: const Offset(0, 8),
+                              color: Color(0xFFE2E8F0),
+                              offset: Offset(0, 4),
+                              blurRadius: 0,
                             ),
                           ],
                         ),
@@ -330,7 +306,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> with AutomaticKeepAli
                                 fallbackName: 'Peringkat 2',
                                 rank: 2,
                                 badge: '🥈',
-                                color: const Color(0xFF7E8B9B), // Elegant Matte Muted Silver
+                                color: const Color(0xFF94A3B8), // Elegant Matte Muted Silver
                                 targetHeight: 85,
                                 startDelay: const Duration(milliseconds: 200),
                                 clayDecorationBuilder: _clayDecoration,
@@ -357,7 +333,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> with AutomaticKeepAli
                                 fallbackName: 'Peringkat 3',
                                 rank: 3,
                                 badge: '🥉',
-                                color: const Color(0xFF9E7C6F), // Elegant Matte Muted Bronze
+                                color: const Color(0xFFD98A6C), // Elegant Matte Muted Bronze
                                 targetHeight: 65,
                                 startDelay: const Duration(milliseconds: 600),
                                 clayDecorationBuilder: _clayDecoration,
@@ -484,9 +460,9 @@ class _LeaderboardPageState extends State<LeaderboardPage> with AutomaticKeepAli
                   ],
                 ],
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -496,12 +472,19 @@ class _LeaderboardPageState extends State<LeaderboardPage> with AutomaticKeepAli
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.12),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.08),
-          width: 1.2,
+          color: const Color(0xFFE2E8F0),
+          width: 1.5,
         ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0xFFE2E8F0),
+            offset: Offset(0, 3),
+            blurRadius: 0,
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -530,14 +513,17 @@ class _LeaderboardPageState extends State<LeaderboardPage> with AutomaticKeepAli
             duration: const Duration(milliseconds: 250),
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
             decoration: BoxDecoration(
-              color: isSelected ? Colors.white : Colors.transparent,
+              color: isSelected ? AppColors.navy500 : Colors.transparent,
               borderRadius: BorderRadius.circular(16),
+              border: isSelected
+                  ? Border.all(color: AppColors.navy700, width: 1.5)
+                  : null,
               boxShadow: isSelected
-                  ? [
+                  ? const [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.12),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
+                        color: Color(0xFF152D5C),
+                        offset: Offset(0, 3),
+                        blurRadius: 0,
                       ),
                     ]
                   : null,
@@ -546,7 +532,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> with AutomaticKeepAli
               child: Text(
                 label,
                 style: AppTextStyles.labelSmall.copyWith(
-                  color: isSelected ? AppColors.navy900 : Colors.white70,
+                  color: isSelected ? Colors.white : AppColors.textSecondary,
                   fontWeight: FontWeight.bold,
                   fontSize: 11,
                 ),
@@ -947,7 +933,7 @@ class _AnimatedPodiumPositionState extends State<AnimatedPodiumPosition>
                   style: AppTextStyles.labelSmall.copyWith(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: AppColors.textPrimary,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -963,7 +949,7 @@ class _AnimatedPodiumPositionState extends State<AnimatedPodiumPosition>
                 xp,
                 style: AppTextStyles.bodySmall.copyWith(
                   fontSize: 8.5,
-                  color: AppColors.navy200,
+                  color: AppColors.textSecondary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -999,4 +985,27 @@ class _AnimatedPodiumPositionState extends State<AnimatedPodiumPosition>
       },
     );
   }
+}
+
+class GridBackgroundPainter extends CustomPainter {
+  const GridBackgroundPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFFE2E8F0) // Very light slate line for grid pattern
+      ..strokeWidth = 1.0;
+
+    const double step = 28.0; // Distance between grid lines
+
+    for (double x = 0; x < size.width; x += step) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+    for (double y = 0; y < size.height; y += step) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant GridBackgroundPainter oldDelegate) => false;
 }
