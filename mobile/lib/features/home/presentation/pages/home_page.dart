@@ -238,12 +238,11 @@ class _HomePageState extends State<HomePage> {
                         color: AppColors.emerald.withValues(alpha: 0.2),
                         width: 1.5,
                       ),
-                      boxShadow: [
+                      boxShadow: const [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.15),
-                          blurRadius: 24,
-                          spreadRadius: 2,
-                          offset: const Offset(0, 8),
+                          color: Color(0xFFE2E8F0),
+                          offset: Offset(0, 6),
+                          blurRadius: 0,
                         ),
                       ],
                     ),
@@ -342,11 +341,11 @@ class _HomePageState extends State<HomePage> {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(color: AppColors.emerald, width: 2.5),
-                        boxShadow: [
+                        boxShadow: const [
                           BoxShadow(
-                            color: AppColors.emerald.withValues(alpha: 0.5),
-                            blurRadius: 16,
-                            spreadRadius: 3,
+                            color: Color(0xFF0D5335),
+                            offset: Offset(0, 3),
+                            blurRadius: 0,
                           ),
                         ],
                       ),

@@ -279,11 +279,12 @@ class _StatisticDetailPageState extends State<StatisticDetailPage> {
       height: 200,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(28),
-        boxShadow: [
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
+        boxShadow: const [
           BoxShadow(
-            color: AppColors.navy900.withValues(alpha: 0.12),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+            color: Color(0xFFE2E8F0),
+            offset: Offset(0, 4),
+            blurRadius: 0,
           ),
         ],
       ),
@@ -595,9 +596,9 @@ class _StatisticDetailPageState extends State<StatisticDetailPage> {
         border: Border.all(color: AppColors.divider, width: 1.5),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x06000000),
-            blurRadius: 16,
-            offset: Offset(0, 8),
+            color: Color(0xFFE2E8F0),
+            offset: Offset(0, 4),
+            blurRadius: 0,
           ),
         ],
       ),
@@ -772,9 +773,9 @@ class _StatisticDetailPageState extends State<StatisticDetailPage> {
         border: Border.all(color: AppColors.divider, width: 1.5),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x06000000),
-            blurRadius: 16,
-            offset: Offset(0, 8),
+            color: Color(0xFFE2E8F0),
+            offset: Offset(0, 4),
+            blurRadius: 0,
           ),
         ],
       ),

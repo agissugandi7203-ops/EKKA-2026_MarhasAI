@@ -150,9 +150,9 @@ class _NotificationCenterPageState extends State<NotificationCenterPage> {
               ),
               boxShadow: const [
                 BoxShadow(
-                  color: Color(0x04000000),
-                  blurRadius: 10,
+                  color: Color(0xFFE2E8F0),
                   offset: Offset(0, 4),
+                  blurRadius: 0,
                 ),
               ],
             ),

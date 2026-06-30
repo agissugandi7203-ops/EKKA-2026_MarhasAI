@@ -545,182 +545,240 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
     return FadeSlideEntrance(
       delay: const Duration(milliseconds: 100),
       child: Container(
-        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(24.0),
           border: Border.all(
-            color: const Color(0xFFE2E8F0),
-            width: 1.5,
+            color: const Color(0xFF0F172A),
+            width: 2.0,
           ),
           boxShadow: const [
             BoxShadow(
-              color: Color(0xFFE2E8F0),
-              offset: Offset(0, 4),
+              color: Color(0xFF0F172A),
+              offset: Offset(4, 4),
               blurRadius: 0,
             ),
           ],
         ),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Glowing circular level progress ring
-                SizedBox(
-                  width: 76,
-                  height: 76,
-                  child: CustomPaint(
-                    painter: LevelProgressPainter(progress: progressPercent),
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'LV',
-                            style: AppTextStyles.labelSmall.copyWith(
-                              color: AppColors.textSecondary,
-                              fontSize: 9,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            '$level',
-                            style: AppTextStyles.headlineMedium.copyWith(
-                              color: AppColors.textPrimary,
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              height: 1.1,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+            // Top Accent Bar (Mascot Blue)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+              decoration: const BoxDecoration(
+                color: Color(0xFF2E4095), // Mascot Blue
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(21.0),
+                  topRight: Radius.circular(21.0),
                 ),
-                const SizedBox(width: 20),
-                // Stats & progress metrics
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: AppColors.gold.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: AppColors.gold.withValues(alpha: 0.4), width: 1),
-                            ),
-                            child: Text(
-                              'Eco Guardian',
-                              style: AppTextStyles.labelSmall.copyWith(
-                                color: AppColors.gold,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 9,
-                              ),
-                            ),
-                          ),
-                          Text(
-                            'Pahlawan Hijau',
-                            style: AppTextStyles.labelSmall.copyWith(
-                              color: AppColors.textSecondary,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          _buildLevelStatBadge(
-                            lottiePath: 'assets/animations/achievements/strike_fire.json',
-                            text: '$activeStreak Hari',
-                          ),
-                          const SizedBox(width: 8),
-                          _buildLevelStatBadge(
-                            svgContent: AppSvgs.miniCamera,
-                            text: '$completedReports Lapor',
-                          ),
-                        ],
+                      const Icon(Icons.stars_rounded, color: Color(0xFFEA869A), size: 16),
+                      const SizedBox(width: 6),
+                      Text(
+                        'LEVEL $level',
+                        style: AppTextStyles.titleMedium.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 13,
+                        ),
                       ),
                     ],
                   ),
-                ),
-              ],
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEA869A), // Mascot Pink
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFF0F172A), width: 1.5),
+                    ),
+                    child: Text(
+                      'Eco Guardian',
+                      style: AppTextStyles.labelSmall.copyWith(
+                        color: const Color(0xFF0F172A),
+                        fontWeight: FontWeight.w900,
+                        fontSize: 8.5,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 14),
-            Container(height: 1, color: const Color(0xFFE2E8F0)),
-            const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Cek Leaderboard Button
-                GestureDetector(
-                  onTap: widget.onNavigateToLeaderboard,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFEF3C7),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: const Color(0xFFF59E0B),
-                        width: 1.2,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.emoji_events_outlined, color: Color(0xFFD97706), size: 14),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Leaderboard',
-                          style: AppTextStyles.labelSmall.copyWith(
-                            color: Color(0xFFB45309),
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
+            // Body Card
+            Padding(
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Circular level progress ring
+                      SizedBox(
+                        width: 68,
+                        height: 68,
+                        child: CustomPaint(
+                          painter: LevelProgressPainter(progress: progressPercent),
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'EXP',
+                                  style: AppTextStyles.labelSmall.copyWith(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 8,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  '${(progressPercent * 100).toInt()}%',
+                                  style: AppTextStyles.labelSmall.copyWith(
+                                    color: AppColors.textPrimary,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w900,
+                                    height: 1.0,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                ),
-                // Tukar Poin Button
-                GestureDetector(
-                  onTap: () {
-                    context.pushNamed(Routes.tukarPoinName);
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFD1FAE5),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: const Color(0xFF10B981),
-                        width: 1.2,
                       ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.card_giftcard_rounded, color: Color(0xFF059669), size: 14),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Tukar Poin',
-                          style: AppTextStyles.labelSmall.copyWith(
-                            color: Color(0xFF047857),
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
+                      const SizedBox(width: 18),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Pahlawan Hijau',
+                              style: AppTextStyles.titleMedium.copyWith(
+                                color: AppColors.textPrimary,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 15,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Laporkan tumpukan sampah di sekitarmu untuk naik level berikutnya!',
+                              style: AppTextStyles.bodySmall.copyWith(
+                                color: AppColors.textSecondary,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildLevelStatBadge(
+                          lottiePath: 'assets/animations/achievements/strike_fire.json',
+                          text: '$activeStreak Hari',
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _buildLevelStatBadge(
+                          svgContent: AppSvgs.miniCamera,
+                          text: '$completedReports Lapor',
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Container(height: 1, color: const Color(0xFFE2E8F0)),
+                  const SizedBox(height: 14),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Cek Leaderboard Button
+                      GestureDetector(
+                        onTap: widget.onNavigateToLeaderboard,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFEF3C7),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: const Color(0xFF0F172A),
+                              width: 1.5,
+                            ),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0xFF0F172A),
+                                offset: Offset(2, 2),
+                                blurRadius: 0,
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.emoji_events_rounded, color: Color(0xFFD97706), size: 14),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Leaderboard',
+                                style: AppTextStyles.labelSmall.copyWith(
+                                  color: const Color(0xFF0F172A),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                      // Tukar Poin Button
+                      GestureDetector(
+                        onTap: () {
+                          context.pushNamed(Routes.tukarPoinName);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFD1FAE5),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: const Color(0xFF0F172A),
+                              width: 1.5,
+                            ),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0xFF0F172A),
+                                offset: Offset(2, 2),
+                                blurRadius: 0,
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.card_giftcard_rounded, color: Color(0xFF059669), size: 14),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Tukar Poin',
+                                style: AppTextStyles.labelSmall.copyWith(
+                                  color: const Color(0xFF0F172A),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),
@@ -734,14 +792,14 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
     required String text,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
         color: const Color(0xFFF1F5F9),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF0F172A), width: 1.5),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           if (lottiePath != null)
             SizedBox(
@@ -750,14 +808,14 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
               child: Lottie.asset(lottiePath, repeat: true),
             )
           else if (svgContent != null)
-            SvgPicture.string(svgContent, width: 11, height: 11, colorFilter: const ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn)),
-          const SizedBox(width: 4),
+            SvgPicture.string(svgContent, width: 11, height: 11, colorFilter: const ColorFilter.mode(Color(0xFF0F172A), BlendMode.srcIn)),
+          const SizedBox(width: 6),
           Text(
             text,
             style: AppTextStyles.labelSmall.copyWith(
-              color: AppColors.textPrimary,
-              fontSize: 9,
-              fontWeight: FontWeight.bold,
+              color: const Color(0xFF0F172A),
+              fontSize: 9.5,
+              fontWeight: FontWeight.w900,
             ),
           ),
         ],
@@ -766,10 +824,10 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
   }
 
   Widget _buildDataStatisticsCard(int completedReports, int activeStreak) {
-    final double reportsRatio = (completedReports / 20.0).clamp(0.1, 1.0);
-    final double streakRatio = (activeStreak / 7.0).clamp(0.15, 1.0);
+    final double reportsRatio = (completedReports / 20.0).clamp(0.0, 1.0);
+    final double streakRatio = (activeStreak / 7.0).clamp(0.0, 1.0);
     final int badgeCount = _profile?.badges.length ?? 0;
-    final double badgesRatio = (badgeCount / 5.0).clamp(0.1, 1.0);
+    final double badgesRatio = (badgeCount / 5.0).clamp(0.0, 1.0);
 
     return FadeSlideEntrance(
       delay: const Duration(milliseconds: 150),
@@ -779,19 +837,19 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(24.0),
           border: Border.all(
-            color: const Color(0xFFE2E8F0),
-            width: 1.5,
+            color: const Color(0xFF0F172A),
+            width: 2.0,
           ),
           boxShadow: const [
             BoxShadow(
-              color: Color(0xFFE2E8F0),
-              offset: Offset(0, 4),
+              color: Color(0xFF0F172A),
+              offset: Offset(4, 4),
               blurRadius: 0,
             ),
           ],
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -799,8 +857,8 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
                 Text(
                   'Ringkasan Statistik',
                   style: AppTextStyles.titleMedium.copyWith(
-                    color: AppColors.navy900,
-                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF0F172A),
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
                 GestureDetector(
@@ -808,15 +866,15 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
                   child: Row(
                     children: [
                       Text(
-                        'Lihat Selengkapnya',
+                        'Detail Statistik',
                         style: AppTextStyles.labelSmall.copyWith(
-                          color: AppColors.navy600,
-                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF2E4095),
+                          fontWeight: FontWeight.w900,
                           fontSize: 10,
                         ),
                       ),
-                      const SizedBox(width: 2),
-                      const Icon(Icons.arrow_forward_ios_rounded, color: AppColors.navy600, size: 8),
+                      const SizedBox(width: 4),
+                      const Icon(Icons.arrow_forward_ios_rounded, color: Color(0xFF2E4095), size: 10),
                     ],
                   ),
                 ),
@@ -825,42 +883,36 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
             const SizedBox(height: 16),
             Row(
               children: [
-                // Concentric circular progress graph (shrunk to 86px)
-                SizedBox(
-                  width: 86,
-                  height: 86,
-                  child: CustomPaint(
-                    painter: ConcentricProgressPainter(
-                      track1: reportsRatio,
-                      track2: streakRatio,
-                      track3: badgesRatio,
-                    ),
+                // Stat 1: Lapor
+                Expanded(
+                  child: _buildNeobrutalistMiniStat(
+                    title: 'Lapor Selesai',
+                    value: '$completedReports/20',
+                    color: const Color(0xFFEFF6FF), // Light Blue
+                    borderColor: const Color(0xFF3B82F6), // Blue
+                    progress: reportsRatio,
                   ),
                 ),
-                const SizedBox(width: 18),
-                // Horizontal / compact side-by-side layout for legend items
+                const SizedBox(width: 10),
+                // Stat 2: Streak
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildLegendItem(
-                        color: const Color(0xFF1E3A8A),
-                        title: 'Lapor Selesai',
-                        value: '${(reportsRatio * 100).toInt()}% ($completedReports/20)',
-                      ),
-                      const SizedBox(height: 8),
-                      _buildLegendItem(
-                        color: const Color(0xFF6366F1),
-                        title: 'Streak Harian',
-                        value: '${(streakRatio * 100).toInt()}% ($activeStreak/7 Hari)',
-                      ),
-                      const SizedBox(height: 8),
-                      _buildLegendItem(
-                        color: const Color(0xFF93C5FD),
-                        title: 'Lencana Didapat',
-                        value: '${(badgesRatio * 100).toInt()}% ($badgeCount/5 Terbuka)',
-                      ),
-                    ],
+                  child: _buildNeobrutalistMiniStat(
+                    title: 'Streak Harian',
+                    value: '$activeStreak/7 H',
+                    color: const Color(0xFFFDF2F8), // Light Pink
+                    borderColor: const Color(0xFFEC4899), // Pink
+                    progress: streakRatio,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                // Stat 3: Lencana
+                Expanded(
+                  child: _buildNeobrutalistMiniStat(
+                    title: 'Lencana',
+                    value: '$badgeCount/5',
+                    color: const Color(0xFFFFFBEB), // Light Gold
+                    borderColor: const Color(0xFFF59E0B), // Gold
+                    progress: badgesRatio,
                   ),
                 ),
               ],
@@ -871,44 +923,71 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
     );
   }
 
-  Widget _buildLegendItem({required Color color, required String title, required String value}) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          margin: const EdgeInsets.only(top: 4),
-          width: 7,
-          height: 7,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
+  Widget _buildNeobrutalistMiniStat({
+    required String title,
+    required String value,
+    required Color color,
+    required Color borderColor,
+    required double progress,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF0F172A), width: 1.5),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0xFF0F172A),
+            offset: Offset(2, 2),
+            blurRadius: 0,
           ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title,
-                style: AppTextStyles.labelSmall.copyWith(
-                  color: AppColors.textSecondary,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: AppTextStyles.labelSmall.copyWith(
+              color: const Color(0xFF0F172A),
+              fontWeight: FontWeight.w900,
+              fontSize: 9.5,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: AppTextStyles.titleMedium.copyWith(
+              color: const Color(0xFF0F172A),
+              fontWeight: FontWeight.w900,
+              fontSize: 13.5,
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Progress Bar
+          Container(
+            height: 6,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(3),
+              border: Border.all(color: const Color(0xFF0F172A), width: 1),
+            ),
+            child: FractionallySizedBox(
+              widthFactor: progress,
+              alignment: Alignment.centerLeft,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: borderColor,
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              Text(
-                value,
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.navy900,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 10,
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
