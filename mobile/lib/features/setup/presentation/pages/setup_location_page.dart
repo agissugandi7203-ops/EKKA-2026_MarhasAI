@@ -244,15 +244,6 @@ class _SetupLocationPageState extends State<SetupLocationPage> {
                           ),
                         ],
 
-                        const SizedBox(height: AppConstants.spacing8),
-
-                        // ── Skip ──
-                        GenesisButton(
-                          text: _hasLocation ? 'Ubah Lokasi Nanti' : 'Lewati untuk Sekarang',
-                          variant: GenesisButtonVariant.text,
-                          onPressed: () =>
-                              context.goNamed(Routes.setupNotificationName),
-                        ),
                       ],
                     ),
                   ),

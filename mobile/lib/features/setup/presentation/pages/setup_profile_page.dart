@@ -63,10 +63,9 @@ class _SetupProfilePageState extends State<SetupProfilePage> {
       );
 
       if (!mounted) return;
-
-      setState(() {
-        _isSubmitting = false;
-      });
+      
+      // JANGAN set _isSubmitting = false di sini agar loading overlay tetap tampil 
+      // sampai AuthBloc mengalihkan halaman ke Welcome/Home secara otomatis.
 
       // Memicu pengecekan ulang status autentikasi/onboarding di AuthBloc agar tersinkronisasi.
       context.read<AuthBloc>().add(AuthCheckRequested());

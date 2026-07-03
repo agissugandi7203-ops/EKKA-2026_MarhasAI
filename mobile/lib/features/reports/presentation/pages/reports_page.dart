@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:async';
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
@@ -46,6 +47,7 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
   // Scanner/UI States
   bool _isCaptured = false;
   String? _capturedImagePath;
+  final Map<String, List<Map<String, String>>> _aiScanCache = {};
 
   // Throttle states
   bool _isCapturing = false;
@@ -265,7 +267,13 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        return _AIScanBottomSheet(imagePath: _capturedImagePath!);
+        return _AIScanBottomSheet(
+          imagePath: _capturedImagePath!,
+          initialMessages: _aiScanCache[_capturedImagePath!] ?? [],
+          onMessagesUpdated: (msgs) {
+            _aiScanCache[_capturedImagePath!] = List<Map<String, String>>.from(msgs);
+          },
+        );
       },
     );
   }
@@ -1119,8 +1127,14 @@ class _CameraGridPainter extends CustomPainter {
 
 class _AIScanBottomSheet extends StatefulWidget {
   final String imagePath;
+  final List<Map<String, String>> initialMessages;
+  final Function(List<Map<String, String>>) onMessagesUpdated;
 
-  const _AIScanBottomSheet({required this.imagePath});
+  const _AIScanBottomSheet({
+    required this.imagePath,
+    required this.initialMessages,
+    required this.onMessagesUpdated,
+  });
 
   @override
   State<_AIScanBottomSheet> createState() => _AIScanBottomSheetState();
@@ -1131,11 +1145,16 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
   final ScrollController _scrollController = ScrollController();
   final List<Map<String, String>> _messages = [];
   bool _isTyping = false;
+  String _loadingText = 'Geni sedang melihat gambar...';
 
   @override
   void initState() {
     super.initState();
-    _simulateInitialAIScan();
+    if (widget.initialMessages.isNotEmpty) {
+      _messages.addAll(widget.initialMessages);
+    } else {
+      _simulateInitialAIScan();
+    }
   }
 
   @override
@@ -1161,6 +1180,25 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
     }
   }
 
+  void _scrollToBottomIfNeeded() {
+    if (_scrollController.hasClients) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_scrollController.hasClients && mounted) {
+          final maxScroll = _scrollController.position.maxScrollExtent;
+          final currentScroll = _scrollController.position.pixels;
+          // Hanya scroll otomatis jika pengguna berada di dasar layar chat (selisih < 150px)
+          if (maxScroll - currentScroll < 150) {
+            _scrollController.animateTo(
+              maxScroll,
+              duration: const Duration(milliseconds: 100),
+              curve: Curves.easeOut,
+            );
+          }
+        }
+      });
+    }
+  }
+
   void _typewriterEffect(String fullText) async {
     setState(() {
       _isTyping = false;
@@ -1180,13 +1218,41 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
       setState(() {
         _messages[index]['text'] = displayed;
       });
-      _scrollToBottom();
+      _scrollToBottomIfNeeded();
       await Future.delayed(delay);
     }
+    widget.onMessagesUpdated(_messages);
   }
 
   void _simulateInitialAIScan() async {
-    setState(() => _isTyping = true);
+    setState(() {
+      _isTyping = true;
+      _loadingText = 'Geni sedang melihat gambar...';
+    });
+
+    Timer? loadingTimer;
+    int loadingStep = 0;
+    final loadingMessages = [
+      'Geni sedang melihat gambar...',
+      'Sedang menganalisis objek...',
+      'Berpikir keras...',
+      'Sedikit lagi selesai...',
+      'Menyusun kata-kata...',
+    ];
+
+    loadingTimer = Timer.periodic(const Duration(milliseconds: 1500), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      loadingStep++;
+      if (loadingStep < loadingMessages.length) {
+        setState(() {
+          _loadingText = loadingMessages[loadingStep];
+        });
+      }
+    });
+
     try {
       final dio = DioClient().dio;
       final file = File(widget.imagePath);
@@ -1209,11 +1275,14 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
         ),
       );
 
+      loadingTimer.cancel();
+
       if (!mounted) return;
       
       final analysisText = response.data['analysis'] as String? ?? 'Gagal menganalisis gambar.';
       _typewriterEffect(analysisText);
     } catch (e) {
+      loadingTimer.cancel();
       if (!mounted) return;
       setState(() {
         _messages.add({
@@ -1224,6 +1293,7 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
         });
         _isTyping = false;
       });
+      widget.onMessagesUpdated(_messages);
     }
     _scrollToBottom();
   }
@@ -1238,6 +1308,7 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
       _isTyping = true;
     });
     _scrollToBottom();
+    widget.onMessagesUpdated(_messages);
 
     // Trigger daily quest challenge completion
     DioClient.completeChallenge('chat_ai');
@@ -1276,6 +1347,7 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
         });
         _isTyping = false;
       });
+      widget.onMessagesUpdated(_messages);
     }
     _scrollToBottom();
   }
@@ -1375,7 +1447,7 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
                             msg['text']!,
                             style: AppTextStyles.bodyMedium.copyWith(
                               color: Colors.white,
-                              fontSize: 13,
+                              fontSize: 15,
                             ),
                           )
                         : MarkdownBody(
@@ -1383,16 +1455,16 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
                             styleSheet: MarkdownStyleSheet(
                               p: AppTextStyles.bodyMedium.copyWith(
                                 color: AppColors.textPrimary,
-                                fontSize: 13,
+                                fontSize: 15,
                               ),
                               strong: AppTextStyles.bodyMedium.copyWith(
                                 color: AppColors.textPrimary,
                                 fontWeight: FontWeight.bold,
-                                fontSize: 13,
+                                fontSize: 15,
                               ),
-                              h1: AppTextStyles.titleMedium.copyWith(color: AppColors.textPrimary),
-                              h2: AppTextStyles.titleMedium.copyWith(color: AppColors.textPrimary, fontSize: 14),
-                              listBullet: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary),
+                              h1: AppTextStyles.titleMedium.copyWith(color: AppColors.textPrimary, fontSize: 17),
+                              h2: AppTextStyles.titleMedium.copyWith(color: AppColors.textPrimary, fontSize: 16),
+                              listBullet: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary, fontSize: 15),
                             ),
                           ),
                   ),
@@ -1472,14 +1544,30 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: AppColors.divider),
         ),
-        child: SizedBox(
-          width: 50,
-          height: 30,
-          child: Lottie.asset(
-            'assets/animations/global/ai_thinking.json',
-            fit: BoxFit.contain,
-            frameRate: FrameRate.max,
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 36,
+              height: 24,
+              child: Lottie.asset(
+                'assets/animations/global/ai_thinking.json',
+                fit: BoxFit.contain,
+                frameRate: FrameRate.max,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                _loadingText,
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppColors.textSecondary,
+                  fontSize: 13,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
