@@ -1483,18 +1483,40 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
                               }
                             },
                             styleSheet: MarkdownStyleSheet(
-                              p: AppTextStyles.bodyMedium.copyWith(
-                                color: AppColors.textPrimary,
-                                fontSize: 15,
+                              p: AppTextStyles.bodyLarge.copyWith(
+                                color: AppColors.navy900,
+                                fontSize: 15.5,
+                                height: 1.55,
                               ),
-                              strong: AppTextStyles.bodyMedium.copyWith(
-                                color: AppColors.textPrimary,
+                              strong: AppTextStyles.bodyLarge.copyWith(
+                                color: AppColors.navy900,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15.5,
+                                height: 1.55,
+                              ),
+                              h1: AppTextStyles.titleMedium.copyWith(
+                                color: AppColors.navy900,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                                height: 1.4,
+                              ),
+                              h2: AppTextStyles.titleMedium.copyWith(
+                                color: AppColors.navy900,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16.5,
+                                height: 1.4,
+                              ),
+                              h3: AppTextStyles.titleMedium.copyWith(
+                                color: AppColors.navy900,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 15,
+                                height: 1.4,
                               ),
-                              h1: AppTextStyles.titleMedium.copyWith(color: AppColors.textPrimary, fontSize: 17),
-                              h2: AppTextStyles.titleMedium.copyWith(color: AppColors.textPrimary, fontSize: 16),
-                              listBullet: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary, fontSize: 15),
+                              listBullet: AppTextStyles.bodyLarge.copyWith(
+                                color: AppColors.navy900,
+                                fontSize: 15.5,
+                                height: 1.55,
+                              ),
                             ),
                           ),
                   ),
