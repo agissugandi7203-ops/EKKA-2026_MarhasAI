@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:lottie/lottie.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/network/dio_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -1001,6 +1002,26 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
                                       ),
                                     ],
                                   ),
+                                  if (report.adminNotes != null && report.adminNotes!.isNotEmpty) ...[
+                                    const SizedBox(height: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.navy50,
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(color: AppColors.divider),
+                                      ),
+                                      width: double.infinity,
+                                      child: Text(
+                                        'Pesan Admin: ${report.adminNotes}',
+                                        style: AppTextStyles.bodySmall.copyWith(
+                                          color: AppColors.textSecondary,
+                                          fontSize: 11,
+                                          fontStyle: FontStyle.italic,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ],
                               ),
                             ),
@@ -1454,6 +1475,15 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
                           )
                         : MarkdownBody(
                             data: msg['text']!,
+                            selectable: true,
+                            onTapLink: (text, href, title) async {
+                              if (href != null) {
+                                final uri = Uri.parse(href);
+                                if (await canLaunchUrl(uri)) {
+                                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                }
+                              }
+                            },
                             styleSheet: MarkdownStyleSheet(
                               p: AppTextStyles.bodyMedium.copyWith(
                                 color: AppColors.textPrimary,

@@ -10,7 +10,8 @@ create table public.reports (
   waste_type text, -- Jenis limbah (misal: plastik, organik, B3)
   danger_level text, -- Tingkat bahaya (misal: low, medium, high)
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
-  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  admin_notes text
 );
 
 -- Indeks Spasial GIST untuk pencarian berbasis jarak koordinat yang efisien
@@ -66,3 +67,6 @@ begin
   return v_report_id;
 end;
 $$ language plpgsql security definer;
+
+-- Jalankan ini untuk database lama guna menambahkan kolom admin_notes
+ALTER TABLE public.reports ADD COLUMN IF NOT EXISTS admin_notes text;

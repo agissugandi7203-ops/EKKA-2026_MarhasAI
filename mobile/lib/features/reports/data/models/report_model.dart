@@ -9,6 +9,7 @@ class ReportModel {
   final double confidenceScore;
   final String? wasteType;
   final String? dangerLevel;
+  final String? adminNotes;
   final String createdAt;
   final String updatedAt;
   final ReporterProfile? reporterProfile;
@@ -24,6 +25,7 @@ class ReportModel {
     required this.confidenceScore,
     this.wasteType,
     this.dangerLevel,
+    this.adminNotes,
     required this.createdAt,
     required this.updatedAt,
     this.reporterProfile,
@@ -65,6 +67,7 @@ class ReportModel {
       confidenceScore: (json['confidence_score'] as num? ?? 0.0).toDouble(),
       wasteType: json['waste_type'] as String?,
       dangerLevel: json['danger_level'] as String?,
+      adminNotes: json['admin_notes'] as String?,
       createdAt: json['created_at'] as String,
       updatedAt: json['updated_at'] as String,
       reporterProfile: json['profiles'] != null
@@ -87,6 +90,7 @@ class ReportModel {
       'confidence_score': confidenceScore,
       'waste_type': wasteType,
       'danger_level': dangerLevel,
+      'admin_notes': adminNotes,
       'created_at': createdAt,
       'updated_at': updatedAt,
     };
