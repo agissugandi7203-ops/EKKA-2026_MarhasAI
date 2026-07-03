@@ -3,6 +3,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:markdown/markdown.dart' as md;
 import 'package:lottie/lottie.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart';
@@ -1338,10 +1339,6 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
 
     try {
       final dio = DioClient().dio;
-      final file = File(widget.imagePath);
-      final bytes = await file.readAsBytes();
-      final base64Image = base64Encode(bytes);
-
       // Build history payload from current messages
       final historyPayload = _messages.map((m) => {
         'sender': m['sender'] == 'user' ? 'user' : 'assistant',
@@ -1352,7 +1349,6 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
         '/chat',
         data: {
           'message': query,
-          'image': base64Image,
           'history': historyPayload,
           'webSearch': _webSearchEnabled,
         },
@@ -1477,6 +1473,9 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
                         : MarkdownBody(
                             data: msg['text']!,
                             selectable: true,
+                            builders: {
+                              'img': PremiumImageMarkdownBuilder(),
+                            },
                             onTapLink: (text, href, title) {
                               if (href != null) {
                                 _showCitationPreviewSheet(context, href, text);
@@ -1820,3 +1819,59 @@ void _showCitationPreviewSheet(BuildContext context, String url, String title) {
     },
   );
 }
+
+// ── CUSTOM MARKDOWN ELEMENT BUILDER FOR PREMIUM IMAGE ──
+class PremiumImageMarkdownBuilder extends MarkdownElementBuilder {
+  @override
+  Widget? visitElementAfter(md.Element element, TextStyle? preferredStyle) {
+    final src = element.attributes['src'] ?? '';
+    if (src.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
+          ),
+          child: Image.network(
+            src,
+            fit: BoxFit.cover,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return Container(
+                height: 200,
+                color: const Color(0xFFF8FAFC),
+                child: const Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF0F2042)),
+                  ),
+                ),
+              );
+            },
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                height: 150,
+                color: const Color(0xFFF1F5F9),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.broken_image_rounded, color: AppColors.textDisabled, size: 40),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Gagal memuat gambar',
+                      style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textDisabled),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
