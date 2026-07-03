@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:lottie/lottie.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/services.dart';
 import '../../../../core/network/dio_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -1476,12 +1477,9 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
                         : MarkdownBody(
                             data: msg['text']!,
                             selectable: true,
-                            onTapLink: (text, href, title) async {
+                            onTapLink: (text, href, title) {
                               if (href != null) {
-                                final uri = Uri.parse(href);
-                                if (await canLaunchUrl(uri)) {
-                                  await launchUrl(uri, mode: LaunchMode.externalApplication);
-                                }
+                                _showCitationPreviewSheet(context, href, text);
                               }
                             },
                             styleSheet: MarkdownStyleSheet(
@@ -1639,4 +1637,164 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
       ),
     );
   }
+}
+
+// ── UTILITY: SHOW CITATION PREVIEW SHEET ──
+void _showCitationPreviewSheet(BuildContext context, String url, String title) {
+  final domain = Uri.tryParse(url)?.host ?? title;
+  final cleanDomain = domain.replaceFirst('www.', '');
+
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: Colors.transparent,
+    isScrollControlled: true,
+    builder: (context) {
+      return Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(24),
+            topRight: Radius.circular(24),
+          ),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.divider,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0F2042).withValues(alpha: 0.05),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Image.network(
+                      'https://www.google.com/s2/favicons?sz=64&domain=$domain',
+                      width: 20,
+                      height: 20,
+                      errorBuilder: (context, error, stackTrace) => const Icon(
+                        Icons.language_rounded,
+                        color: Color(0xFF0F2042),
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title.isNotEmpty ? title : 'Rujukan Web',
+                        style: AppTextStyles.titleMedium.copyWith(
+                          color: AppColors.navy900,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        cleanDomain,
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.textSecondary,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Tautan referensi luar yang disediakan oleh asisten AI untuk memverifikasi informasi.',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textSecondary,
+                fontSize: 12.5,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: url));
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Tautan berhasil disalin!'),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    },
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: AppColors.divider),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    child: Text(
+                      'Salin Link',
+                      style: AppTextStyles.labelMedium.copyWith(
+                        color: AppColors.navy900,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      Navigator.pop(context);
+                      final uri = Uri.tryParse(url);
+                      if (uri != null && await canLaunchUrl(uri)) {
+                        await launchUrl(uri, mode: LaunchMode.externalApplication);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0F2042),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    child: Text(
+                      'Kunjungi Situs',
+                      style: AppTextStyles.labelMedium.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: MediaQuery.of(context).padding.bottom),
+          ],
+        ),
+      );
+    },
+  );
 }

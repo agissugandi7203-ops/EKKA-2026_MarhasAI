@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:markdown/markdown.dart' as md;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
@@ -259,17 +260,9 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
                 child: Tooltip(
                   message: url,
                   child: InkWell(
-                    onTap: () async {
+                    onTap: () {
                       if (url.isNotEmpty) {
-                        final uri = Uri.tryParse(url);
-                        if (uri != null && await canLaunchUrl(uri)) {
-                          await launchUrl(uri, mode: LaunchMode.externalApplication);
-                        } else {
-                          // Fallback to copy if launching fails
-                          Clipboard.setData(ClipboardData(text: url));
-                          if (!mounted) return;
-                          context.showInfoSnackBar('Tautan disalin (gagal membuka browser): $url');
-                        }
+                        _showCitationPreviewSheet(context, url, source['title'] ?? '');
                       }
                     },
                     borderRadius: BorderRadius.circular(20),
@@ -783,16 +776,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
             const Spacer(),
             // Copy button
             if (msg.message.isNotEmpty)
-              IconButton(
-                icon: const Icon(Icons.content_copy_rounded, color: AppColors.textSecondary, size: 16),
-                tooltip: 'Salin Pesan',
-                constraints: const BoxConstraints(),
-                padding: const EdgeInsets.all(6),
-                onPressed: () {
-                  Clipboard.setData(ClipboardData(text: msg.message));
-                  context.showSuccessSnackBar('Pesan berhasil disalin ke papan klip!');
-                },
-              ),
+              _CopyButton(message: msg.message),
           ],
         ),
         const SizedBox(height: 10),
@@ -1481,8 +1465,6 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
   }
 
   Widget _buildNormalInputComposer(bool isStreaming) {
-    final isMulti = _textController.text.contains('\n') || _textController.text.length > 40;
-
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -1500,216 +1482,118 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        child: AnimatedSize(
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeInOut,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (isMulti) ...[
-                // 1. Text input field (occupies full width!)
-                TextField(
-                  key: _textFieldKey,
-                  controller: _textController,
-                  focusNode: _focusNode,
-                  enabled: !isStreaming,
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: isStreaming ? AppColors.textDisabled : AppColors.navy900,
-                  ),
-                  keyboardType: TextInputType.multiline,
-                  minLines: 1,
-                  maxLines: 5,
-                  textInputAction: TextInputAction.newline,
-                  decoration: InputDecoration(
-                    hintText: isStreaming ? 'Geni sedang mengetik...' : 'Tanya Geni sesuatu...',
-                    hintStyle: AppTextStyles.bodyMedium.copyWith(color: AppColors.textDisabled),
-                    contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                    border: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    disabledBorder: InputBorder.none,
-                    filled: false,
-                  ),
-                ),
-                
-                // 2. Attachment preview (above options, below text field)
-                if (_attachedFileBytes != null) ...[
-                  const SizedBox(height: 6),
-                  _buildAttachmentPreviewInline(),
-                ],
-                
-                const Divider(color: AppColors.divider, height: 12, thickness: 1),
-                
-                // 3. Actions Row below the text input
-                Row(
-                  children: [
-                    // Integrated Plus/Attachment button
-                    GestureDetector(
-                      onTap: isStreaming ? null : _showAttachmentMenu,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        child: Icon(
-                          Icons.add_rounded,
-                          color: isStreaming ? AppColors.textDisabled : AppColors.navy700,
-                          size: 24,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    // Integrated Web Search button
-                    Tooltip(
-                      message: _webSearchEnabled ? 'Pencarian Web Aktif' : 'Pencarian Web Nonaktif',
-                      child: InkWell(
-                        onTap: isStreaming ? null : () {
-                          setState(() {
-                            _webSearchEnabled = !_webSearchEnabled;
-                          });
-                          if (_webSearchEnabled) {
-                            _showTopToast(
-                              'Pencarian Web Diaktifkan!',
-                              isSuccess: true,
-                            );
-                          } else {
-                            _showTopToast(
-                              'Pencarian Web Dinonaktifkan.',
-                              isSuccess: false,
-                            );
-                          }
-                        },
-                        borderRadius: BorderRadius.circular(20),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: _webSearchEnabled 
-                                ? (isStreaming ? AppColors.disabled : AppColors.gold).withValues(alpha: 0.15) 
-                                : Colors.transparent,
-                            shape: BoxShape.circle,
-                          ),
-                          child: AnimatedRotation(
-                            turns: _webSearchEnabled ? 1.0 : 0.0,
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeInOutBack,
-                            child: Icon(
-                              Icons.language_rounded,
-                              color: isStreaming
-                                  ? AppColors.textDisabled
-                                  : (_webSearchEnabled ? AppColors.gold : AppColors.textSecondary),
-                              size: 20,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const Spacer(),
-                    // Mic / Send button (Integrated!)
-                    _buildSendMicButton(isStreaming),
-                  ],
-                ),
-              ] else ...[
-                // Single-line compact row layout
-                Row(
-                  children: [
-                    // Integrated Plus/Attachment button
-                    GestureDetector(
-                      onTap: isStreaming ? null : _showAttachmentMenu,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        child: Icon(
-                          Icons.add_rounded,
-                          color: isStreaming ? AppColors.textDisabled : AppColors.navy700,
-                          size: 24,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    // Integrated Web Search button
-                    Tooltip(
-                      message: _webSearchEnabled ? 'Pencarian Web Aktif' : 'Pencarian Web Nonaktif',
-                      child: InkWell(
-                        onTap: isStreaming ? null : () {
-                          setState(() {
-                            _webSearchEnabled = !_webSearchEnabled;
-                          });
-                          if (_webSearchEnabled) {
-                            _showTopToast(
-                              'Pencarian Web Diaktifkan!',
-                              isSuccess: true,
-                            );
-                          } else {
-                            _showTopToast(
-                              'Pencarian Web Dinonaktifkan.',
-                              isSuccess: false,
-                            );
-                          }
-                        },
-                        borderRadius: BorderRadius.circular(20),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: _webSearchEnabled 
-                                ? (isStreaming ? AppColors.disabled : AppColors.gold).withValues(alpha: 0.15) 
-                                : Colors.transparent,
-                            shape: BoxShape.circle,
-                          ),
-                          child: AnimatedRotation(
-                            turns: _webSearchEnabled ? 1.0 : 0.0,
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeInOutBack,
-                            child: Icon(
-                              Icons.language_rounded,
-                              color: isStreaming
-                                  ? AppColors.textDisabled
-                                  : (_webSearchEnabled ? AppColors.gold : AppColors.textSecondary),
-                              size: 20,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: TextField(
-                        key: _textFieldKey,
-                        controller: _textController,
-                        focusNode: _focusNode,
-                        enabled: !isStreaming,
-                        style: AppTextStyles.bodyMedium.copyWith(
-                          color: isStreaming ? AppColors.textDisabled : AppColors.navy900,
-                        ),
-                        keyboardType: TextInputType.multiline,
-                        minLines: 1,
-                        maxLines: 5,
-                        textInputAction: TextInputAction.newline,
-                        decoration: InputDecoration(
-                          hintText: isStreaming ? 'Geni sedang mengetik...' : 'Tanya Geni sesuatu...',
-                          hintStyle: AppTextStyles.bodyMedium.copyWith(color: AppColors.textDisabled),
-                          contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                          border: InputBorder.none,
-                          enabledBorder: InputBorder.none,
-                          focusedBorder: InputBorder.none,
-                          disabledBorder: InputBorder.none,
-                          filled: false,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    // Mic / Send button (Integrated!)
-                    _buildSendMicButton(isStreaming),
-                  ],
-                ),
-                
-                // Attachment preview inside the box (for single-line layout)
-                if (_attachedFileBytes != null) ...[
-                  const SizedBox(height: 6),
-                  _buildAttachmentPreviewInline(),
-                ],
-              ],
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // 1. Attachment preview (above input row)
+            if (_attachedFileBytes != null) ...[
+              _buildAttachmentPreviewInline(),
+              const SizedBox(height: 6),
             ],
-          ),
+            
+            // 2. Main Input Row
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                // Plus/Attachment button
+                GestureDetector(
+                  onTap: isStreaming ? null : _showAttachmentMenu,
+                  child: Container(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Icon(
+                      Icons.add_rounded,
+                      color: isStreaming ? AppColors.textDisabled : AppColors.navy700,
+                      size: 24,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                
+                // Text input field (flexible width, auto-expands from 1 to 5 lines)
+                Expanded(
+                  child: TextField(
+                    key: _textFieldKey,
+                    controller: _textController,
+                    focusNode: _focusNode,
+                    enabled: !isStreaming,
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: isStreaming ? AppColors.textDisabled : AppColors.navy900,
+                    ),
+                    keyboardType: TextInputType.multiline,
+                    minLines: 1,
+                    maxLines: 5,
+                    textInputAction: TextInputAction.newline,
+                    decoration: InputDecoration(
+                      hintText: isStreaming ? 'Geni sedang mengetik...' : 'Tanya Geni sesuatu...',
+                      hintStyle: AppTextStyles.bodyMedium.copyWith(color: AppColors.textDisabled),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      disabledBorder: InputBorder.none,
+                      filled: false,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                
+                // Web Search (Globe icon)
+                Tooltip(
+                  message: _webSearchEnabled ? 'Pencarian Web Aktif' : 'Pencarian Web Nonaktif',
+                  child: InkWell(
+                    onTap: isStreaming ? null : () {
+                      setState(() {
+                        _webSearchEnabled = !_webSearchEnabled;
+                      });
+                      if (_webSearchEnabled) {
+                        _showTopToast(
+                          'Pencarian Web Diaktifkan!',
+                          isSuccess: true,
+                        );
+                      } else {
+                        _showTopToast(
+                          'Pencarian Web Dinonaktifkan.',
+                          isSuccess: false,
+                        );
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(20),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: _webSearchEnabled 
+                            ? (isStreaming ? AppColors.disabled : AppColors.gold).withValues(alpha: 0.15) 
+                            : Colors.transparent,
+                        shape: BoxShape.circle,
+                      ),
+                      child: AnimatedRotation(
+                        turns: _webSearchEnabled ? 1.0 : 0.0,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOutBack,
+                        child: Icon(
+                          Icons.language_rounded,
+                          color: isStreaming
+                              ? AppColors.textDisabled
+                              : (_webSearchEnabled ? AppColors.gold : AppColors.textSecondary),
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                
+                // Send/Mic Button
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 2),
+                  child: _buildSendMicButton(isStreaming),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -1804,12 +1688,12 @@ class _MarkdownStreamRenderer extends StatelessWidget {
     return MarkdownBody(
       data: text,
       selectable: true,
-      onTapLink: (text, href, title) async {
+      builders: {
+        'pre': DraftMarkdownBuilder(),
+      },
+      onTapLink: (text, href, title) {
         if (href != null) {
-          final uri = Uri.parse(href);
-          if (await canLaunchUrl(uri)) {
-            await launchUrl(uri, mode: LaunchMode.externalApplication);
-          }
+          _showCitationPreviewSheet(context, href, text);
         }
       },
       styleSheet: MarkdownStyleSheet(
@@ -2082,3 +1966,387 @@ class _WebSearchGroundingIndicatorState extends State<_WebSearchGroundingIndicat
     );
   }
 }
+
+// ── UTILITY: SHOW CITATION PREVIEW SHEET ──
+void _showCitationPreviewSheet(BuildContext context, String url, String title) {
+  final domain = Uri.tryParse(url)?.host ?? title;
+  final cleanDomain = domain.replaceFirst('www.', '');
+
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: Colors.transparent,
+    isScrollControlled: true,
+    builder: (context) {
+      return Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(24),
+            topRight: Radius.circular(24),
+          ),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.divider,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0F2042).withValues(alpha: 0.05),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Image.network(
+                      'https://www.google.com/s2/favicons?sz=64&domain=$domain',
+                      width: 20,
+                      height: 20,
+                      errorBuilder: (context, error, stackTrace) => const Icon(
+                        Icons.language_rounded,
+                        color: Color(0xFF0F2042),
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title.isNotEmpty ? title : 'Rujukan Web',
+                        style: AppTextStyles.titleMedium.copyWith(
+                          color: AppColors.navy900,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        cleanDomain,
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.textSecondary,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Tautan referensi luar yang disediakan oleh asisten AI untuk memverifikasi informasi.',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textSecondary,
+                fontSize: 12.5,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: url));
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Tautan berhasil disalin!'),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    },
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: AppColors.divider),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    child: Text(
+                      'Salin Link',
+                      style: AppTextStyles.labelMedium.copyWith(
+                        color: AppColors.navy900,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      Navigator.pop(context);
+                      final uri = Uri.tryParse(url);
+                      if (uri != null && await canLaunchUrl(uri)) {
+                        await launchUrl(uri, mode: LaunchMode.externalApplication);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0F2042),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    child: Text(
+                      'Kunjungi Situs',
+                      style: AppTextStyles.labelMedium.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: MediaQuery.of(context).padding.bottom),
+          ],
+        ),
+      );
+    },
+  );
+}
+
+// ── CUSTOM MARKDOWN ELEMENT BUILDER FOR DRAFT CARD ──
+class DraftMarkdownBuilder extends MarkdownElementBuilder {
+  @override
+  Widget? visitElementAfter(md.Element element, TextStyle? preferredStyle) {
+    String? language;
+    if (element.children != null && element.children!.isNotEmpty) {
+      final child = element.children![0];
+      if (child is md.Element) {
+        final className = child.attributes['class'] ?? '';
+        if (className.startsWith('language-draft')) {
+          language = 'draft';
+        }
+      }
+    }
+
+    if (language == 'draft' || element.attributes['class'] == 'language-draft') {
+      return _DraftCard(textContent: element.textContent);
+    }
+    return null;
+  }
+}
+
+// ── DRAFT CARD WIDGET ──
+class _DraftCard extends StatefulWidget {
+  final String textContent;
+  const _DraftCard({required this.textContent});
+
+  @override
+  State<_DraftCard> createState() => _DraftCardState();
+}
+
+class _DraftCardState extends State<_DraftCard> {
+  bool _isCopied = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 12),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header Bar
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: const BoxDecoration(
+              color: Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(15),
+                topRight: Radius.circular(15),
+              ),
+              border: Border(
+                bottom: BorderSide(color: Color(0xFFE2E8F0)),
+                left: BorderSide(color: Color(0xFF0F2042), width: 4),
+              ),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.description_outlined,
+                  color: Color(0xFF0F2042),
+                  size: 16,
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'Draf Dokumen / Surat',
+                  style: TextStyle(
+                    color: Color(0xFF0F2042),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+                const Spacer(),
+                GestureDetector(
+                  onTap: () async {
+                    await Clipboard.setData(ClipboardData(text: widget.textContent.trim()));
+                    setState(() {
+                      _isCopied = true;
+                    });
+                    Future.delayed(const Duration(seconds: 2), () {
+                      if (mounted) {
+                        setState(() {
+                          _isCopied = false;
+                        });
+                      }
+                    });
+                  },
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 150),
+                    child: _isCopied
+                        ? const Row(
+                            key: ValueKey('copied'),
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.check_rounded, color: AppColors.emerald, size: 14),
+                              SizedBox(width: 4),
+                              Text(
+                                'Tersalin',
+                                style: TextStyle(
+                                  color: AppColors.emerald,
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          )
+                        : const Row(
+                            key: ValueKey('copy'),
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.copy_all_rounded, color: AppColors.textSecondary, size: 14),
+                              SizedBox(width: 4),
+                              Text(
+                                'Salin Draf',
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Content
+          Container(
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              border: Border(
+                left: BorderSide(color: Color(0xFF0F2042), width: 4),
+              ),
+            ),
+            padding: const EdgeInsets.all(16),
+            child: SelectableText(
+              widget.textContent.trim(),
+              style: const TextStyle(
+                color: Color(0xFF1E293B),
+                fontSize: 13,
+                height: 1.5,
+                fontFamily: 'Roboto',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── CUSTOM STATEFUL COPY BUTTON WITH MICRO-INTERACTION ──
+class _CopyButton extends StatefulWidget {
+  final String message;
+  const _CopyButton({required this.message});
+
+  @override
+  State<_CopyButton> createState() => _CopyButtonState();
+}
+
+class _CopyButtonState extends State<_CopyButton> {
+  bool _isCopied = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 200),
+      child: _isCopied
+          ? const SizedBox(
+              key: ValueKey('copied'),
+              width: 28,
+              height: 28,
+              child: Icon(
+                Icons.check_rounded,
+                color: AppColors.emerald,
+                size: 15,
+              ),
+            )
+          : SizedBox(
+              key: const ValueKey('copy'),
+              width: 28,
+              height: 28,
+              child: IconButton(
+                icon: const Icon(
+                  Icons.content_copy_rounded,
+                  color: AppColors.textSecondary,
+                  size: 15,
+                ),
+                tooltip: 'Salin Pesan',
+                constraints: const BoxConstraints(),
+                padding: EdgeInsets.zero,
+                onPressed: () async {
+                  await Clipboard.setData(ClipboardData(text: widget.message));
+                  setState(() {
+                    _isCopied = true;
+                  });
+                  Future.delayed(const Duration(seconds: 2), () {
+                    if (mounted) {
+                      setState(() {
+                        _isCopied = false;
+                      });
+                    }
+                  });
+                },
+              ),
+            ),
+    );
+  }
+}
+
