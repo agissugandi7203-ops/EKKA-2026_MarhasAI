@@ -1145,6 +1145,7 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
   final ScrollController _scrollController = ScrollController();
   final List<Map<String, String>> _messages = [];
   bool _isTyping = false;
+  bool _webSearchEnabled = false;
   String _loadingText = 'Geni sedang melihat gambar...';
 
   @override
@@ -1331,6 +1332,7 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
           'message': query,
           'image': base64Image,
           'history': historyPayload,
+          'webSearch': _webSearchEnabled,
         },
       );
 
@@ -1487,6 +1489,41 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
             ),
             child: Row(
               children: [
+                // Integrated Web Search button
+                Tooltip(
+                  message: _webSearchEnabled ? 'Pencarian Web Aktif' : 'Pencarian Web Nonaktif',
+                  child: InkWell(
+                    onTap: _isTyping ? null : () {
+                      setState(() {
+                        _webSearchEnabled = !_webSearchEnabled;
+                      });
+                    },
+                    borderRadius: BorderRadius.circular(20),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: _webSearchEnabled 
+                            ? (_isTyping ? AppColors.navy100 : AppColors.gold).withValues(alpha: 0.15) 
+                            : Colors.transparent,
+                        shape: BoxShape.circle,
+                      ),
+                      child: AnimatedRotation(
+                        turns: _webSearchEnabled ? 1.0 : 0.0,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOutBack,
+                        child: Icon(
+                          Icons.language_rounded,
+                          color: _isTyping
+                              ? AppColors.textDisabled
+                              : (_webSearchEnabled ? AppColors.gold : AppColors.textSecondary),
+                          size: 22,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Container(
                     decoration: BoxDecoration(

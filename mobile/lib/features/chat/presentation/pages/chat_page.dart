@@ -56,6 +56,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
   final AudioRecorder _audioRecorder = AudioRecorder();
   String _lastWords = '';
   final FocusNode _focusNode = FocusNode();
+  final GlobalKey _textFieldKey = GlobalKey();
   bool _wasMulti = false;
 
   @override
@@ -1463,6 +1464,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
               if (isMulti) ...[
                 // 1. Text input field (occupies full width!)
                 TextField(
+                  key: _textFieldKey,
                   controller: _textController,
                   focusNode: _focusNode,
                   enabled: !isStreaming,
@@ -1624,6 +1626,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
                     const SizedBox(width: 10),
                     Expanded(
                       child: TextField(
+                        key: _textFieldKey,
                         controller: _textController,
                         focusNode: _focusNode,
                         enabled: !isStreaming,
