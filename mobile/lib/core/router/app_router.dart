@@ -25,6 +25,9 @@ import '../../features/profile/presentation/pages/tukar_poin_page.dart';
 import '../../features/profile/presentation/pages/badge_list_page.dart';
 import '../../features/home/presentation/pages/notification_center_page.dart';
 import '../../features/splash/presentation/pages/splash_page.dart';
+import '../../features/leaderboard/presentation/pages/leaderboard_page.dart';
+import '../../features/profile/presentation/pages/profile_page.dart';
+import '../../features/reports/presentation/pages/reports_page.dart';
 import '../widgets/auth_listener_wrapper.dart';
 import '../widgets/genesis_loading.dart';
 
@@ -228,6 +231,31 @@ class AppRouter {
         path: Routes.badges,
         name: Routes.badgesName,
         builder: (context, state) => const BadgeListPage(),
+      ),
+      GoRoute(
+        path: '/profile',
+        name: 'profile',
+        builder: (context, state) => ProfilePage(
+          onClose: () => context.pop(),
+        ),
+      ),
+      GoRoute(
+        path: '/leaderboard',
+        name: 'leaderboard',
+        builder: (context, state) => const LeaderboardPage(),
+      ),
+      GoRoute(
+        path: '/reports/create',
+        name: 'reportsCreate',
+        builder: (context, state) => ReportsPage(
+          onClose: () => context.pop(),
+          isActive: true,
+        ),
+      ),
+      GoRoute(
+        path: '/rewards',
+        name: 'rewards',
+        builder: (context, state) => const TukarPoinPage(),
       ),
     ];
   }
