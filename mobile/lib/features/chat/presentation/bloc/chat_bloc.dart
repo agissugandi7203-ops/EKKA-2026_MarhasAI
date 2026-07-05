@@ -107,15 +107,17 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final historyStr = prefs.getString('chat_history');
-      if (historyStr != null) {
+      if (historyStr != null && historyStr.isNotEmpty) {
         final List<dynamic> decoded = jsonDecode(historyStr) as List<dynamic>;
         final messages = decoded
             .map((item) => ChatMessageModel.fromLocalJson(item as Map<String, dynamic>))
             .toList();
         emit(state.copyWith(messages: messages));
+      } else {
+        emit(const ChatState());
       }
     } catch (e) {
-      // safe catch
+      emit(const ChatState());
     }
   }
 
