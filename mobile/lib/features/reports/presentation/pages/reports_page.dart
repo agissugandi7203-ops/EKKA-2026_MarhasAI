@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:markdown/markdown.dart' as md;
-import 'package:lottie/lottie.dart';
+import 'package:lottie/lottie.dart' hide Marker;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/network/dio_client.dart';
@@ -22,6 +22,10 @@ import '../../../../core/widgets/genesis_error_widget.dart';
 import '../bloc/reports_bloc.dart';
 import '../bloc/reports_event.dart';
 import '../bloc/reports_state.dart';
+import '../../../chat/presentation/pages/chat_page.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+import '../../data/models/report_model.dart';
 
 class ReportsPage extends StatefulWidget {
   final VoidCallback? onClose;
@@ -59,6 +63,11 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      if (mounted) {
+        setState(() {});
+      }
+    });
     WidgetsBinding.instance.addObserver(this);
     
     // Fetch reports history on start
@@ -412,6 +421,31 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
             _buildHistoryTab(),
           ],
         ),
+        floatingActionButton: _tabController.index == 1
+            ? BlocBuilder<ReportsBloc, ReportsState>(
+                builder: (context, state) {
+                  if (state is ReportsFetchSuccess) {
+                    final approved = state.reports.where((r) => r.status.toLowerCase() == 'approved').toList();
+                    if (approved.isNotEmpty) {
+                      return FloatingActionButton.extended(
+                        onPressed: () => _showRouteOptimizationSheet(context, approved),
+                        backgroundColor: AppColors.emerald,
+                        icon: const Icon(Icons.route_rounded, color: Colors.white),
+                        label: const Text(
+                          'Rute Pembersihan AI',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      );
+                    }
+                  }
+                  return const SizedBox.shrink();
+                },
+              )
+            : null,
       ),
     );
   }
@@ -892,10 +926,12 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
                 final statusColor = _getStatusColor(report.status);
                 final statusLabel = _getStatusLabel(report.status);
 
-                return FadeSlideEntrance(
-                  delay: Duration(milliseconds: 50 * index),
-                  child: Container(
-                    margin: const EdgeInsets.only(bottom: 16),
+                return GestureDetector(
+                  onTap: () => _showReportDetailBottomSheet(context, report),
+                  child: FadeSlideEntrance(
+                    delay: Duration(milliseconds: 50 * index),
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 16),
                     decoration: BoxDecoration(
                       color: AppColors.cardBackground,
                       borderRadius: BorderRadius.circular(20),
@@ -1031,8 +1067,9 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
                       ),
                     ),
                   ),
-                );
-              },
+                ),
+              );
+            },
             );
           } else if (state is ReportsFailure) {
             return SingleChildScrollView(
@@ -1098,6 +1135,461 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
           ),
         ),
       ),
+    );
+  }
+
+  void _showReportDetailBottomSheet(BuildContext context, ReportModel report) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.75,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          child: Column(
+            children: [
+              Container(
+                margin: const EdgeInsets.only(top: 12, bottom: 8),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  children: [
+                    Text(
+                      report.wasteType ?? 'Laporan Lingkungan',
+                      style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Dilaporkan pada: ${report.createdAt.length > 16 ? report.createdAt.substring(0, 16).replaceAll('T', ' ') : report.createdAt}',
+                      style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+                    ),
+                    const SizedBox(height: 16),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: AspectRatio(
+                        aspectRatio: 16 / 9,
+                        child: _buildImagePreview(report.imageUrl),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    if (report.description != null && report.description!.isNotEmpty) ...[
+                      Text(
+                        'Deskripsi Warga:',
+                        style: AppTextStyles.labelSmall.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        report.description!,
+                        style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                    Text(
+                      'Lokasi Laporan:',
+                      style: AppTextStyles.labelSmall.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      height: 160,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.divider),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: FlutterMap(
+                          options: MapOptions(
+                            initialCenter: LatLng(report.latitude, report.longitude),
+                            initialZoom: 15.0,
+                          ),
+                          children: [
+                            TileLayer(
+                              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                              userAgentPackageName: 'id.genesis.app',
+                            ),
+                            MarkerLayer(
+                              markers: [
+                                Marker(
+                                  point: LatLng(report.latitude, report.longitude),
+                                  width: 40,
+                                  height: 40,
+                                  child: const Icon(
+                                    Icons.location_on_rounded,
+                                    color: Colors.red,
+                                    size: 36,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.navy500,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        onPressed: () async {
+                          final url = Uri.parse(
+                            'https://www.google.com/maps/search/?api=1&query=${report.latitude},${report.longitude}'
+                          );
+                          if (await canLaunchUrl(url)) {
+                            await launchUrl(url, mode: LaunchMode.externalApplication);
+                          }
+                        },
+                        icon: const Icon(Icons.map_rounded, size: 18),
+                        label: const Text('Buka di Google Maps', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFECFDF5),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFA7F3D0)),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(Icons.android_rounded, color: Color(0xFF059669), size: 24),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Analisis AI (${(report.confidenceScore * 100).toStringAsFixed(0)}% Akurasi)',
+                                  style: AppTextStyles.labelSmall.copyWith(
+                                    color: const Color(0xFF065F46),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  report.aiNotes ?? 'Menunggu analisis AI selesai.',
+                                  style: AppTextStyles.bodySmall.copyWith(
+                                    color: const Color(0xFF047857),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (report.adminNotes != null && report.adminNotes!.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF0F4F8),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFD0E1FD)),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(Icons.supervised_user_circle_rounded, color: AppColors.navy700, size: 24),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Catatan Admin',
+                                    style: AppTextStyles.labelSmall.copyWith(
+                                      color: AppColors.navy900,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    report.adminNotes!,
+                                    style: AppTextStyles.bodySmall.copyWith(
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  List<ReportModel> _calculateOptimalRoute(LatLng start, List<ReportModel> targets) {
+    List<ReportModel> unvisited = List.from(targets);
+    List<ReportModel> route = [];
+    LatLng current = start;
+
+    while (unvisited.isNotEmpty) {
+      ReportModel nearest = unvisited.reduce((a, b) {
+        double distA = Geolocator.distanceBetween(current.latitude, current.longitude, a.latitude, a.longitude);
+        double distB = Geolocator.distanceBetween(current.latitude, current.longitude, b.latitude, b.longitude);
+        return distA < distB ? a : b;
+      });
+      route.add(nearest);
+      current = LatLng(nearest.latitude, nearest.longitude);
+      unvisited.remove(nearest);
+    }
+    return route;
+  }
+
+  void _showRouteOptimizationSheet(BuildContext context, List<ReportModel> approvedReports) async {
+    Position? pos;
+    try {
+      pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium),
+      );
+    } catch (e) {
+      debugPrint('Error getting location: $e');
+    }
+
+    final startLatLng = pos != null ? LatLng(pos.latitude, pos.longitude) : LatLng(-7.2504, 112.7508);
+    final route = _calculateOptimalRoute(startLatLng, approvedReports);
+    
+    double totalDistance = 0.0;
+    LatLng prev = startLatLng;
+    for (var r in route) {
+      totalDistance += Geolocator.distanceBetween(prev.latitude, prev.longitude, r.latitude, r.longitude);
+      prev = LatLng(r.latitude, r.longitude);
+    }
+
+    if (!context.mounted) return;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.85,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          child: Column(
+            children: [
+              Container(
+                margin: const EdgeInsets.only(top: 12, bottom: 8),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Rute Pembersihan Sampah AI',
+                          style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          'Greedy TSP Route • ${(totalDistance / 1000).toStringAsFixed(2)} km total',
+                          style: AppTextStyles.bodySmall.copyWith(color: AppColors.emerald, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: ClipRRect(
+                  child: FlutterMap(
+                    options: MapOptions(
+                      initialCenter: startLatLng,
+                      initialZoom: 13.0,
+                    ),
+                    children: [
+                      TileLayer(
+                        urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        userAgentPackageName: 'id.genesis.app',
+                      ),
+                      PolylineLayer(
+                        polylines: [
+                          Polyline(
+                            points: [startLatLng, ...route.map((r) => LatLng(r.latitude, r.longitude))],
+                            color: AppColors.emerald,
+                            strokeWidth: 4.0,
+                            borderColor: const Color(0xFF00796B),
+                            borderStrokeWidth: 1.0,
+                          ),
+                        ],
+                      ),
+                      MarkerLayer(
+                        markers: [
+                          Marker(
+                            point: startLatLng,
+                            width: 40,
+                            height: 40,
+                            child: Container(
+                              decoration: const BoxDecoration(
+                                color: Colors.blue,
+                                shape: BoxShape.circle,
+                                boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)],
+                              ),
+                              child: const Icon(Icons.my_location_rounded, color: Colors.white, size: 20),
+                            ),
+                          ),
+                          ...route.asMap().entries.map((entry) {
+                            final idx = entry.key;
+                            final report = entry.value;
+                            return Marker(
+                              point: LatLng(report.latitude, report.longitude),
+                              width: 45,
+                              height: 45,
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  const Icon(Icons.location_on_rounded, color: Colors.red, size: 40),
+                                  Positioned(
+                                    top: 4,
+                                    child: CircleAvatar(
+                                      radius: 9,
+                                      backgroundColor: Colors.white,
+                                      child: Text(
+                                        '${idx + 1}',
+                                        style: const TextStyle(
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.red,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Container(
+                height: 180,
+                color: Colors.grey[50],
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: route.length + 1,
+                  itemBuilder: (context, index) {
+                    if (index == 0) {
+                      return Container(
+                        width: 140,
+                        margin: const EdgeInsets.only(right: 12),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.blue[50],
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.blue[100]!),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.my_location_rounded, color: Colors.blue, size: 24),
+                            const SizedBox(height: 8),
+                            const Text('Titik Awal', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                            const SizedBox(height: 4),
+                            Text(pos != null ? 'Lokasi Anda' : 'Default (Surabaya)', style: const TextStyle(fontSize: 10, color: Colors.blue)),
+                          ],
+                        ),
+                      );
+                    }
+                    final reportIdx = index - 1;
+                    final r = route[reportIdx];
+                    return Container(
+                      width: 160,
+                      margin: const EdgeInsets.only(right: 12),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.divider),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              CircleAvatar(
+                                radius: 10,
+                                backgroundColor: AppColors.emerald,
+                                child: Text('$index', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                              ),
+                              Text(r.dangerLevel?.toUpperCase() ?? 'LOW', style: TextStyle(color: r.dangerLevel == 'high' ? Colors.red : Colors.orange, fontSize: 9, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(r.wasteType ?? 'Sampah', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis),
+                          const SizedBox(height: 4),
+                          Expanded(
+                            child: Text(
+                              r.description ?? 'Tidak ada deskripsi',
+                              style: const TextStyle(fontSize: 10, color: Colors.grey),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.pop(context);
+                              _showReportDetailBottomSheet(context, r);
+                            },
+                            child: const Text('Detail Laporan ➔', style: TextStyle(fontSize: 10, color: AppColors.navy500, fontWeight: FontWeight.bold)),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -1203,24 +1695,7 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
     }
   }
 
-  void _scrollToBottomIfNeeded() {
-    if (_scrollController.hasClients) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_scrollController.hasClients && mounted) {
-          final maxScroll = _scrollController.position.maxScrollExtent;
-          final currentScroll = _scrollController.position.pixels;
-          // Hanya scroll otomatis jika pengguna berada di dasar layar chat (selisih < 150px)
-          if (maxScroll - currentScroll < 150) {
-            _scrollController.animateTo(
-              maxScroll,
-              duration: const Duration(milliseconds: 100),
-              curve: Curves.easeOut,
-            );
-          }
-        }
-      });
-    }
-  }
+
 
   void _typewriterEffect(String fullText) async {
     setState(() {
@@ -1233,16 +1708,30 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
 
     final int index = _messages.length - 1;
     String displayed = '';
-    const delay = Duration(milliseconds: 6);
+    const int chunkSize = 6;
+    const delay = Duration(milliseconds: 15);
 
-    for (int i = 0; i < fullText.length; i++) {
+    for (int i = 0; i < fullText.length; i += chunkSize) {
       if (!mounted) return;
-      displayed += fullText[i];
+      final end = (i + chunkSize < fullText.length) ? i + chunkSize : fullText.length;
+      displayed += fullText.substring(i, end);
       setState(() {
         _messages[index]['text'] = displayed;
       });
-      _scrollToBottomIfNeeded();
+      
+      if (_scrollController.hasClients) {
+        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+      }
+      
       await Future.delayed(delay);
+    }
+
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
+      );
     }
     widget.onMessagesUpdated(_messages);
   }
@@ -1473,6 +1962,7 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
                             data: msg['text']!,
                             selectable: true,
                             builders: {
+                              'pre': DraftMarkdownBuilder(),
                               'img': PremiumImageMarkdownBuilder(),
                             },
                             onTapLink: (text, href, title) {

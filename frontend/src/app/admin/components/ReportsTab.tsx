@@ -35,6 +35,7 @@ interface ReportsTabProps {
   actionLoading: boolean;
   loading: boolean;
   theme?: "light" | "dark";
+  showToast?: (message: string, type: "success" | "error" | "info") => void;
 }
 
 export default function ReportsTab({
@@ -52,7 +53,8 @@ export default function ReportsTab({
   handleBatchAction,
   actionLoading,
   loading,
-  theme = "light"
+  theme = "light",
+  showToast
 }: ReportsTabProps) {
   const mapInstanceRef = useRef<any>(null);
   const isDark = theme === "dark";
@@ -316,6 +318,9 @@ export default function ReportsTab({
     if (rep.coordinates?.latitude && rep.coordinates?.longitude) {
       lat = rep.coordinates.latitude;
       lng = rep.coordinates.longitude;
+    } else if (rep.location && typeof rep.location === "object" && (rep.location as any).coordinates) {
+      lng = (rep.location as any).coordinates[0];
+      lat = (rep.location as any).coordinates[1];
     }
     return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
   };
@@ -633,7 +638,7 @@ export default function ReportsTab({
             <div className="overflow-y-auto p-6 md:p-8 flex flex-col gap-6">
               
               {/* Heading */}
-              <div className={`border-b pb-4 select-none flex items-center justify-between gap-4 ${
+              <div className={`border-b pb-4 select-none flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
                 isDark ? "border-zinc-900" : "border-slate-100"
               }`}>
                 <div>
@@ -644,7 +649,7 @@ export default function ReportsTab({
                 </div>
 
                 {/* Google Maps link & Delete permanently button */}
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <a
                     href={getGoogleMapsUrl(selectedReport)}
                     target="_blank"
@@ -791,7 +796,7 @@ export default function ReportsTab({
       {/* --- IN-UI CUSTOM INDIVIDUAL DELETE MODAL (Glassmorphic) --- */}
       {deleteConfirmId && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center p-4 z-[1000] animate-fade-in">
-          <div className={`w-full max-w-sm border backdrop-blur-xl rounded-3xl shadow-2xl p-6 md:p-8 flex flex-col gap-6 text-center select-none ${
+          <div className={`w-full max-w-sm border backdrop-blur-xl rounded-3xl shadow-2xl p-6 md:p-8 flex flex-col gap-6 text-center select-none max-h-[90vh] overflow-y-auto ${
             isDark ? "bg-zinc-950 border-zinc-850 text-white" : "bg-white border-slate-200 text-slate-850"
           }`}>
             <div className="mx-auto h-12 w-12 rounded-2xl flex items-center justify-center bg-red-50 border border-red-100 text-red-600 animate-bounce">
@@ -805,13 +810,13 @@ export default function ReportsTab({
               </p>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-3 w-full">
               <button
                 onClick={() => setDeleteConfirmId(null)}
-                className={`flex-1 rounded-xl border py-2.5 text-xs font-bold transition-all cursor-pointer ${
+                className={`w-full sm:w-1/2 rounded-xl border py-2.5 text-xs font-bold transition-all cursor-pointer ${
                   isDark 
                     ? "border-zinc-800 text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200" 
-                    : "border-slate-200 text-slate-650 hover:bg-slate-50"
+                    : "border-slate-200 text-slate-655 hover:bg-slate-50"
                 }`}
               >
                 Batal
@@ -822,7 +827,7 @@ export default function ReportsTab({
                   setDeleteConfirmId(null);
                   setSelectedReport(null);
                 }}
-                className="flex-1 rounded-xl bg-red-600 hover:bg-red-700 text-white py-2.5 text-xs font-bold transition-all cursor-pointer shadow-md"
+                className="w-full sm:w-1/2 rounded-xl bg-red-600 hover:bg-red-700 text-white py-2.5 text-xs font-bold transition-all cursor-pointer shadow-md"
               >
                 Hapus Permanen
               </button>
@@ -834,7 +839,7 @@ export default function ReportsTab({
       {/* --- IN-UI CUSTOM BATCH ACTION MODAL (Glassmorphic) --- */}
       {batchConfirmAction && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center p-4 z-[1000] animate-fade-in">
-          <div className={`w-full max-w-sm border backdrop-blur-xl rounded-3xl shadow-2xl p-6 md:p-8 flex flex-col gap-6 text-center select-none ${
+          <div className={`w-full max-w-sm border backdrop-blur-xl rounded-3xl shadow-2xl p-6 md:p-8 flex flex-col gap-6 text-center select-none max-h-[90vh] overflow-y-auto ${
             isDark ? "bg-zinc-950 border-zinc-850 text-white" : "bg-white border-slate-250 text-slate-850"
           }`}>
             <div className={`mx-auto h-12 w-12 rounded-2xl flex items-center justify-center border ${
@@ -854,20 +859,20 @@ export default function ReportsTab({
               </p>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-3 w-full">
               <button
                 onClick={() => setBatchConfirmAction(null)}
-                className={`flex-1 rounded-xl border py-2.5 text-xs font-bold transition-all cursor-pointer ${
+                className={`w-full sm:w-1/2 rounded-xl border py-2.5 text-xs font-bold transition-all cursor-pointer ${
                   isDark 
                     ? "border-zinc-800 text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200" 
-                    : "border-slate-200 text-slate-650 hover:bg-slate-50"
+                    : "border-slate-200 text-slate-655 hover:bg-slate-50"
                 }`}
               >
                 Batal
               </button>
               <button
                 onClick={handleConfirmBatchAction}
-                className={`flex-1 rounded-xl py-2.5 text-xs font-bold transition-all cursor-pointer shadow-md text-white ${
+                className={`w-full sm:w-1/2 rounded-xl py-2.5 text-xs font-bold transition-all cursor-pointer shadow-md text-white ${
                   batchConfirmAction.action === "delete" ? "bg-red-600 hover:bg-red-700" : "bg-indigo-600 hover:bg-indigo-700"
                 }`}
               >

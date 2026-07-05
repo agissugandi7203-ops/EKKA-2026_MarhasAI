@@ -31,6 +31,7 @@ interface RagTabProps {
   handleAddRagDoc: () => void;
   handleDeleteRagDoc: (id: string) => void;
   theme?: "light" | "dark";
+  showToast?: (message: string, type: "success" | "error" | "info") => void;
 }
 
 export default function RagTab({
@@ -45,11 +46,13 @@ export default function RagTab({
   setRagContent,
   handleAddRagDoc,
   handleDeleteRagDoc,
-  theme = "light"
+  theme = "light",
+  showToast
 }: RagTabProps) {
   const [readingDoc, setReadingDoc] = useState<RAGDocument | null>(null);
   const [deleteConfirmDoc, setDeleteConfirmDoc] = useState<RAGDocument | null>(null);
   const [verifyText, setVerifyText] = useState("");
+  const [validationError, setValidationError] = useState("");
   const isDark = theme === "dark";
 
   const getDocContent = (doc: RAGDocument) => {
@@ -136,9 +139,10 @@ Limbah Bahan Berbahaya dan Beracun (B3) rumah tangga memerlukan penanganan khusu
   const handleTriggerDelete = () => {
     if (!deleteConfirmDoc) return;
     if (verifyText.toUpperCase() !== "HAPUS") {
-      alert('Harap ketik "HAPUS" untuk mengonfirmasi.');
+      setValidationError('Kata verifikasi tidak cocok! Harap ketik "HAPUS".');
       return;
     }
+    setValidationError("");
     handleDeleteRagDoc(deleteConfirmDoc.id);
     setDeleteConfirmDoc(null);
     setVerifyText("");
@@ -273,7 +277,7 @@ Limbah Bahan Berbahaya dan Beracun (B3) rumah tangga memerlukan penanganan khusu
                     Baca
                   </button>
                   <button
-                    onClick={() => { setVerifyText(""); setDeleteConfirmDoc(doc); }}
+                    onClick={() => { setVerifyText(""); setValidationError(""); setDeleteConfirmDoc(doc); }}
                     className={`p-1.5 rounded-lg transition-colors cursor-pointer shrink-0 ${
                       isDark
                         ? "text-zinc-600 hover:text-red-400 hover:bg-red-950/20"
@@ -309,7 +313,7 @@ Limbah Bahan Berbahaya dan Beracun (B3) rumah tangga memerlukan penanganan khusu
       {/* ── ADD DOCUMENT PANEL (slide-down) ────────────────────── */}
       {isAddRagOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
-          <div className={`w-full max-w-lg border rounded-3xl shadow-2xl flex flex-col gap-0 overflow-hidden ${
+          <div className={`w-full max-w-lg border rounded-3xl shadow-2xl flex flex-col gap-0 overflow-hidden max-h-[90vh] ${
             isDark ? "bg-zinc-950 border-zinc-800 text-white" : "bg-white border-slate-200 text-slate-800"
           }`}>
             {/* Modal header */}
@@ -320,7 +324,7 @@ Limbah Bahan Berbahaya dan Beracun (B3) rumah tangga memerlukan penanganan khusu
                 </div>
                 <div>
                   <h3 className="text-sm font-bold">Latih Dokumen RAG Baru</h3>
-                  <p className={`text-[10px] ${isDark ? "text-zinc-500" : "text-slate-400"}`}>Tambahkan ke basis pengetahuan vektor AI</p>
+                  <p className={`text-[10px] ${isDark ? "text-zinc-500" : "text-slate-440"}`}>Tambahkan ke basis pengetahuan vektor AI</p>
                 </div>
               </div>
               <button
@@ -334,7 +338,7 @@ Limbah Bahan Berbahaya dan Beracun (B3) rumah tangga memerlukan penanganan khusu
             </div>
 
             {/* Form body */}
-            <div className="flex flex-col gap-5 px-6 py-6">
+            <div className="flex-1 overflow-y-auto flex flex-col gap-5 px-6 py-6">
               {/* Title */}
               <div className="flex flex-col gap-1.5">
                 <label className={`text-[10px] font-extrabold uppercase tracking-wider ${isDark ? "text-zinc-500" : "text-slate-400"}`}>
@@ -399,10 +403,10 @@ Limbah Bahan Berbahaya dan Beracun (B3) rumah tangga memerlukan penanganan khusu
             </div>
 
             {/* Footer actions */}
-            <div className={`flex items-center justify-end gap-3 px-6 py-4 border-t ${isDark ? "border-zinc-800" : "border-slate-100"}`}>
+            <div className={`flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-3 px-6 py-4 border-t ${isDark ? "border-zinc-800" : "border-slate-100"}`}>
               <button
                 onClick={() => setIsAddRagOpen(false)}
-                className={`rounded-xl px-4 py-2 text-xs font-semibold cursor-pointer border transition-all ${
+                className={`w-full sm:w-auto rounded-xl px-4 py-2 text-xs font-semibold cursor-pointer border transition-all ${
                   isDark ? "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white" : "bg-slate-50 border-slate-200 text-slate-500 hover:text-slate-800"
                 }`}
               >
@@ -411,7 +415,7 @@ Limbah Bahan Berbahaya dan Beracun (B3) rumah tangga memerlukan penanganan khusu
               <button
                 onClick={handleAddRagDoc}
                 disabled={!ragTitle || !ragContent}
-                className="flex items-center gap-2 rounded-xl px-5 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-700 transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed shadow-sm"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl px-5 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-700 transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed shadow-sm"
               >
                 <Brain className="h-3.5 w-3.5" />
                 Indeks ke RAG
@@ -495,7 +499,7 @@ Limbah Bahan Berbahaya dan Beracun (B3) rumah tangga memerlukan penanganan khusu
       {/* ── DELETE CONFIRM MODAL ───────────────────────────────── */}
       {deleteConfirmDoc && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center p-4 z-[1000] animate-fade-in">
-          <div className={`w-full max-w-sm border backdrop-blur-xl rounded-3xl shadow-2xl p-6 md:p-8 flex flex-col gap-6 text-center select-none ${
+          <div className={`w-full max-w-sm border backdrop-blur-xl rounded-3xl shadow-2xl p-6 md:p-8 flex flex-col gap-6 text-center select-none max-h-[90vh] overflow-y-auto ${
             isDark ? "bg-zinc-950 border-zinc-800 text-white" : "bg-white border-slate-200 text-slate-800"
           }`}>
 
@@ -526,12 +530,17 @@ Limbah Bahan Berbahaya dan Beracun (B3) rumah tangga memerlukan penanganan khusu
                     : "bg-slate-50 border-slate-200 text-slate-900 focus:border-slate-350"
                 }`}
               />
+              {validationError && (
+                <p className="text-[10px] font-bold text-red-500 animate-fade-in mt-1 select-none text-center">
+                  {validationError}
+                </p>
+              )}
             </div>
 
-            <div className={`flex items-center gap-3 pt-2 border-t justify-end ${isDark ? "border-zinc-900" : "border-slate-100"}`}>
+            <div className={`flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-3 pt-2 border-t w-full ${isDark ? "border-zinc-900" : "border-slate-100"}`}>
               <button
-                onClick={() => { setDeleteConfirmDoc(null); setVerifyText(""); }}
-                className={`flex-1 rounded-xl py-2.5 text-xs font-bold transition-all border cursor-pointer ${
+                onClick={() => { setDeleteConfirmDoc(null); setVerifyText(""); setValidationError(""); }}
+                className={`w-full sm:w-1/2 rounded-xl py-2.5 text-xs font-bold transition-all border cursor-pointer ${
                   isDark
                     ? "bg-zinc-900 border-zinc-800 text-zinc-400 hover:bg-zinc-850"
                     : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
@@ -542,7 +551,7 @@ Limbah Bahan Berbahaya dan Beracun (B3) rumah tangga memerlukan penanganan khusu
               <button
                 onClick={handleTriggerDelete}
                 disabled={verifyText.toUpperCase() !== "HAPUS"}
-                className="flex-1 rounded-xl py-2.5 text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                className="w-full sm:w-1/2 rounded-xl py-2.5 text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
               >
                 Hapus Permanen
               </button>

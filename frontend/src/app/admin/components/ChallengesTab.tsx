@@ -29,6 +29,7 @@ interface ChallengesTabProps {
   handleDeleteEvent: (id: string) => Promise<void>;
   actionLoading: boolean;
   theme?: "light" | "dark";
+  showToast?: (message: string, type: "success" | "error" | "info") => void;
 }
 
 export default function ChallengesTab({
@@ -39,7 +40,8 @@ export default function ChallengesTab({
   handleAddEvent,
   handleDeleteEvent,
   actionLoading,
-  theme = "light"
+  theme = "light",
+  showToast
 }: ChallengesTabProps) {
   // New Challenge Form States
   const [newChalCode, setNewChallengeCode] = useState("");

@@ -9,6 +9,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:url_launcher/url_launcher.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:record/record.dart';
@@ -107,17 +108,20 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
       _isTyping = hasInput;
     });
   }
-
-  void _scrollToBottom({bool force = false}) {
+  void _scrollToBottom({bool force = false, bool isStreaming = false}) {
     if (_scrollController.hasClients) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final position = _scrollController.position;
         if (force || (position.maxScrollExtent - position.pixels < 150)) {
-          _scrollController.animateTo(
-            position.maxScrollExtent,
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeOut,
-          );
+          if (isStreaming) {
+            _scrollController.jumpTo(position.maxScrollExtent);
+          } else {
+            _scrollController.animateTo(
+              position.maxScrollExtent,
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeOut,
+            );
+          }
         }
       });
     }
@@ -435,7 +439,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
         if (state.errorMessage != null && state.errorMessage!.isNotEmpty) {
           context.showErrorSnackBar(state.errorMessage!);
         }
-        _scrollToBottom(force: false);
+        _scrollToBottom(force: false, isStreaming: state.isStreaming);
       },
       builder: (context, state) {
         final messages = state.messages;
@@ -786,14 +790,39 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              msg.message.isEmpty
-                  ? (_webSearchEnabled
-                      ? const _WebSearchGroundingIndicator()
-                      : const _ThinkingIndicator())
-                  : _MarkdownStreamRenderer(
-                      data: msg.message,
-                      isStreaming: isActiveStreaming,
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 400),
+                switchInCurve: Curves.easeOutCubic,
+                switchOutCurve: Curves.easeIn,
+                transitionBuilder: (Widget child, Animation<double> animation) {
+                  final slideAnimation = Tween<Offset>(
+                    begin: const Offset(0.0, 0.05),
+                    end: Offset.zero,
+                  ).animate(animation);
+                  return FadeTransition(
+                    opacity: animation,
+                    child: SlideTransition(
+                      position: slideAnimation,
+                      child: child,
                     ),
+                  );
+                },
+                child: msg.message.isEmpty
+                    ? SizedBox(
+                        key: const ValueKey('thinking'),
+                        child: _webSearchEnabled
+                            ? const _WebSearchGroundingIndicator()
+                            : const _ThinkingIndicator(),
+                      )
+                    : SizedBox(
+                        key: const ValueKey('content'),
+                        width: double.infinity,
+                        child: _MarkdownStreamRenderer(
+                          data: msg.message,
+                          isStreaming: isActiveStreaming,
+                        ),
+                      ),
+              ),
               _buildGroundingSources(msg.message),
             ],
           ),
@@ -2182,26 +2211,43 @@ class PremiumImageMarkdownBuilder extends MarkdownElementBuilder {
     );
   }
 }
-
 // ── CUSTOM MARKDOWN ELEMENT BUILDER FOR DRAFT CARD ──
 class DraftMarkdownBuilder extends MarkdownElementBuilder {
   @override
   Widget? visitElementAfter(md.Element element, TextStyle? preferredStyle) {
-    String? language;
+    String language = '';
+    
+    // Extract language class from children (pre -> code)
     if (element.children != null && element.children!.isNotEmpty) {
       final child = element.children![0];
       if (child is md.Element) {
         final className = child.attributes['class'] ?? '';
-        if (className.startsWith('language-draft')) {
-          language = 'draft';
+        if (className.startsWith('language-')) {
+          language = className.substring('language-'.length);
         }
       }
     }
-
-    if (language == 'draft' || element.attributes['class'] == 'language-draft') {
-      return _DraftCard(textContent: element.textContent);
+    
+    // Fallback check on element class
+    if (language.isEmpty) {
+      final className = element.attributes['class'] ?? '';
+      if (className.startsWith('language-')) {
+        language = className.substring('language-'.length);
+      }
     }
-    return null;
+
+    final content = element.textContent.trim();
+
+    if (language == 'draft') {
+      return _DraftCard(textContent: content);
+    } else if (language == 'navigation') {
+      return _NavigationButtonCard(content: content);
+    } else {
+      return _CodeBlockCard(
+        code: content,
+        language: language.isNotEmpty ? language : 'code',
+      );
+    }
   }
 }
 
@@ -2406,3 +2452,180 @@ class _CopyButtonState extends State<_CopyButton> {
   }
 }
 
+// ── CUSTOM CODE BLOCK CARD WIDGET ──
+class _CodeBlockCard extends StatefulWidget {
+  final String code;
+  final String language;
+  const _CodeBlockCard({required this.code, required this.language});
+
+  @override
+  State<_CodeBlockCard> createState() => _CodeBlockCardState();
+}
+
+class _CodeBlockCardState extends State<_CodeBlockCard> {
+  bool _copied = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F172A), // Dark Slate
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF1E293B)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header Bar
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: const BoxDecoration(
+              color: Color(0xFF1E293B),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(11)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  widget.language.toUpperCase(),
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: const Color(0xFF94A3B8),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    Clipboard.setData(ClipboardData(text: widget.code));
+                    setState(() {
+                      _copied = true;
+                    });
+                    Future.delayed(const Duration(seconds: 2), () {
+                      if (mounted) {
+                        setState(() {
+                          _copied = false;
+                        });
+                      }
+                    });
+                  },
+                  child: Row(
+                    children: [
+                      Icon(
+                        _copied ? Icons.check : Icons.copy,
+                        size: 14,
+                        color: _copied ? Colors.green : const Color(0xFF94A3B8),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        _copied ? 'Copied!' : 'Copy',
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: _copied ? Colors.green : const Color(0xFF94A3B8),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Code Content
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Text(
+                widget.code,
+                style: const TextStyle(
+                  fontFamily: 'monospace',
+                  fontSize: 13,
+                  color: Color(0xFFE2E8F0),
+                  height: 1.5,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── CUSTOM NAVIGATION BUTTON CARD WIDGET ──
+class _NavigationButtonCard extends StatelessWidget {
+  final String content;
+  const _NavigationButtonCard({required this.content});
+
+  @override
+  Widget build(BuildContext context) {
+    String label = 'Buka Halaman';
+    String route = '';
+    String iconStr = 'link';
+
+    final lines = content.split('\n');
+    for (final line in lines) {
+      final parts = line.split(':');
+      if (parts.length >= 2) {
+        final key = parts[0].trim().toLowerCase();
+        final value = parts.sublist(1).join(':').trim();
+        if (key == 'label') label = value;
+        if (key == 'route') route = value;
+        if (key == 'icon') iconStr = value.toLowerCase();
+      }
+    }
+
+    if (route.isEmpty) return const SizedBox.shrink();
+
+    IconData iconData = Icons.arrow_forward;
+    if (iconStr == 'camera') {
+      iconData = Icons.camera_alt_outlined;
+    } else if (iconStr == 'trophy' || iconStr == 'leaderboard') {
+      iconData = Icons.emoji_events_outlined;
+    } else if (iconStr == 'gift' || iconStr == 'rewards') {
+      iconData = Icons.card_giftcard_outlined;
+    } else if (iconStr == 'person' || iconStr == 'profile') {
+      iconData = Icons.person_outline;
+    }
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      child: Material(
+        color: AppColors.navy500,
+        borderRadius: BorderRadius.circular(12),
+        elevation: 2,
+        shadowColor: AppColors.navy500.withValues(alpha: 0.3),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () {
+            try {
+              GoRouter.of(context).push(route);
+            } catch (e) {
+              debugPrint('GoRouter failed to navigate to $route: $e');
+            }
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(iconData, color: Colors.white, size: 20),
+                const SizedBox(width: 10),
+                Text(
+                  label,
+                  style: AppTextStyles.titleMedium.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                const Icon(Icons.chevron_right, color: Colors.white70, size: 16),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

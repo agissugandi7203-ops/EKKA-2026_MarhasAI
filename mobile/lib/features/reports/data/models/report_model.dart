@@ -10,6 +10,7 @@ class ReportModel {
   final String? wasteType;
   final String? dangerLevel;
   final String? adminNotes;
+  final String? aiNotes;
   final String createdAt;
   final String updatedAt;
   final ReporterProfile? reporterProfile;
@@ -26,6 +27,7 @@ class ReportModel {
     this.wasteType,
     this.dangerLevel,
     this.adminNotes,
+    this.aiNotes,
     required this.createdAt,
     required this.updatedAt,
     this.reporterProfile,
@@ -68,6 +70,7 @@ class ReportModel {
       wasteType: json['waste_type'] as String?,
       dangerLevel: json['danger_level'] as String?,
       adminNotes: json['admin_notes'] as String?,
+      aiNotes: json['ai_notes'] as String?,
       createdAt: json['created_at'] as String,
       updatedAt: json['updated_at'] as String,
       reporterProfile: json['profiles'] != null
@@ -91,6 +94,7 @@ class ReportModel {
       'waste_type': wasteType,
       'danger_level': dangerLevel,
       'admin_notes': adminNotes,
+      'ai_notes': aiNotes,
       'created_at': createdAt,
       'updated_at': updatedAt,
     };

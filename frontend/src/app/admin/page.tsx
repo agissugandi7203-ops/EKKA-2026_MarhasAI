@@ -14,7 +14,9 @@ import {
   X, 
   Loader2, 
   ArrowRight,
-  ShieldCheck
+  ShieldCheck,
+  CheckCircle,
+  Info
 } from "lucide-react";
 
 // Sub-components
@@ -89,6 +91,17 @@ export default function AdminDashboard() {
   const [broadcastLogs, setBroadcastLogs] = useState<BroadcastLog[]>([]);
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [events, setEvents] = useState<OfficialEvent[]>([]);
+
+  // Toast notifications state
+  const [toasts, setToasts] = useState<Array<{ id: string; message: string; type: "success" | "error" | "info" }>>([]);
+
+  const showToast = (message: string, type: "success" | "error" | "info" = "info") => {
+    const id = Math.random().toString(36).substring(2, 9);
+    setToasts((prev) => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 4500);
+  };
 
   // Search/Filter states
   const [reportSearch, setReportSearch] = useState<string>("");
@@ -561,6 +574,7 @@ export default function AdminDashboard() {
       setSelectedReport(null);
       setAdminFeedback("");
       setActionLoading(false);
+      showToast(`Status laporan #${id} diperbarui menjadi ${nextStatus.toUpperCase()} (Emulator)`, "success");
       return;
     }
 
@@ -583,8 +597,9 @@ export default function AdminDashboard() {
         fetchData(true, token || "");
         setSelectedReport(null);
         setAdminFeedback("");
+        showToast(`Status laporan #${id} berhasil diperbarui menjadi ${nextStatus.toUpperCase()}!`, "success");
       } else {
-        alert("Gagal memperbarui status laporan ke backend.");
+        showToast("Gagal memperbarui status laporan ke backend.", "error");
       }
     } catch (err) {
       console.error("Live status update error:", err);
@@ -604,6 +619,7 @@ export default function AdminDashboard() {
       localStorage.setItem("emu_reports", JSON.stringify(updated));
       await writeAuditLog("DELETE_REPORT", `Menghapus laporan sampah #${id} secara permanen`);
       setActionLoading(false);
+      showToast(`Laporan #${id} berhasil dihapus (Emulator)`, "success");
       return;
     }
 
@@ -615,8 +631,9 @@ export default function AdminDashboard() {
       if (res.ok) {
         setReports(prev => prev.filter(r => r.id !== id));
         await writeAuditLog("DELETE_REPORT", `[Live] Menghapus laporan sampah #${id} secara permanen`);
+        showToast(`Laporan #${id} berhasil dihapus permanen!`, "success");
       } else {
-        alert("Gagal menghapus laporan dari backend.");
+        showToast("Gagal menghapus laporan dari backend.", "error");
       }
     } catch (err) {
       console.error("Live delete report error:", err);
@@ -738,6 +755,7 @@ export default function AdminDashboard() {
       localStorage.setItem("emu_badges", JSON.stringify(updated));
       await writeAuditLog("CREATE_BADGE", `Membuat katalog lencana baru: ${title} (${code})`);
       setActionLoading(false);
+      showToast(`Lencana "${title}" berhasil dibuat (Emulator)`, "success");
       return;
     }
 
@@ -754,12 +772,15 @@ export default function AdminDashboard() {
         const freshBdg = await res.json();
         setBadges(prev => [...prev, freshBdg]);
         await writeAuditLog("CREATE_BADGE", `[Live] Membuat katalog lencana baru: ${title} (${code})`);
+        showToast(`Lencana "${title}" berhasil dirilis ke katalog!`, "success");
       } else {
         setBadges(prev => [...prev, newBdg]);
         await writeAuditLog("CREATE_BADGE", `[Live Fallback] Membuat katalog lencana baru: ${title} (${code})`);
+        showToast(`Lencana "${title}" berhasil dibuat (Live Fallback)!`, "success");
       }
     } catch (err) {
       setBadges(prev => [...prev, newBdg]);
+      showToast(`Lencana "${title}" dibuat (Offline Fallback)`, "info");
     } finally {
       setActionLoading(false);
     }
@@ -777,6 +798,7 @@ export default function AdminDashboard() {
       localStorage.setItem("emu_badges", JSON.stringify(updated));
       await writeAuditLog("DELETE_BADGE", `Menghapus lencana dari katalog sistem: ${badgeTitle}`);
       setActionLoading(false);
+      showToast(`Lencana "${badgeTitle}" berhasil dihapus dari katalog (Emulator)`, "info");
       return;
     }
 
@@ -788,9 +810,11 @@ export default function AdminDashboard() {
       const updated = badges.filter(b => b.id !== id);
       setBadges(updated);
       await writeAuditLog("DELETE_BADGE", `[Live] Menghapus lencana dari katalog sistem: ${badgeTitle}`);
+      showToast(`Lencana "${badgeTitle}" berhasil dihapus dari katalog!`, "success");
     } catch (err) {
       const updated = badges.filter(b => b.id !== id);
       setBadges(updated);
+      showToast(`Lencana "${badgeTitle}" dihapus (Offline Fallback)`, "info");
     } finally {
       setActionLoading(false);
     }
@@ -815,6 +839,7 @@ export default function AdminDashboard() {
       await writeAuditLog("ADJUST_GAMIFY", `Menyesuaikan gamifikasi @${selectedProfile.username}: ${adjustXp} XP, Level ${adjustLevel}, Streak ${adjustStreak}`);
       setIsAdjustGamifyOpen(false);
       setActionLoading(false);
+      showToast(`Koreksi gamifikasi @${selectedProfile.username} berhasil (Emulator)`, "success");
       return;
     }
 
@@ -837,8 +862,9 @@ export default function AdminDashboard() {
         await writeAuditLog("ADJUST_GAMIFY", `[Live] Menyesuaikan gamifikasi @${selectedProfile.username}: ${adjustXp} XP, Level ${adjustLevel}, Streak ${adjustStreak}`);
         fetchData(true, token || "");
         setIsAdjustGamifyOpen(false);
+        showToast(`Koreksi gamifikasi @${selectedProfile.username} berhasil disimpan!`, "success");
       } else {
-        alert("Gagal melakukan penyesuaian gamifikasi ke server.");
+        showToast("Gagal melakukan penyesuaian gamifikasi ke server.", "error");
       }
     } catch (err) {
       console.error("Live gamify adjust error:", err);
@@ -876,10 +902,10 @@ export default function AdminDashboard() {
         return p;
       });
       setProfiles(updated);
-      localStorage.setItem("emu_profiles", JSON.stringify(updated));
       await writeAuditLog("AWARD_BADGE", `Menyematkan lencana ${badgeObj?.title || badgeToAward} ke profil @${selectedProfile.username}`);
       setIsAwardBadgeOpen(false);
       setActionLoading(false);
+      showToast(`Lencana "${badgeObj?.title || badgeToAward}" disematkan ke @${selectedProfile.username} (Emulator)`, "success");
       return;
     }
 
@@ -901,8 +927,9 @@ export default function AdminDashboard() {
         await writeAuditLog("AWARD_BADGE", `[Live] Menyematkan lencana ${badgeObj?.title || badgeToAward} ke profil @${selectedProfile.username}`);
         fetchData(true, token || "");
         setIsAwardBadgeOpen(false);
+        showToast(`Lencana "${badgeObj?.title || badgeToAward}" berhasil disematkan!`, "success");
       } else {
-        alert("Gagal menyematkan lencana ke profil warga.");
+        showToast("Gagal menyematkan lencana ke profil warga.", "error");
       }
     } catch (err) {
       console.error("Live badge award error:", err);
@@ -932,6 +959,7 @@ export default function AdminDashboard() {
       localStorage.setItem("emu_profiles", JSON.stringify(updated));
       await writeAuditLog("REVOKE_BADGE", `Mencabut lencana ${badgeCode} dari warga @${userProfile?.username}`);
       setActionLoading(false);
+      showToast(`Lencana "${badgeCode}" dicabut dari @${userProfile?.username} (Emulator)`, "success");
       return;
     }
 
@@ -952,8 +980,9 @@ export default function AdminDashboard() {
       if (res.ok) {
         await writeAuditLog("REVOKE_BADGE", `[Live] Mencabut lencana ${badgeCode} dari warga @${userProfile?.username}`);
         fetchData(true, token || "");
+        showToast(`Lencana "${badgeCode}" berhasil dicabut dari @${userProfile?.username}!`, "success");
       } else {
-        alert("Gagal mencabut lencana dari profil.");
+        showToast("Gagal mencabut lencana dari profil.", "error");
       }
     } catch (err) {
       console.error("Live badge revoke error:", err);
@@ -976,6 +1005,7 @@ export default function AdminDashboard() {
       localStorage.setItem("emu_profiles", JSON.stringify(updated));
       await writeAuditLog("DELETE_USER", `Menghapus absolut akun warga @${username}`);
       setActionLoading(false);
+      showToast(`Profil warga @${username} berhasil dihapus (Emulator)`, "success");
       return;
     }
 
@@ -989,13 +1019,14 @@ export default function AdminDashboard() {
       if (res.ok) {
         await writeAuditLog("DELETE_USER", `[Live] Menghapus absolut akun warga @${username}`);
         fetchData(true, token || "");
+        showToast(`Profil warga @${username} berhasil dihapus permanen!`, "success");
       } else {
-        const errData = await res.json();
-        alert(`Gagal menghapus user: ${errData.message || "Akses Ditolak."}`);
+        const errData = await res.json().catch(() => ({}));
+        showToast(`Gagal menghapus user: ${errData.message || "Akses Ditolak."}`, "error");
       }
     } catch (err: any) {
       console.error("Live delete profile error:", err);
-      alert("Error: " + err.message);
+      showToast("Error: " + err.message, "error");
     } finally {
       setActionLoading(false);
     }
@@ -1027,6 +1058,7 @@ export default function AdminDashboard() {
       setRagContent("");
       setIsAddRagOpen(false);
       setActionLoading(false);
+      showToast(`Dokumen "${ragTitle}" berhasil diindeks (Emulator)`, "success");
       return;
     }
 
@@ -1053,13 +1085,14 @@ export default function AdminDashboard() {
         setRagTitle("Tuntunan");
         setRagContent("");
         setIsAddRagOpen(false);
+        showToast(`Dokumen "${ragTitle}" berhasil diindeks ke Knowledge Base AI!`, "success");
       } else {
         const errData = await res.json().catch(() => ({}));
-        alert(`Gagal melatih RAG: ${errData.message || "Periksa server."}`);
+        showToast(`Gagal melatih RAG: ${errData.message || "Periksa server."}`, "error");
       }
     } catch (err: any) {
       console.error("Live add RAG doc error:", err);
-      alert("Error: " + err.message);
+      showToast("Error: " + err.message, "error");
     } finally {
       setActionLoading(false);
     }
@@ -1078,6 +1111,7 @@ export default function AdminDashboard() {
       localStorage.setItem("emu_rag_docs", JSON.stringify(updated));
       await writeAuditLog("DELETE_RAG", `Menghapus dokumen regulasi RAG: ${docTitle}`);
       setActionLoading(false);
+      showToast(`Dokumen "${docTitle}" berhasil dihapus (Emulator)`, "success");
       return;
     }
 
@@ -1091,13 +1125,14 @@ export default function AdminDashboard() {
       if (res.ok) {
         await writeAuditLog("DELETE_RAG", `[Live] Menghapus dokumen regulasi RAG: ${docTitle}`);
         fetchData(true, token || "");
+        showToast(`Dokumen "${docTitle}" berhasil dihapus dari Knowledge Base AI!`, "success");
       } else {
         const errData = await res.json().catch(() => ({}));
-        alert(`Gagal menghapus dokumen RAG: ${errData.message || "Akses Ditolak."}`);
+        showToast(`Gagal menghapus dokumen RAG: ${errData.message || "Akses Ditolak."}`, "error");
       }
     } catch (err: any) {
       console.error("Live delete RAG doc error:", err);
-      alert("Error: " + err.message);
+      showToast("Error: " + err.message, "error");
     } finally {
       setActionLoading(false);
     }
@@ -1119,6 +1154,7 @@ export default function AdminDashboard() {
     localStorage.setItem("emu_challenges", JSON.stringify(updated));
     await writeAuditLog("CREATE_CHALLENGE", `Membuat misi harian baru: ${title} (+${xp} XP, +${points} Pts)`);
     setActionLoading(false);
+    showToast(`Misi harian "${title}" berhasil ditambahkan!`, "success");
   };
 
   const handleDeleteChallenge = async (id: string) => {
@@ -1130,6 +1166,7 @@ export default function AdminDashboard() {
     localStorage.setItem("emu_challenges", JSON.stringify(updated));
     await writeAuditLog("DELETE_CHALLENGE", `Menghapus misi harian: ${chalTitle}`);
     setActionLoading(false);
+    showToast(`Misi harian "${chalTitle}" berhasil dihapus.`, "info");
   };
 
   const handleAddEvent = async (title: string, description: string, points: number) => {
@@ -1146,6 +1183,7 @@ export default function AdminDashboard() {
     localStorage.setItem("emu_events", JSON.stringify(updated));
     await writeAuditLog("CREATE_EVENT", `Membuat event resmi kota: ${title} (+${points} Pts)`);
     setActionLoading(false);
+    showToast(`Event resmi "${title}" berhasil dirilis!`, "success");
   };
 
   const handleDeleteEvent = async (id: string) => {
@@ -1157,6 +1195,7 @@ export default function AdminDashboard() {
     localStorage.setItem("emu_events", JSON.stringify(updated));
     await writeAuditLog("DELETE_EVENT", `Menghapus event resmi kota: ${evTitle}`);
     setActionLoading(false);
+    showToast(`Event resmi "${evTitle}" berhasil dihapus.`, "info");
   };
 
   // --- HANDLERS: BROADCAST NOTIFICATIONS DISPATCH ---
@@ -1194,6 +1233,7 @@ export default function AdminDashboard() {
       }
     }
     setActionLoading(false);
+    showToast(`Siaran notifikasi "${title}" berhasil dikirim!`, "success");
   };
 
   // --- HANDLERS: CLEAR AUDIT LOGS ---
@@ -1201,6 +1241,7 @@ export default function AdminDashboard() {
     setAuditLogs([]);
     localStorage.setItem("emu_audit_logs", JSON.stringify([]));
     await writeAuditLog("CLEAR_AUDIT", "Berhasil membersihkan seluruh log audit administratif");
+    showToast("Seluruh riwayat log audit berhasil dibersihkan!", "info");
   };
 
   // Summary counts
@@ -1319,6 +1360,7 @@ export default function AdminDashboard() {
             actionLoading={actionLoading}
             loading={loading}
             theme={theme}
+            showToast={showToast}
           />
         )}
 
@@ -1353,6 +1395,7 @@ export default function AdminDashboard() {
             handleDeleteBadge={handleDeleteBadge}
             actionLoading={actionLoading}
             theme={theme}
+            showToast={showToast}
           />
         )}
 
@@ -1371,6 +1414,7 @@ export default function AdminDashboard() {
             handleAddRagDoc={handleAddRagDoc}
             handleDeleteRagDoc={handleDeleteRagDoc}
             theme={theme}
+            showToast={showToast}
           />
         )}
 
@@ -1385,6 +1429,7 @@ export default function AdminDashboard() {
             handleDeleteEvent={handleDeleteEvent}
             actionLoading={actionLoading}
             theme={theme}
+            showToast={showToast}
           />
         )}
 
@@ -1395,6 +1440,7 @@ export default function AdminDashboard() {
             handleSendBroadcast={handleSendBroadcast}
             actionLoading={actionLoading}
             theme={theme}
+            showToast={showToast}
           />
         )}
 
@@ -1404,9 +1450,63 @@ export default function AdminDashboard() {
             auditLogs={auditLogs}
             handleClearAuditLogs={handleClearAuditLogs}
             theme={theme}
+            showToast={showToast}
           />
         )}
 
+      </div>
+
+      {/* Toast notifications portal */}
+      <div className="fixed bottom-6 right-6 z-[9999] flex flex-col gap-3 max-w-sm w-full pointer-events-none px-4 sm:px-0">
+        {toasts.map((t) => {
+          const isSuccess = t.type === "success";
+          const isError = t.type === "error";
+          return (
+            <div
+              key={t.id}
+              className={`pointer-events-auto w-full flex items-start gap-3 rounded-2xl border p-4 shadow-xl backdrop-blur-xl animate-slide-left relative overflow-hidden transition-all ${
+                theme === "dark"
+                  ? isSuccess
+                    ? "bg-emerald-950/40 border-emerald-850/30 text-emerald-300"
+                    : isError
+                    ? "bg-rose-950/20 border-rose-850/30 text-rose-300"
+                    : "bg-zinc-950/80 border-zinc-850 text-slate-350"
+                  : isSuccess
+                  ? "bg-emerald-50/95 border-emerald-150 text-emerald-800"
+                  : isError
+                  ? "bg-rose-50/95 border-rose-150 text-rose-800"
+                  : "bg-white/95 border-slate-200 text-slate-800"
+              }`}
+            >
+              {/* Progress timer bar */}
+              <div 
+                className={`absolute bottom-0 left-0 h-1 bg-current opacity-40 animate-shrink-width`}
+                style={{ animationDuration: '4.5s', animationTimingFunction: 'linear', animationFillMode: 'forwards' }}
+              />
+
+              <div className="shrink-0 mt-0.5">
+                {isSuccess ? (
+                  <CheckCircle className="h-4.5 w-4.5" />
+                ) : isError ? (
+                  <AlertTriangle className="h-4.5 w-4.5" />
+                ) : (
+                  <Info className="h-4.5 w-4.5" />
+                )}
+              </div>
+
+              <div className="flex-1 text-xs font-semibold leading-relaxed">
+                {t.message}
+              </div>
+
+              <button
+                onClick={() => setToasts((prev) => prev.filter((toast) => toast.id !== t.id))}
+                className="shrink-0 text-current opacity-55 hover:opacity-100 transition-opacity p-0.5 rounded-lg hover:bg-black/5 cursor-pointer"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          );
+        })}
       </div>
 
     </main>

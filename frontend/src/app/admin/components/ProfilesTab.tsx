@@ -35,6 +35,7 @@ interface ProfilesTabProps {
   isAdjustGamifyOpen: boolean;
   setIsAdjustGamifyOpen: (open: boolean) => void;
   adjustXp: number;
+  showToast?: (message: string, type: "success" | "error" | "info") => void;
   setAdjustXp: (xp: number) => void;
   adjustLevel: number;
   setAdjustLevel: (level: number) => void;
@@ -83,7 +84,8 @@ export default function ProfilesTab({
   handleCreateBadge,
   handleDeleteBadge,
   actionLoading,
-  theme = "light"
+  theme = "light",
+  showToast
 }: ProfilesTabProps) {
   // In-UI Custom Confirm Modal State
   const [confirmModal, setConfirmModal] = useState<{
@@ -96,6 +98,7 @@ export default function ProfilesTab({
   } | null>(null);
 
   const [typeVerify, setTypeVerify] = useState("");
+  const [validationError, setValidationError] = useState("");
 
   // Create badge form states
   const [newBadgeCode, setNewBadgeCode] = useState("");
@@ -112,6 +115,7 @@ export default function ProfilesTab({
     onConfirm: () => void
   ) => {
     setTypeVerify("");
+    setValidationError("");
     setConfirmModal({
       isOpen: true,
       title,
@@ -125,9 +129,10 @@ export default function ProfilesTab({
   const executeConfirmAction = () => {
     if (!confirmModal) return;
     if (confirmModal.confirmText && typeVerify.toUpperCase() !== confirmModal.confirmText.toUpperCase()) {
-      alert(`Harap ketik "${confirmModal.confirmText}" untuk memverifikasi.`);
+      setValidationError(`Kata verifikasi tidak cocok! Harap ketik "${confirmModal.confirmText}".`);
       return;
     }
+    setValidationError("");
     confirmModal.onConfirm();
     setConfirmModal(null);
   };
@@ -497,51 +502,53 @@ export default function ProfilesTab({
 
         {/* Badge Cards List */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {badges.map((b) => (
-            <div
-              key={b.id}
-              className={`rounded-2xl p-4.5 border transition-all flex items-start gap-4 ${
-                isDark ? "bg-zinc-900/40 border-zinc-800/80 hover:border-zinc-750" : "bg-slate-50 border-slate-150 hover:border-slate-200 hover:shadow-sm"
-              }`}
-            >
-              <div className={`h-10 w-10 rounded-xl border flex items-center justify-center shrink-0 ${
-                isDark ? "bg-zinc-900 border-zinc-800 text-gold" : "bg-gold-50/50 border-gold-200/40 text-gold"
-              }`}>
-                <Sparkles className="h-5 w-5" />
-              </div>
-              <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
-                <div>
-                  <div className="flex items-start justify-between gap-2">
-                    <h4 className={`text-xs font-bold truncate ${isDark ? "text-slate-100" : "text-slate-800"}`}>{b.title}</h4>
-                    <button
-                      onClick={() => triggerCustomConfirm(
-                        "Hapus Lencana Katalog",
-                        `⚠️ PERINGATAN: Menghapus lencana "${b.title}" dari katalog akan menghapus referensi bagi seluruh warga yang memilikinya!`,
-                        "HAPUS",
-                        "danger",
-                        () => handleDeleteBadge(b.id)
-                      )}
-                      className={`p-1.5 rounded-lg cursor-pointer transition-all shrink-0 ${
-                        isDark ? "text-red-400 hover:bg-red-950/20" : "text-red-500 hover:bg-red-50"
-                      }`}
-                      title="Hapus dari Katalog"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+          {badges.map((b) => {
+            return (
+              <div
+                key={b.id}
+                className={`rounded-2xl p-4.5 border transition-all flex items-start gap-4 ${
+                  isDark ? "bg-zinc-900/40 border-zinc-800/80 hover:border-zinc-750" : "bg-slate-50 border-slate-150 hover:border-slate-200 hover:shadow-sm"
+                }`}
+              >
+                <div className={`h-10 w-10 rounded-xl border flex items-center justify-center shrink-0 ${
+                  isDark ? "bg-zinc-900 border-zinc-800 text-gold" : "bg-gold-50/50 border-gold-200/40 text-gold"
+                }`}>
+                  <Sparkles className="h-5 w-5" />
+                </div>
+                <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+                  <div>
+                    <div className="flex items-start justify-between gap-2">
+                      <h4 className={`text-xs font-bold truncate ${isDark ? "text-slate-100" : "text-slate-800"}`}>{b.title}</h4>
+                      <button
+                        onClick={() => triggerCustomConfirm(
+                          "Hapus Lencana Katalog",
+                          `⚠️ PERINGATAN: Menghapus lencana "${b.title}" dari katalog akan menghapus referensi bagi seluruh warga yang memilikinya!`,
+                          "HAPUS",
+                          "danger",
+                          () => handleDeleteBadge(b.id)
+                        )}
+                        className={`p-1.5 rounded-lg cursor-pointer transition-all shrink-0 ${
+                          isDark ? "text-red-400 hover:bg-red-950/20" : "text-red-500 hover:bg-red-50"
+                        }`}
+                        title="Hapus dari Katalog"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                    <span className={`text-[9px] font-mono tracking-wider font-bold uppercase mt-0.5 block ${isDark ? "text-zinc-500" : "text-slate-400"}`}>{b.code}</span>
+                    <p className={`text-[10px] font-light leading-relaxed mt-2 line-clamp-2 ${isDark ? "text-zinc-400" : "text-slate-500"}`}>{b.description}</p>
                   </div>
-                  <span className={`text-[9px] font-mono tracking-wider font-bold uppercase mt-0.5 block ${isDark ? "text-zinc-500" : "text-slate-400"}`}>{b.code}</span>
-                  <p className={`text-[10px] font-light leading-relaxed mt-2 line-clamp-2 ${isDark ? "text-zinc-400" : "text-slate-500"}`}>{b.description}</p>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
       {/* --- IN-UI CUSTOM CONFIRMATION MODAL (Glassmorphic) --- */}
       {confirmModal && confirmModal.isOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center p-4 z-[1000] animate-fade-in">
-          <div className={`w-full max-w-sm border backdrop-blur-xl rounded-3xl shadow-2xl p-6 md:p-8 flex flex-col gap-6 text-center ${
+          <div className={`w-full max-w-sm border backdrop-blur-xl rounded-3xl shadow-2xl p-6 md:p-8 flex flex-col gap-6 text-center max-h-[90vh] overflow-y-auto ${
             isDark ? "bg-zinc-950 border-zinc-800 text-white" : "bg-white/95 text-slate-800 border-slate-200"
           }`}>
             
@@ -575,14 +582,19 @@ export default function ProfilesTab({
                       : "bg-slate-50 border-slate-200 text-slate-900 focus:border-slate-350"
                   }`}
                 />
+                {validationError && (
+                  <p className="text-[10px] font-bold text-red-500 animate-fade-in mt-1 select-none text-center">
+                    {validationError}
+                  </p>
+                )}
               </div>
             )}
 
             {/* Actions button list */}
-            <div className={`flex items-center gap-3 pt-4 border-t justify-end ${isDark ? "border-zinc-900" : "border-slate-100"}`}>
+            <div className={`flex flex-col-reverse sm:flex-row items-center gap-3 pt-4 border-t w-full ${isDark ? "border-zinc-900" : "border-slate-100"}`}>
               <button
                 onClick={() => setConfirmModal(null)}
-                className={`w-1/2 rounded-xl border py-2.5 text-xs font-bold transition-all cursor-pointer ${
+                className={`w-full sm:w-1/2 rounded-xl border py-2.5 text-xs font-bold transition-all cursor-pointer ${
                   isDark 
                     ? "bg-zinc-900 border-zinc-850 text-zinc-400 hover:bg-zinc-800" 
                     : "bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200 hover:text-slate-900"
@@ -593,7 +605,7 @@ export default function ProfilesTab({
               <button
                 onClick={executeConfirmAction}
                 disabled={confirmModal.confirmText !== undefined && typeVerify.toUpperCase() !== confirmModal.confirmText.toUpperCase()}
-                className={`w-1/2 rounded-xl py-2.5 text-xs font-bold text-white transition-all cursor-pointer shadow-sm disabled:opacity-30 disabled:cursor-not-allowed ${
+                className={`w-full sm:w-1/2 rounded-xl py-2.5 text-xs font-bold text-white transition-all cursor-pointer shadow-sm disabled:opacity-30 disabled:cursor-not-allowed ${
                   confirmModal.theme === "danger" 
                     ? "bg-red-600 hover:bg-red-700" 
                     : "bg-amber-600 hover:bg-amber-700"
@@ -610,7 +622,7 @@ export default function ProfilesTab({
       {/* MODAL: EDIT GAMIFICATION VALUES */}
       {isAdjustGamifyOpen && selectedProfile && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className={`w-full max-w-sm border rounded-3xl shadow-2xl p-6 md:p-8 flex flex-col gap-6 ${
+          <div className={`w-full max-w-sm border rounded-3xl shadow-2xl p-6 md:p-8 flex flex-col gap-6 max-h-[90vh] overflow-y-auto ${
             isDark ? "bg-zinc-950 border-zinc-800 text-white" : "bg-white border-slate-200 text-slate-850"
           }`}>
             
@@ -657,10 +669,10 @@ export default function ProfilesTab({
               </div>
             </div>
 
-            <div className={`flex items-center justify-end gap-2.5 pt-4 border-t ${isDark ? "border-zinc-900" : "border-slate-100"}`}>
+            <div className={`flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 pt-4 border-t w-full ${isDark ? "border-zinc-900" : "border-slate-100"}`}>
               <button
                 onClick={() => setIsAdjustGamifyOpen(false)}
-                className={`rounded-xl px-4 py-2.5 text-xs font-semibold border transition-all cursor-pointer ${
+                className={`w-full sm:w-auto rounded-xl px-4 py-2.5 text-xs font-semibold border transition-all cursor-pointer ${
                   isDark ? "bg-zinc-900 border-zinc-850 text-zinc-400 hover:bg-zinc-800" : "bg-slate-100 border-slate-200 hover:bg-slate-200 text-slate-655"
                 }`}
               >
@@ -669,7 +681,7 @@ export default function ProfilesTab({
               <button
                 onClick={handleAdjustGamification}
                 disabled={actionLoading}
-                className={`rounded-xl px-4 py-2.5 text-xs font-semibold transition-all shadow-sm cursor-pointer text-white ${
+                className={`w-full sm:w-auto rounded-xl px-4 py-2.5 text-xs font-semibold transition-all shadow-sm cursor-pointer text-white ${
                   isDark ? "bg-zinc-800 hover:bg-zinc-700" : "bg-slate-900 hover:bg-slate-850"
                 }`}
               >
@@ -684,7 +696,7 @@ export default function ProfilesTab({
       {/* MODAL: AWARD NEW PRESTIGE BADGE */}
       {isAwardBadgeOpen && selectedProfile && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className={`w-full max-w-sm border rounded-3xl shadow-2xl p-6 md:p-8 flex flex-col gap-6 ${
+          <div className={`w-full max-w-sm border rounded-3xl shadow-2xl p-6 md:p-8 flex flex-col gap-6 max-h-[90vh] overflow-y-auto ${
             isDark ? "bg-zinc-950 border-zinc-800 text-white" : "bg-white border-slate-200 text-slate-850"
           }`}>
             
@@ -711,10 +723,10 @@ export default function ProfilesTab({
               </select>
             </div>
 
-            <div className={`flex items-center justify-end gap-2.5 pt-4 border-t ${isDark ? "border-zinc-900" : "border-slate-100"}`}>
+            <div className={`flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 pt-4 border-t w-full ${isDark ? "border-zinc-900" : "border-slate-100"}`}>
               <button
                 onClick={() => setIsAwardBadgeOpen(false)}
-                className={`rounded-xl px-4 py-2.5 text-xs font-semibold border transition-all cursor-pointer ${
+                className={`w-full sm:w-auto rounded-xl px-4 py-2.5 text-xs font-semibold border transition-all cursor-pointer ${
                   isDark ? "bg-zinc-900 border-zinc-850 text-zinc-400 hover:bg-zinc-800" : "bg-slate-100 border-slate-200 hover:bg-slate-200 text-slate-655"
                 }`}
               >
@@ -723,7 +735,7 @@ export default function ProfilesTab({
               <button
                 onClick={handleAwardBadge}
                 disabled={actionLoading || !badgeToAward}
-                className="rounded-xl bg-amber-500 hover:bg-amber-600 text-white px-4 py-2.5 text-xs font-semibold transition-all cursor-pointer shadow-sm"
+                className="w-full sm:w-auto rounded-xl bg-amber-500 hover:bg-amber-600 text-white px-4 py-2.5 text-xs font-semibold transition-all cursor-pointer shadow-sm"
               >
                 Sematkan Lencana
               </button>

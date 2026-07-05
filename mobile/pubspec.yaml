@@ -39,6 +39,8 @@ dependencies:
   # ── Location ──
   geolocator: ^13.0.1
   geocoding: ^3.0.0
+  flutter_map: ^8.0.0
+  latlong2: ^0.9.1
 
   # ── Forms ──
   pin_code_fields: ^8.0.1

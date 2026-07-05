@@ -15,12 +15,14 @@ interface AuditTabProps {
   auditLogs: AuditLog[];
   handleClearAuditLogs: () => Promise<void>;
   theme?: "light" | "dark";
+  showToast?: (message: string, type: "success" | "error" | "info") => void;
 }
 
 export default function AuditTab({
   auditLogs,
   handleClearAuditLogs,
-  theme = "light"
+  theme = "light",
+  showToast
 }: AuditTabProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState("all");
@@ -45,7 +47,7 @@ export default function AuditTab({
   // Export to TXT
   const handleExportText = () => {
     if (filteredLogs.length === 0) {
-      alert("Tidak ada log audit untuk diekspor.");
+      showToast?.("Tidak ada log audit untuk diekspor.", "error");
       return;
     }
 
@@ -122,7 +124,7 @@ export default function AuditTab({
               <select
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value)}
-                className={`w-full border rounded-2xl pl-11 pr-4 py-2.5 text-xs focus:outline-none transition-all cursor-pointer font-medium appearance-none ${
+                className={`w-full border rounded-2xl pl-11 pr-4 py-2.5 text-xs focus:outline-none transition-all cursor-pointer font-medium ${
                   isDark
                     ? "bg-zinc-900 border-zinc-800 text-white focus:border-zinc-700"
                     : "bg-slate-50 border-slate-200 text-slate-800 focus:border-slate-350"
@@ -249,7 +251,7 @@ export default function AuditTab({
       {/* --- IN-UI CUSTOM CRITICAL CLEAR LOGS MODAL (Glassmorphic) --- */}
       {isClearConfirmOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center p-4 z-[1000] animate-fade-in select-none">
-          <div className={`w-full max-w-sm border backdrop-blur-xl rounded-3xl shadow-2xl p-6 md:p-8 flex flex-col gap-6 text-center ${
+          <div className={`w-full max-w-sm border backdrop-blur-xl rounded-3xl shadow-2xl p-6 md:p-8 flex flex-col gap-6 text-center max-h-[90vh] overflow-y-auto ${
             isDark ? "bg-zinc-950 border-zinc-800 text-slate-100" : "bg-white/95 text-slate-900 border-slate-100"
           }`}>
             <div className="mx-auto h-12 w-12 rounded-2xl flex items-center justify-center bg-red-50 border border-red-100 text-red-600 animate-bounce">
@@ -263,13 +265,13 @@ export default function AuditTab({
               </p>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-3 w-full">
               <button
                 onClick={() => setIsClearConfirmOpen(false)}
-                className={`flex-1 rounded-xl border py-2.5 text-xs font-bold transition-all cursor-pointer ${
+                className={`w-full sm:w-1/2 rounded-xl border py-2.5 text-xs font-bold transition-all cursor-pointer ${
                   isDark 
                     ? "border-zinc-800 text-zinc-400 hover:bg-zinc-900" 
-                    : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                    : "border-slate-200 text-slate-655 hover:bg-slate-50"
                 }`}
               >
                 Batal
@@ -279,7 +281,7 @@ export default function AuditTab({
                   await handleClearAuditLogs();
                   setIsClearConfirmOpen(false);
                 }}
-                className="flex-1 rounded-xl bg-red-650 hover:bg-red-700 text-white py-2.5 text-xs font-bold transition-all cursor-pointer shadow-md"
+                className="w-full sm:w-1/2 rounded-xl bg-red-600 hover:bg-red-700 text-white py-2.5 text-xs font-bold transition-all cursor-pointer shadow-md"
               >
                 Hapus Permanen
               </button>

@@ -17,13 +17,15 @@ interface BroadcastTabProps {
   handleSendBroadcast: (title: string, message: string, category: "info" | "alert" | "event" | "quest", target: "all" | string) => Promise<void>;
   actionLoading: boolean;
   theme?: "light" | "dark";
+  showToast?: (message: string, type: "success" | "error" | "info") => void;
 }
 
 export default function BroadcastTab({
   broadcastLogs,
   handleSendBroadcast,
   actionLoading,
-  theme = "light"
+  theme = "light",
+  showToast
 }: BroadcastTabProps) {
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
@@ -39,7 +41,7 @@ export default function BroadcastTab({
     
     const finalTarget = targetType === "all" ? "all" : specificUserId;
     if (targetType === "user" && !specificUserId) {
-      alert("Silakan masukkan ID Profil Spesifik.");
+      showToast?.("Silakan masukkan ID Profil Spesifik.", "error");
       return;
     }
 
@@ -165,7 +167,7 @@ export default function BroadcastTab({
                 id="category"
                 value={category}
                 onChange={(e) => setCategory(e.target.value as any)}
-                className={`w-full border rounded-2xl px-4 py-2.5 text-xs focus:outline-none transition-all cursor-pointer font-medium appearance-none ${
+                className={`w-full border rounded-2xl px-4 py-2.5 text-xs focus:outline-none transition-all cursor-pointer font-medium ${
                   isDark
                     ? "bg-zinc-900 border-zinc-800 text-white focus:border-zinc-700"
                     : "bg-slate-50 border-slate-200 text-slate-800 focus:border-slate-350"
