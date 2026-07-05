@@ -168,11 +168,12 @@ class _SplashPageState extends State<SplashPage>
               ),
               ElevatedButton(
                 onPressed: () async {
+                  final navigator = Navigator.of(dialogContext);
                   final uri = Uri.parse(updateUrl);
                   if (await canLaunchUrl(uri)) {
                     await launchUrl(uri, mode: LaunchMode.externalApplication);
                   }
-                  Navigator.of(dialogContext).pop();
+                  navigator.pop();
                   updateDialogCompleter.complete();
                 },
                 style: ElevatedButton.styleFrom(
@@ -263,7 +264,7 @@ class _SplashPageState extends State<SplashPage>
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Versi aplikasi Anda saat ini ($currentVersion) sudah tidak didukung.\n\nHarap perbarui ke versi terbaru ($_latestVersion) untuk melanjutkan menggunakan layanan Genesis.id.',
+                  'Versi aplikasi Anda saat ini (${AppConstants.appVersion}) sudah tidak didukung.\n\nHarap perbarui ke versi terbaru ($_latestVersion) untuk melanjutkan menggunakan layanan Genesis.id.',
                   style: AppTextStyles.bodyLarge.copyWith(color: Colors.white70),
                   textAlign: TextAlign.center,
                 ),
