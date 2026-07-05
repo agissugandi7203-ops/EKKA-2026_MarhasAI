@@ -228,8 +228,11 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
 
   Future<Position?> _getCurrentLocation() async {
     try {
-      final hasPermission = await Geolocator.checkPermission();
-      if (hasPermission == LocationPermission.always || hasPermission == LocationPermission.whileInUse) {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.always || permission == LocationPermission.whileInUse) {
         return await Geolocator.getCurrentPosition(
           locationSettings: const LocationSettings(
             accuracy: LocationAccuracy.medium,
@@ -259,8 +262,8 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
       return;
     }
 
-    final double lat = position?.latitude ?? -6.2088;
-    final double lng = position?.longitude ?? 106.8451;
+    final double lat = position?.latitude ?? -6.9175;
+    final double lng = position?.longitude ?? 107.6191;
 
     context.read<ReportsBloc>().add(
       UploadReportRequested(

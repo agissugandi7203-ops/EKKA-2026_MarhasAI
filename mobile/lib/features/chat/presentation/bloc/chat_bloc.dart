@@ -212,11 +212,21 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     _StreamFailed event,
     Emitter<ChatState> emit,
   ) {
+    final updatedMessages = List<ChatMessageModel>.from(state.messages);
+    if (updatedMessages.isNotEmpty) {
+      final lastMsg = updatedMessages.last;
+      if (lastMsg.sender == 'bot' && lastMsg.message.isEmpty) {
+        updatedMessages[updatedMessages.length - 1] = lastMsg.copyWith(
+          message: 'Maaf Kak, sistem kami sedang mengalami gangguan koneksi. Silakan coba beberapa saat lagi.',
+        );
+      }
+    }
     emit(state.copyWith(
+      messages: updatedMessages,
       isStreaming: false,
       errorMessage: event.error,
     ));
-    _saveChatHistory(state.messages);
+    _saveChatHistory(updatedMessages);
   }
 
   void _onClearChatRequested(
