@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/foundation.dart';
@@ -38,6 +39,31 @@ class _SetupProfilePageState extends State<SetupProfilePage> {
   bool _isSubmitting = false;
 
   @override
+  void initState() {
+    super.initState();
+    _loadProfileData();
+  }
+
+  Future<void> _loadProfileData() async {
+    try {
+      final profileRepo = context.read<ProfileRepository>();
+      final profile = await profileRepo.getMyProfile();
+      if (mounted) {
+        setState(() {
+          if (profile.username != null && profile.username!.isNotEmpty) {
+            _usernameController.text = profile.username!;
+          }
+          if (profile.fullName != null && profile.fullName!.isNotEmpty) {
+            _fullNameController.text = profile.fullName!;
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading initial profile for setup: $e');
+    }
+  }
+
+  @override
   void dispose() {
     _usernameController.dispose();
     _fullNameController.dispose();
@@ -60,7 +86,9 @@ class _SetupProfilePageState extends State<SetupProfilePage> {
         fullName: _fullNameController.text.trim(),
         province: setupState.province ?? 'Belum diatur',
         cityOrDistrict: setupState.cityOrDistrict ?? 'Belum diatur',
-      );
+      ).timeout(const Duration(seconds: 12), onTimeout: () {
+        throw TimeoutException('Koneksi internet lambat. Silakan coba beberapa saat lagi.');
+      });
 
       if (!mounted) return;
       

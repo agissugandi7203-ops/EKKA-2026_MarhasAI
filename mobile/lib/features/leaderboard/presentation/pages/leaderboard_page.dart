@@ -448,7 +448,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> with AutomaticKeepAli
                                       Text(
                                         currentUserIndex == 0
                                             ? 'Luar biasa! Kamu memimpin papan peringkat saat ini! 👑'
-                                            : 'Kumpulkan ${_leaderboardList[currentUserIndex - 1].xp - currentUserEntry.xp} XP lagi untuk menggeser ${_leaderboardList[currentUserIndex - 1].fullName}!',
+                                            : 'Kumpulkan ${_leaderboardList[currentUserIndex - 1].xp - currentUserEntry.xp} XP lagi untuk menggeser @${_leaderboardList[currentUserIndex - 1].username}!',
                                         style: AppTextStyles.bodySmall.copyWith(
                                           color: AppColors.textPrimary,
                                           fontWeight: FontWeight.w600,
@@ -612,7 +612,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> with AutomaticKeepAli
     required UserLeaderboardModel user,
     bool isSelf = false,
   }) {
-    final initial = user.fullName.isNotEmpty ? user.fullName.substring(0, 1).toUpperCase() : '?';
+    final initial = user.username.isNotEmpty ? user.username.substring(0, 1).toUpperCase() : '?';
 
     return Container(
       margin: const EdgeInsets.only(bottom: AppConstants.spacing12),
@@ -654,7 +654,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> with AutomaticKeepAli
           const SizedBox(width: 16),
           Expanded(
             child: Text(
-              isSelf ? '${user.fullName} (Kamu)' : user.fullName,
+              isSelf ? '@${user.username} (Kamu)' : '@${user.username}',
               style: AppTextStyles.titleMedium.copyWith(
                 fontWeight: isSelf ? FontWeight.bold : FontWeight.w600,
                 color: AppColors.navy900,
@@ -911,10 +911,10 @@ class _AnimatedPodiumPositionState extends State<AnimatedPodiumPosition>
 
   @override
   Widget build(BuildContext context) {
-    final name = widget.user?.fullName ?? widget.fallbackName;
+    final name = widget.user != null ? '@${widget.user!.username}' : widget.fallbackName;
     final xp = widget.user != null ? '${widget.user!.xp} XP' : '- XP';
-    final initial = widget.user != null && widget.user!.fullName.isNotEmpty
-        ? widget.user!.fullName.substring(0, 1).toUpperCase()
+    final initial = widget.user != null && widget.user!.username.isNotEmpty
+        ? widget.user!.username.substring(0, 1).toUpperCase()
         : '?';
 
     return AnimatedBuilder(

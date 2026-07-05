@@ -146,6 +146,15 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<void> signOut() async {
+    try {
+      final googleSignIn = GoogleSignIn(
+        serverClientId: '12178843429-lktd01tj39831ok404qssp246n3vblpf.apps.googleusercontent.com',
+        scopes: ['email'],
+      );
+      await googleSignIn.signOut();
+    } catch (e) {
+      // Abaikan jika google_sign_in belum ter-sign-in
+    }
     await _supabaseClient.auth.signOut();
   }
 

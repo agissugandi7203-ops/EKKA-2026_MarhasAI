@@ -281,18 +281,31 @@ class AppRouter {
       return Routes.login;
     }
 
-    // Jika user sudah login dan masih di halaman login/signup → redirect berdasarkan onboarding.
-    if (isAuthenticated && isOnPublicRoute) {
-      // Kecuali halaman yang memang perlu diakses saat flow reset password
-      final bool isResetFlow = currentPath == Routes.forgotPassword ||
-          currentPath == Routes.otpVerification ||
-          currentPath == Routes.resetPassword;
+    if (isAuthenticated) {
+      final bool needsOnboarding = authState is Authenticated
+          ? authState.needsOnboarding
+          : (authState as PasswordResetSuccess).needsOnboarding;
 
-      if (!isResetFlow) {
-        final bool needsOnboarding = authState is Authenticated
-            ? authState.needsOnboarding
-            : (authState as PasswordResetSuccess).needsOnboarding;
-        return needsOnboarding ? Routes.setupWelcome : Routes.welcome;
+      // Jika user sudah menyelesaikan onboarding tapi masih berada di halaman onboarding (setup) → redirect ke welcome/home
+      final bool isOnOnboardingRoute = currentPath == Routes.setupWelcome ||
+          currentPath == Routes.setupLocation ||
+          currentPath == Routes.setupNotification ||
+          currentPath == Routes.setupProfile;
+
+      if (!needsOnboarding && isOnOnboardingRoute) {
+        return Routes.welcome;
+      }
+
+      // Jika user sudah login dan masih di halaman login/signup (halaman publik) → redirect ke onboarding atau home.
+      if (isOnPublicRoute) {
+        // Kecuali halaman yang memang perlu diakses saat flow reset password
+        final bool isResetFlow = currentPath == Routes.forgotPassword ||
+            currentPath == Routes.otpVerification ||
+            currentPath == Routes.resetPassword;
+
+        if (!isResetFlow) {
+          return needsOnboarding ? Routes.setupWelcome : Routes.welcome;
+        }
       }
     }
 
