@@ -1,5 +1,5 @@
 """
-Generator Word Document — WorldSkills / LKS Test Project Proposal (Premium Version)
+Generator Word Document — WorldSkills / LKS Test Project Proposal (Premium Indonesian Version)
 Kecerdasan Artifisial (Artificial Intelligence) LKS Nasional 2026
 """
 from docx import Document
@@ -11,10 +11,11 @@ from docx.oxml import parse_xml
 import os
 
 OUTPUT = r"d:\PROJECT ARIEF\LKS Dikdasmen\docs\Test_Project_AI_Genesis.docx"
+IMAGE_PATH = r"C:\Users\arief\.gemini\antigravity\brain\5d19354b-3bf1-42bf-bfc4-06f605652364\technical_architecture_diagram_1782888262343.png"
 
 # Konstanta Format Dokumen
 FONT_NAME = "Arial"
-SIZE_TITLE = Pt(22)
+SIZE_TITLE = Pt(20)
 SIZE_H1 = Pt(14)
 SIZE_H2 = Pt(12)
 SIZE_BODY = Pt(10.5)
@@ -24,7 +25,7 @@ LINE_SPACING_TABLE = 1.05
 
 COLOR_BLACK = RGBColor(0x00, 0x00, 0x00)
 COLOR_GRAY = RGBColor(0x55, 0x55, 0x55)
-COLOR_WS_BLUE = RGBColor(0x0A, 0x22, 0x40) # Warna biru tua WorldSkills
+COLOR_WS_BLUE = RGBColor(0x0A, 0x22, 0x40) # WorldSkills Dark Blue
 
 HEX_BORDER = "CCCCCC"
 HEX_HEADER_BG = "F2F2F2"
@@ -167,6 +168,16 @@ def add_caption(doc, text):
     run.font.color.rgb = COLOR_GRAY
     run.italic = True
 
+def add_centered_picture(doc, path, width):
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    pf = p.paragraph_format
+    pf.space_before = Pt(6)
+    pf.space_after = Pt(6)
+    run = p.add_run()
+    run.add_picture(path, width=width)
+    return p
+
 def build_simple_table(doc, headers, data, col_widths):
     tbl = doc.add_table(rows=len(data) + 1, cols=len(headers))
     tbl.alignment = WD_TABLE_ALIGNMENT.CENTER
@@ -207,7 +218,7 @@ sec.bottom_margin = Cm(2.5)
 sec.left_margin = Cm(3.0)
 sec.right_margin = Cm(2.5)
 
-# ── Konfigurasi Header dan Footer Premium ──
+# ── Konfigurasi Header dan Footer ──
 header = sec.header
 p_header = header.paragraphs[0]
 p_header.text = ""
@@ -221,11 +232,10 @@ footer = sec.footer
 p_footer = footer.paragraphs[0]
 p_footer.text = ""
 p_footer.alignment = WD_ALIGN_PARAGRAPH.CENTER
-f_run = p_footer.add_run("Date: 05.07.2026  |  Version: 1.0  |  LKS2026_TP_AI_EN  |  © WorldSkills International")
+f_run = p_footer.add_run("Tanggal: 05.07.2026  |  Versi: 1.0  |  LKS2026_TP_AI_ID  |  © WorldSkills International")
 f_run.font.name = FONT_NAME
 f_run.font.size = Pt(8.5)
 f_run.font.color.rgb = COLOR_GRAY
-
 
 # ── Halaman Judul Formal (Cover Page Style) ──
 p_space = doc.add_paragraph()
@@ -242,7 +252,7 @@ run_lks.font.size = Pt(13)
 run_lks.font.color.rgb = COLOR_GRAY
 run_lks.bold = True
 
-run_main_title = p_title.add_run("TEST PROJECT PROPOSAL\nKecerdasan Artifisial (Artificial Intelligence)\n")
+run_main_title = p_title.add_run("PROPOSAL PROYEK UJI (TEST PROJECT PROPOSAL)\nKecerdasan Artifisial (Artificial Intelligence)\n")
 run_main_title.font.name = FONT_NAME
 run_main_title.font.size = SIZE_TITLE
 run_main_title.font.color.rgb = COLOR_WS_BLUE
@@ -252,178 +262,211 @@ p_desc = doc.add_paragraph()
 p_desc_format = p_desc.paragraph_format
 p_desc_format.space_after = Pt(48)
 run_desc = p_desc.add_run(
-    "Nama Proyek Uji: Genesis — Platform Pelaporan Lingkungan Cerdas Berbasis Crowdsourcing, "
-    "Deteksi Spasial Anti-Spam, Sensor Gambar Privasi (PII), dan Asisten Regulasi Hukum RAG dengan Model Routing\n"
+    "Nama Proyek: Genesis — Platform Pelaporan Ekologi Berbasis Crowdsourcing dengan Anti-Spam Spasial, "
+    "Sensor Data Sensitif (PII Redaction), dan Chatbot RAG Hukum Berbasis Model Routing Hybrid\n"
 )
 run_desc.font.name = FONT_NAME
 run_desc.font.size = Pt(11)
 run_desc.italic = True
 run_desc.font.color.rgb = COLOR_GRAY
 
-# Page Break after Cover Elements
+# Page Break
 doc.add_page_break()
 
 # ══════════════════════════════════════════════════════════════
-# CONTENTS
+# DAFTAR ISI
 # ══════════════════════════════════════════════════════════════
-add_heading_1(doc, "Contents")
+add_heading_1(doc, "Daftar Isi")
 add_paragraph(doc, [
-    ("Dokumen Test Project Proposal ini terbagi atas beberapa bagian wajib sesuai ketentuan WorldSkills International:\n", False, False),
-    ("1. Introduction\n", True, False),
-    ("   - Memuat latar belakang masalah ekologi, visi solusi platform Genesis, dan bagan perutean model kecerdasan artifisial.\n", False, False),
-    ("2. Description of project and tasks\n", True, False),
-    ("   - Memuat pembagian modul kerja kompetitor (Modul A hingga Modul D) beserta deliverables teknis yang diharapkan.\n", False, False),
-    ("3. Instructions to the Competitor\n", True, False),
-    ("   - Panduan implementasi teknis langkah demi langkah, struktur repositori, spesifikasi basis data, dan batasan operasional.\n", False, False),
-    ("4. Other\n", True, False),
-    ("   - Menjabarkan kerangka kerja Responsible AI, manajemen mitigasi risiko, batasan data privasi, dan matriks penilaian LKS Nasional.", False, False),
+    ("Proposal proyek uji ini terbagi atas beberapa bagian wajib sesuai ketentuan WorldSkills International:\n", False, False),
+    ("1. Pendahuluan\n", True, False),
+    ("   - Memuat latar belakang masalah ekologi, solusi konsep Genesis, dan bagan alur arsitektur teknis.\n", False, False),
+    ("2. Deskripsi Proyek dan Tugas\n", True, False),
+    ("   - Menjelaskan pembagian modul evaluasi (Modul A hingga Modul D) serta target hasil pembelajaran.\n", False, False),
+    ("3. Instruksi kepada Peserta\n", True, False),
+    ("   - Menyajikan spesifikasi teknis, hasil yang diharapkan, serta batasan untuk setiap modul kompetensi uji.\n", False, False),
+    ("4. Lain-lain\n", True, False),
+    ("   - Menjelaskan kerangka kerja Responsible AI, batasan data privasi, dan matriks penilaian LKS Nasional.", False, False),
 ], space_after=Pt(12))
 
 # ══════════════════════════════════════════════════════════════
-# INTRODUCTION
+# PENDAHULUAN
 # ══════════════════════════════════════════════════════════════
-add_heading_1(doc, "Introduction")
+add_heading_1(doc, "Pendahuluan")
 add_paragraph(doc, [
-    ("Kerusakan akibat perubahan iklim yang kompleks di Indonesia memerlukan sistem pengambilan keputusan adaptif berbasis bukti. "
-     "Banyak platform pelaporan lingkungan konvensional saat ini mengalami kegagalan adopsi karena tidak menyediakan insentif nyata bagi warga "
-     "serta menyimpan laporan sebagai entitas terisolasi yang tidak saling terhubung. Informasi yang masuk terbiarkan menumpuk tanpa "
-     "menjadi landasan pembentukan pengetahuan baru. Akibatnya, setiap permasalahan diperlakukan sebagai kasus terpisah tanpa akumulasi pembelajaran.\n\n"
-     "Genesis hadir sebagai platform aksi iklim lokal berbasis crowdsourcing untuk menjawab tantangan tersebut dengan mengintegrasikan "
-     "aplikasi mobile warga (Flutter BLoC), dasbor admin (Next.js), dan server backend (NestJS Fastify) pada infrastruktur Google Cloud Platform (GCP). "
-     "Sistem ini menerapkan validasi otomatis anti-spam geospasial, penyaringan data sensitif (PII redaction) otomatis, serta asisten hukum regulasi "
-     "lingkungan hidup berbasis Retrieval-Augmented Generation (RAG). Selama proses pengembangan, tim memanfaatkan ", False, False),
-    ("Google Antigravity sebagai AI coding assistant", True, False),
-     (" untuk penyusunan dokumentasi teknis dan optimasi kode, sementara perancangan arsitektur, implementasi fitur, validasi, dan pengujian sistem dilakukan secara mandiri oleh tim.\n\n"
-      "Untuk mengoptimalkan efisiensi biaya operasional dan kecepatan respons sistem (latensi), backend Genesis menerapkan pola ", False, False),
-    ("Dynamic Model Routing (Perutean Model Dinamis)", True, False),
-     (" menggunakan Vertex AI. Kueri percakapan sederhana chatbot atau sapaan ringan ditangani oleh model berbiaya rendah dan latensi ultra-rendah yaitu ", False, False),
-    ("Gemini 2.5 Flash Lite", True, False),
-     (". Sebaliknya, kueri kompleks yang membutuhkan analisis regulasi hukum panjang, dokumen pembanding RAG, atau klasifikasi otomatis foto sampah "
-      "menjadi metadata JSON diarahkan ke model dengan kemampuan penalaran tinggi yaitu ", False, False),
-    ("Gemini 3.5 Flash", True, False),
-     (". Hal ini memastikan sistem berjalan secara efisien, responsif, dan berorientasi pada dampak nyata aksi iklim lokal.", False, False)
+    ("Kompleksitas kerusakan akibat perubahan iklim di Indonesia memerlukan sistem pengambilan keputusan yang adaptif dan berbasis bukti. "
+     "Platform pelaporan lingkungan konvensional saat ini sering kali mengalami kegagalan adopsi karena ketiadaan insentif partisipasi bagi warga, "
+     "serta menyimpan data laporan sebagai entitas terisolasi yang berdiri sendiri. Ketiadaan integrasi data ini menghambat akumulasi wawasan ekologi lokal, "
+     "sehingga memicu laporan ganda yang berulang dan membebani kinerja petugas administratif Dinas Lingkungan Hidup.\n\n"
+     "Genesis dirancang sebagai platform aksi iklim lokal berbasis crowdsourcing untuk menjembatani celah tersebut. "
+     "Sistem ini mengintegrasikan aplikasi mobile warga untuk pelaporan, dasbor admin web untuk kurasi data, "
+     "serta server backend yang menerapkan ekstensi basis data spasial dan mesin AI pada Google Cloud Platform (GCP). Selama proses pengembangan, "
+     "tim memanfaatkan Google Antigravity sebagai AI coding assistant untuk penyusunan dokumentasi teknis dan optimasi kode, "
+     "sedangkan seluruh logika sistem, validasi pengujian, dan desain arsitektur diselesaikan secara mandiri oleh tim.\n\n"
+     "Guna mengoptimalkan latensi server dan efisiensi biaya, sistem menerapkan pola perutean model AI dinamis (dynamic model routing). "
+     "Kueri percakapan chatbot yang sederhana diproses secara otomatis oleh model berbiaya rendah dengan latensi ultra-rendah yaitu Gemini 2.5 Flash Lite. "
+     "Sebaliknya, kueri kompleks yang membutuhkan penalaran regulasi hukum panjang, dokumen pembanding RAG, atau klasifikasi foto sampah "
+     "menjadi metadata JSON diarahkan ke model dengan kapasitas penalaran tinggi yaitu Gemini 3.5 Flash. Pendekatan perutean model dinamis ini "
+     "menghasilkan efisiensi sumber daya dan keamanan data, membentuk landasan yang kokoh untuk aksi iklim lokal.", False, False)
 ])
 
-# ══════════════════════════════════════════════════════════════
-# DESCRIPTION OF PROJECT AND TASKS
-# ══════════════════════════════════════════════════════════════
-add_heading_1(doc, "Description of project and tasks")
-add_paragraph(doc, [
-    ("Proyek uji ini dirancang untuk menguji kompetensi holistik peserta dalam bidang Kecerdasan Artifisial. "
-     "Peserta diwajibkan menyelesaikan seluruh milestones yang dibagi ke dalam 4 modul deliverables:", False, False),
-])
+# Embed Architecture Diagram
+if os.path.exists(IMAGE_PATH):
+    add_centered_picture(doc, IMAGE_PATH, width=Cm(13.5))
+    add_caption(doc, "Gambar 1. Diagram arsitektur teknis dan alur data AI pada platform Genesis.")
 
-add_heading_2(doc, "Module A: Mobile Client & UI Gamifikasi (Flutter)")
-add_paragraph(doc, [
-    ("Kompetitor harus membangun antarmuka mobile warga menggunakan Flutter dengan arsitektur bersih dan manajemen status BLoC. "
-     "Deliverables wajib meliputi: (1) Halaman pelaporan sampah yang mengambil foto kamera dan melampirkan metadata koordinat GPS secara otomatis via geolocator; "
-     "(2) Tampilan gamifikasi interaktif yang menyajikan data poin pengalaman (XP), akumulasi level warga, lencana (badges), dan papan peringkat (leaderboard) secara real-time.", False, False),
-])
-
-add_heading_2(doc, "Module B: Backend API & Integrasi Database (NestJS + Supabase)")
-add_paragraph(doc, [
-    ("Kompetitor harus mengimplementasikan API RESTful menggunakan NestJS Fastify. "
-     "Deliverables wajib meliputi: (1) Endpoint autentikasi dan pendaftaran berbasis JWT token; "
-     "(2) Skema otorisasi berbasis peran (RBAC) untuk membedakan rute menu warga (citizen) dan menu pengelola (admin); "
-     "(3) Integrasi Supabase PostgreSQL sebagai pusat penyimpanan data relasional.", False, False),
-])
-
-add_heading_2(doc, "Module C: Deteksi Spasial Anti-Spam & Sensor Gambar Privasi (PII)")
-add_paragraph(doc, [
-    ("Kompetitor mengonfigurasikan modul keamanan data dan sanitasi laporan. "
-     "Deliverables wajib meliputi: (1) Fungsi database PostGIS ", False, False),
-    ("check_duplicate_report()", False, True),
-    (" untuk membandingkan koordinat laporan baru dengan laporan aktif dalam radius 50 meter dan rentang waktu 12 jam guna mencegah duplikasi data; "
-     "(2) Sensor gambar otomatis berbasis Google Vision API untuk mendeteksi koordinat bounding box wajah manusia dan plat nomor kendaraan; "
-     "(3) Modul Sharp untuk menerapkan Gaussian Blur destruktif secara in-memory sebelum buffer gambar diunggah ke Google Cloud Storage (GCS).", False, False),
-])
-
-add_heading_2(doc, "Module D: RAG Chatbot & Dynamic Model Routing")
-add_paragraph(doc, [
-    ("Kompetitor merancang asisten hukum regulasi lingkungan hidup menggunakan pgvector dan Gemini Embedding. "
-     "Deliverables wajib meliputi: (1) Pencarian kesamaan kosinus pada indeks vektor HNSW untuk mencari pasal hukum yang relevan; "
-     "(2) Modul transkripsi suara warga berbasis Whisper-1; "
-     "(3) Pengontrol perutean model AI (Model Router) yang secara dinamis mengalihkan kueri pendek ke Gemini 2.5 Flash Lite dan kueri analisis dokumen ke Gemini 3.5 Flash; "
-     "(4) Respons streaming data menggunakan Server-Sent Events (SSE).", False, False),
-])
-
-# Page Break for Instructions Section
+# Page Break
 doc.add_page_break()
 
 # ══════════════════════════════════════════════════════════════
-# INSTRUCTIONS TO THE COMPETITOR
+# DESKRIPSI PROYEK DAN TUGAS
 # ══════════════════════════════════════════════════════════════
-add_heading_1(doc, "Instructions to the Competitor")
+add_heading_1(doc, "Deskripsi Proyek dan Tugas")
 add_paragraph(doc, [
-    ("Berikut adalah instruksi pengerjaan teknis rinci yang wajib diikuti oleh kompetitor untuk menyelesaikan setiap modul:", False, False),
+    ("Proyek uji ini dirancang untuk menguji kompetensi peserta dalam integrasi Kecerdasan Artifisial, "
+     "pengembangan full-stack, dan rekayasa data. Peserta wajib menyelesaikan empat modul kompetensi utama:", False, False),
 ])
 
-# ── Tabel 1: Instruksi Modul Kompetitor ──
-build_simple_table(doc,
-    ["Modul", "Instruksi Kerja & Spesifikasi Teknis", "Kriteria Evaluasi & Keberhasilan"],
-    [
-        ("Modul A",
-         "1. Konfigurasikan Geolocator Flutter untuk mengambil data garis lintang/bujur.\n2. Terapkan state management BLoC untuk melacak riwayat laporan dan data XP gamifikasi.\n3. Rancang tampilan leaderboard dan badges menggunakan custom UI widget.",
-         "Aplikasi berhasil menangkap GPS perangkat secara background saat kamera aktif, dan menampilkan riwayat poin dengan state BLoC yang stabil."),
-        
-        ("Modul B",
-         "1. Buat REST controller NestJS menggunakan adapter Fastify.\n2. Hubungkan service ke database PostgreSQL Supabase.\n3. Implementasikan AuthGuard menggunakan Passport JWT dan RolesGuard berbasis metadata role.",
-         "API merespons request dalam <150ms. Request tanpa Authorization header Bearer token ditolak dengan HTTP Status 401 Unauthorized."),
-        
-        ("Modul C",
-         "1. Tulis stored procedure SQL PostGIS menggunakan fungsi ST_DWithin untuk perbandingan jarak spasial.\n2. Kirim gambar ke Google Vision API, deteksi bounding box wajah/plat nomor.\n3. Olah buffer gambar menggunakan Sharp langsung di memori server.",
-         "Fungsi check_duplicate_report() mendeteksi spam dengan tepat. Gambar tersimpan di GCS terbukti telah tersensor pada wajah/plat nomor."),
-        
-        ("Modul D",
-         "1. Konfigurasikan tabel pgvector Supabase dengan embedding 768 dimensi.\n2. Buat fungsi Model Router yang memeriksa panjang karakter input (kueri < 100 karakter diarahkan ke Gemini 2.5 Flash Lite, kueri >= 100 karakter atau pencarian dokumen diarahkan ke Gemini 3.5 Flash).\n3. Kirimkan transkripsi suara M4A via Whisper-1 dan streaming SSE.",
-         "Sistem merespons kueri sapaan singkat secara instan (<500ms). Kueri regulasi menampilkan kutipan pasal hukum resmi secara streaming.")
-    ],
-    [2.0, 7.5, 6.0] # Total: 15.5 cm
-)
-add_caption(doc, "Tabel 1. Panduan instruksi kerja teknis dan kriteria keberhasilan bagi kompetitor LKS.")
-
-# ══════════════════════════════════════════════════════════════
-# OTHER
-# ══════════════════════════════════════════════════════════════
-add_heading_1(doc, "Other")
-
-add_heading_2(doc, "1. Penerapan Responsible AI dan Mitigasi Risiko")
+add_heading_2(doc, "Modul A: Client Mobile & Inti Gamifikasi")
 add_paragraph(doc, [
-    ("Proyek uji ini sangat menekankan pentingnya etika AI dan perlindungan privasi data. "
-     "Kompetitor wajib membuktikan penerapan prinsip-prinsip kecerdasan artifisial yang bertanggung jawab melalui langkah konkret:\n"
-     "- Privasi (PII Redaction): Sensor wajah dan plat nomor diproses secara in-memory (RAM server) sehingga tidak ada file mentah tanpa blur yang tersimpan di cloud storage.\n"
-     "- Mitigasi Misinformasi (RAG Grounding): Jawaban chatbot dibatasi hanya bersumber dari database regulasi undang-undang lingkungan hidup resmi guna mencegah halusinasi LLM.\n"
-     "- Mitigasi Keamanan (Prompt Injection Guardrails): Backend mendeteksi dan menolak pola prompt injection atau evasion sebelum input diteruskan ke model LLM.\n"
-     "- Peran Penilaian Manusia (Human-in-the-Loop): AI diposisikan sebagai asisten pendukung keputusan (decision support system). Laporan dengan skor keyakinan AI di bawah 85% akan berstatus \"pending_human\" dan wajib divalidasi manual oleh petugas Dinas Lingkungan Hidup melalui dasbor Next.js sebelum dirilis ke publik.", False, False),
+    ("Peserta wajib membangun aplikasi mobile warga menggunakan Flutter dengan arsitektur bersih dan manajemen status BLoC. "
+     "Modul ini berfokus pada implementasi antarmuka pengguna (UI/UX), penangkapan koordinat GPS otomatis via geolocator saat memotret, "
+     "serta visualisasi poin pengalaman (XP), level warga, lencana pencapaian (badges), dan papan peringkat (leaderboard) secara real-time.", False, False),
 ])
 
-add_heading_2(doc, "2. Batasan Data & Sumber Data")
+add_heading_2(doc, "Modul B: API Aman & Lapisan Akses Relasional")
 add_paragraph(doc, [
-    ("Seluruh pengerjaan hanya diperbolehkan menggunakan data yang aman dan terbebas dari Pelanggaran Informasi Identitas Pribadi (PII):\n"
-     "1. Data Partisipasi Publik: Dataset koordinat dan foto uji coba lingkungan hasil simulasi perangkat pengembang.\n"
-     "2. Data Regulasi Daerah: Dokumen peraturan perundang-undang resmi daerah dan nasional tentang pengelolaan lingkungan hidup.\n"
-     "3. Data Historis: Data relasional PostgreSQL yang memuat profil samaran username warga dan perolehan poin gamifikasi.", False, False),
+    ("Peserta wajib membangun endpoint REST API menggunakan NestJS Fastify dan database relasional. "
+     "Modul ini mencakup sistem autentikasi berbasis token JWT, otorisasi berbasis peran (RBAC) untuk menu warga (citizen) "
+     "dan pengelola (admin), serta struktur tabel relasional PostgreSQL di Supabase.", False, False),
 ])
 
-add_heading_2(doc, "3. Rubrik Penilaian Kompetisi")
+add_heading_2(doc, "Modul C: Pemrosesan Spasial & Sanitasi Computer Vision")
 add_paragraph(doc, [
-    ("Penilaian performa hasil kerja kompetitor oleh juri nasional didistribusikan secara transparan berdasarkan matriks penilaian pada Tabel 2.", False, False),
+    ("Peserta wajib mengonfigurasi algoritma spasial dan otomatisasi sanitasi gambar. "
+     "Modul ini membutuhkan fungsi database PostGIS check_duplicate_report() untuk mendeteksi laporan aktif dalam radius 50 meter "
+     "dan jendela waktu 12 jam agar laporan baru otomatis digabungkan sebagai upvote. Selain itu, peserta wajib menggunakan model computer vision "
+     "untuk mendeteksi wajah dan plat nomor kendaraan secara otomatis, lalu memburamkannya secara in-memory menggunakan Sharp sebelum diunggah ke Google Cloud Storage (GCS).", False, False),
+])
+
+add_heading_2(doc, "Modul D: Retrieval-Augmented Generation (RAG) & Perutean Model AI Dinamis")
+add_paragraph(doc, [
+    ("Peserta wajib mengimplementasikan sistem pencarian semantik dan perutean model AI dinamis. "
+     "Modul ini mencakup pencarian kesamaan kosinus pada database vektor pgvector (indeks HNSW), transkripsi audio chatbot menggunakan Whisper-1, "
+     "pembuatan API Router untuk membagi kueri pendek ke Gemini 2.5 Flash Lite dan kueri panjang/RAG ke Gemini 3.5 Flash, serta pengiriman data streaming via SSE.", False, False),
+])
+
+add_heading_2(doc, "Target Capaian Pembelajaran (Expected Learning Outcomes)")
+add_paragraph(doc, [
+    ("Dengan menyelesaikan proyek uji ini, peserta membuktikan penguasaan dalam domain teknis berikut:\n"
+     "1. Integrasi AI: Penerapan praktis model LLM, embedding, dan pengolahan computer vision.\n"
+     "2. Computer Vision: Proteksi privasi data warga via sensor otomatis wajah dan plat nomor kendaraan.\n"
+     "3. Pemrosesan Geospasial: Deduplikasi spasial berbasis radius dan rentang waktu.\n"
+     "4. Information Retrieval: Pencarian semantik berbasis vektor dan RAG regulasi hukum.\n"
+     "5. Full-Stack Engineering: Desain API backend yang aman, database relasional, dan aplikasi mobile multiplatform.\n"
+     "6. Responsible AI: Penerapan pengolahan data aman, pembatasan prompt injection, dan batas verifikasi manual manusia (HITL).", False, False),
+])
+
+# ══════════════════════════════════════════════════════════════
+# INSTRUKSI KEPADA PESERTA
+# ══════════════════════════════════════════════════════════════
+add_heading_1(doc, "Instruksi kepada Peserta")
+
+# ── Modul A ──
+add_heading_2(doc, "Modul A: Client Mobile & Inti Gamifikasi")
+add_paragraph(doc, [
+    ("Tujuan: Mengimplementasikan aplikasi mobile warga untuk pelaporan dan umpan balik gamifikasi.\n", True, False),
+    ("Persyaratan:\n", True, False),
+    ("- Peserta wajib membuat halaman pelaporan sampah yang mengakses kamera dan geolocator perangkat.\n"
+     "- Peserta wajib menggunakan pola BLoC untuk mengelola status perolehan poin XP, level warga, dan lencana.\n", False, False),
+    ("Hasil yang Diharapkan: ", True, False),
+    ("UI aplikasi mobile fungsional yang menampilkan metadata lokasi laporan dan data poin gamifikasi.\n", False, False),
+    ("Batasan: ", True, False),
+    ("Aplikasi harus membaca koordinat lokasi secara otomatis tanpa memerlukan input teks manual dari warga.", False, False)
+])
+
+# ── Modul B ──
+add_heading_2(doc, "Modul B: API Aman & Lapisan Akses Relasional")
+add_paragraph(doc, [
+    ("Tujuan: Membangun endpoint REST API yang aman dan skema database relasional.\n", True, False),
+    ("Persyaratan:\n", True, False),
+    ("- Peserta wajib mengimplementasikan API controller yang dilindungi autentikasi JWT token.\n"
+     "- Peserta wajib menerapkan sistem otorisasi peran (RBAC) untuk mengamankan menu admin dari akses warga.\n", False, False),
+    ("Hasil yang Diharapkan: ", True, False),
+    ("Endpoint API yang terdokumentasi di Swagger dan terhubung ke database relasional.\n", False, False),
+    ("Batasan: ", True, False),
+    ("Seluruh akses pelaporan harus terautentikasi. Permintaan anonim wajib ditolak sistem.", False, False)
+])
+
+# ── Modul C ──
+add_heading_2(doc, "Modul C: Pemrosesan Spasial & Sanitasi Computer Vision")
+add_paragraph(doc, [
+    ("Tujuan: Mengimplementasikan pencegahan laporan spam spasial dan sensor data sensitif otomatis.\n", True, False),
+    ("Persyaratan:\n", True, False),
+    ("- Peserta wajib membuat fungsi spasial SQL menggunakan ST_DWithin untuk mencari duplikasi dalam radius 50m.\n"
+     "- Peserta wajib mengintegrasikan model computer vision untuk mendeteksi koordinat wajah/plat nomor, dan menerapkan filter Gaussian blur via Sharp.\n", False, False),
+    ("Hasil yang Diharapkan: ", True, False),
+    ("Foto yang tersimpan di cloud storage terbukti tersensor, dan laporan dalam radius 50m tergabung otomatis.\n", False, False),
+    ("Batasan: ", True, False),
+    ("Proses pemotongan/sensor gambar wajib dikerjakan in-memory di RAM server. Menyimpan gambar mentah tanpa blur adalah pelanggaran keamanan.", False, False)
+])
+
+# ── Modul D ──
+add_heading_2(doc, "Modul D: Retrieval-Augmented Generation (RAG) & Perutean Model AI Dinamis")
+add_paragraph(doc, [
+    ("Tujuan: Membangun asisten chatbot regulasi hukum berbasis RAG dengan perutean model AI dinamis.\n", True, False),
+    ("Persyaratan:\n", True, False),
+    ("- Peserta wajib menerapkan pencarian semantik menggunakan kesamaan kosinus pada database vektor.\n"
+     "- Peserta wajib merancang mekanisme API Router: mengarahkan kueri percakapan pendek (< 100 karakter) ke model Gemini 2.5 Flash Lite, dan kueri analisis dokumen/RAG panjang ke model Gemini 3.5 Flash.\n", False, False),
+    ("Hasil yang Diharapkan: ", True, False),
+    ("Chatbot regulasi lingkungan hidup yang merespons secara streaming menggunakan Server-Sent Events (SSE).\n", False, False),
+    ("Batasan: ", True, False),
+    ("Respons chatbot wajib bersumber secara mutlak pada dokumen regulasi resmi yang tersimpan di database vektor.", False, False)
+])
+
+# Page Break
+doc.add_page_break()
+
+# ══════════════════════════════════════════════════════════════
+# LAIN-LAIN
+# ══════════════════════════════════════════════════════════════
+add_heading_1(doc, "Lain-lain")
+
+add_heading_2(doc, "1. Penerapan Responsible AI dan Batasan Keamanan")
+add_paragraph(doc, [
+    ("Peserta diwajibkan menerapkan prinsip etika kecerdasan artifisial secara nyata pada seluruh deliverables:\n"
+     "- Privasi (PII Redaction): Sensor wajah dan plat nomor diproses secara in-memory untuk mematuhi regulasi perlindungan data pribadi.\n"
+     "- Keandalan (Prompt Injection Guardrails): Backend mendeteksi dan menolak pola prompt injection sebelum dikirim ke mesin LLM.\n"
+     "- Pengawasan Manusia (Human-in-the-Loop): AI diposisikan sebagai sistem pendukung keputusan (decision support system). Laporan dengan skor keyakinan AI di bawah 85% otomatis disetel ke status \"pending_human\" untuk divalidasi manual oleh petugas Dinas Lingkungan Hidup melalui dasbor Next.js.", False, False)
+])
+
+add_heading_2(doc, "2. Batasan Data Uji")
+add_paragraph(doc, [
+    ("Seluruh pengembangan proyek uji hanya menggunakan data yang aman dan bebas data PII:\n"
+     "- Regulasi Publik: Peraturan daerah, Peraturan Presiden, dan Undang-Undang lingkungan hidup resmi yang tersedia publik.\n"
+     "- Dataset Terbuka: Kumpulan citra sampah publik untuk pelatihan model klasifikasi.\n"
+     "- Data Sintetis: Simulasi data profil warga samaran, koordinat GPS pengembang, dan pencatatan poin gamifikasi.", False, False)
+])
+
+add_heading_2(doc, "3. Rubrik Penilaian Proyek Uji")
+add_paragraph(doc, [
+    ("Matriks rubrik penilaian juri nasional LKS 2026 untuk menguji performa kompetitor didistribusikan secara transparan pada Tabel 2.", False, False)
 ])
 
 # ── Tabel Rubrik Penilaian Proyek ──
 build_simple_table(doc,
     ["No.", "Kriteria Evaluasi Juri", "Bobot", "Metode Pengujian & Aspek Penilaian"],
     [
-        ("1", "Pemahaman masalah & relevansi case", "20%", "Ketepatan solusi dalam menyelesaikan geospasial spam dan kebutuhan aksi iklim lokal."),
-        ("2", "Kreativitas & inovasi solusi", "20%", "Keunikan integrasi gamifikasi, deteksi spasial PostGIS, dan model routing dinamis."),
-        ("3", "Pemanfaatan AI yang efektif & berdampak", "20%", "Keberhasilan klasifikasi citra Gemini 3.5 Flash dan performa pencarian dokumen RAG."),
-        ("4", "Penerapan Responsible AI (HITL & PII)", "15%", "Keandalan modul sensor Sharp dan validasi manual status pending_human di dasbor."),
-        ("5", "Fungsionalitas aplikasi/prototipe", "15%", "Kemudahan instalasi Flutter mobile client, kestabilan REST API, dan integrasi admin dashboard."),
-        ("6", "Kejelasan presentasi & dokumentasi", "10%", "Kerapian struktur kode (clean code), dokumentasi teknis, dan kejelasan video presentasi.")
+        ("1", "Pemahaman masalah & relevansi case", "20%", "Kesesuaian solusi dengan kebutuhan aksi iklim lokal, reduksi spam spasial, dan retensi pengguna."),
+        ("2", "Kreativitas & inovasi solusi", "20%", "Keunikan integrasi gamifikasi warga, deduplikasi spasial PostGIS, dan perutean model AI dinamis."),
+        ("3", "Pemanfaatan AI yang efektif & berdampak", "20%", "Akurasi model visi AI dalam klasifikasi sampah dan performa chatbot RAG regulasi."),
+        ("4", "Penerapan Responsible AI (HITL & Privasi)", "15%", "Keamanan pemrosesan sensor gambar in-memory dan keandalan batas status pending_human."),
+        ("5", "Fungsionalitas aplikasi/prototipe", "15%", "Kestabilan instalasi Flutter client, NestJS REST API, dan visualisasi admin dashboard."),
+        ("6", "Kejelasan presentasi & dokumentasi", "10%", "Kerapian penulisan kode (clean code), dokumentasi teknis proposal, dan video demo.")
     ],
     [1.0, 5.5, 1.5, 7.5] # Total: 15.5 cm
 )
-add_caption(doc, "Tabel 2. Rubrik penilaian penentuan pemenang kompetisi AI LKS Nasional 2026.")
+add_caption(doc, "Tabel 2. Matriks kriteria penilaian juri ekshibisi AI LKS Nasional 2026.")
 
 # ══════════════════════════════════════════════════════════════
 # SIMPAN DOKUMEN
