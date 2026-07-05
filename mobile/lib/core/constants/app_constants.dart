@@ -74,4 +74,9 @@ abstract final class AppConstants {
   static const double iconMedium = 24;
   static const double iconLarge = 32;
   static const double iconXLarge = 48;
+
+  // ══════════════════════════════════════════════════════════════════════
+  // APP VERSION
+  // ══════════════════════════════════════════════════════════════════════
+  static const String appVersion = '1.0.0';
 }

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/router/app_router.dart';
@@ -30,6 +32,11 @@ class _SplashPageState extends State<SplashPage>
   late final Animation<Offset> _slideAnimation;
   bool _startLoading = false;
   StreamSubscription? _authSubscription;
+
+  // State variabel untuk fitur Update Checker
+  bool _needsUpdate = false;
+  String _latestVersion = '';
+  String _updateUrl = '';
 
   @override
   void initState() {
@@ -71,8 +78,117 @@ class _SplashPageState extends State<SplashPage>
     _controller.forward();
   }
 
+  // Helper fungsi untuk membandingkan dua versi semantik (e.g. 1.0.0 vs 1.1.0)
+  bool _isVersionOlder(String current, String target) {
+    try {
+      final currentParts = current.split('.').map((e) => int.tryParse(e) ?? 0).toList();
+      final targetParts = target.split('.').map((e) => int.tryParse(e) ?? 0).toList();
+
+      for (int i = 0; i < 3; i++) {
+        final currentVal = i < currentParts.length ? currentParts[i] : 0;
+        final targetVal = i < targetParts.length ? targetParts[i] : 0;
+        if (currentVal < targetVal) return true;
+        if (currentVal > targetVal) return false;
+      }
+    } catch (e) {
+      debugPrint('Error comparing versions: $e');
+    }
+    return false;
+  }
+
+  Future<void> _launchUpdateUrl() async {
+    if (_updateUrl.isNotEmpty) {
+      final uri = Uri.parse(_updateUrl);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        debugPrint('Could not launch $_updateUrl');
+      }
+    }
+  }
+
   Future<void> _navigateAfterDelay() async {
     await Future.delayed(AppConstants.splashDuration);
+    if (!mounted) return;
+
+    // ── Update Checker Logic ──
+    Map<String, dynamic>? appConfig;
+    try {
+      final response = await Supabase.instance.client
+          .from('app_config')
+          .select()
+          .maybeSingle();
+      appConfig = response;
+    } catch (e) {
+      debugPrint('Failed to fetch app config: $e');
+    }
+
+    if (appConfig != null && mounted) {
+      final minVersion = appConfig['min_version'] as String? ?? '1.0.0';
+      final latestVersion = appConfig['latest_version'] as String? ?? '1.0.0';
+      final updateUrl = appConfig['update_url'] as String? ?? 'https://genesisHub.web.id';
+      final forceUpdateFlag = appConfig['force_update'] as bool? ?? false;
+
+      final currentVersion = AppConstants.appVersion;
+
+      // 1. Cek apakah harus FORCE UPDATE
+      final isBelowMinimum = _isVersionOlder(currentVersion, minVersion);
+      final isBelowLatestWithForce = forceUpdateFlag && _isVersionOlder(currentVersion, latestVersion);
+
+      if (isBelowMinimum || isBelowLatestWithForce) {
+        setState(() {
+          _needsUpdate = true;
+          _latestVersion = latestVersion;
+          _updateUrl = updateUrl;
+        });
+        return; // Hentikan alur login/routing, paksa update screen
+      }
+
+      // 2. Cek apakah ada SOFT UPDATE (Opsional)
+      final hasNewerVersion = _isVersionOlder(currentVersion, latestVersion);
+      if (hasNewerVersion) {
+        final Completer<void> updateDialogCompleter = Completer<void>();
+        
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (dialogContext) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: const Text('Update Tersedia'),
+            content: Text(
+              'Versi baru ($latestVersion) telah tersedia. Update sekarang untuk menikmati fitur terbaik?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(dialogContext).pop();
+                  updateDialogCompleter.complete();
+                },
+                child: const Text('Nanti'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  final uri = Uri.parse(updateUrl);
+                  if (await canLaunchUrl(uri)) {
+                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  }
+                  Navigator.of(dialogContext).pop();
+                  updateDialogCompleter.complete();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.accent,
+                  foregroundColor: AppColors.navy900,
+                ),
+                child: const Text('Update Sekarang'),
+              ),
+            ],
+          ),
+        );
+
+        await updateDialogCompleter.future;
+      }
+    }
+
     if (!mounted) return;
 
     final prefs = await SharedPreferences.getInstance();
@@ -124,6 +240,71 @@ class _SplashPageState extends State<SplashPage>
 
   @override
   Widget build(BuildContext context) {
+    if (_needsUpdate) {
+      return Scaffold(
+        backgroundColor: AppColors.navy900,
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Spacer(),
+                const Icon(
+                  Icons.system_update_rounded,
+                  size: 80,
+                  color: AppColors.accent,
+                ),
+                const SizedBox(height: 32),
+                Text(
+                  'Pembaruan Wajib Tersedia',
+                  style: AppTextStyles.h2.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Versi aplikasi Anda saat ini (${AppConstants.appVersion}) sudah tidak didukung.\n\nHarap perbarui ke versi terbaru (${_latestVersion}) untuk melanjutkan menggunakan layanan Genesis.id.',
+                  style: AppTextStyles.bodyLarge.copyWith(color: Colors.white.withOpacity(0.7)),
+                  textAlign: TextAlign.center,
+                ),
+                const Spacer(),
+                SizedBox(
+                  width: double.infinity,
+                  height: 54,
+                  child: ElevatedButton(
+                    onPressed: _launchUpdateUrl,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.accent,
+                      foregroundColor: AppColors.navy900,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Update Sekarang',
+                          style: AppTextStyles.button.copyWith(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Icon(Icons.arrow_forward_rounded, size: 20),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 48),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       body: Container(
         width: double.infinity,
