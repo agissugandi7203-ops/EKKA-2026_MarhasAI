@@ -17,6 +17,9 @@ create table public.reports (
 -- Indeks Spasial GIST untuk pencarian berbasis jarak koordinat yang efisien
 create index reports_location_idx on public.reports using gist(location);
 
+-- Indeks untuk mempercepat pencarian riwayat laporan per user
+create index if not exists reports_reporter_idx on public.reports(reporter_id);
+
 -- Aktifkan Row Level Security (RLS) di tabel reports
 alter table public.reports enable row level security;
 

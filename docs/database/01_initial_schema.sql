@@ -109,6 +109,10 @@ create or replace view public.city_leaderboard as
   where city_or_district is not null
   group by city_or_district, province;
 
+-- Indeks untuk meningkatkan performa leaderboard global & regional
+CREATE INDEX IF NOT EXISTS profiles_xp_idx ON public.profiles (xp DESC);
+CREATE INDEX IF NOT EXISTS profiles_city_idx ON public.profiles (city_or_district);
+
 -- Insert katalog lencana awal (badges) untuk kebutuhan lomba
 insert into public.badges (code, name, description, icon_url) values
   ('first_report', 'Laporan Pertama', 'Berhasil mengunggah laporan masalah lingkungan pertama.', 'https://raw.githubusercontent.com/arief/genesis-badges/main/first_report.png'),

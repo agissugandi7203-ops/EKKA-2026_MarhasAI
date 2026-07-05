@@ -35,6 +35,12 @@ create table if not exists public.notifications (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
+-- Indeks untuk mempercepat pencarian notifikasi per user
+create index if not exists notifications_profile_idx on public.notifications(profile_id, created_at desc);
+
+-- Indeks untuk mempercepat pencarian tantangan per user
+create index if not exists profile_challenges_profile_idx on public.profile_challenges(profile_id);
+
 -- 5. Aktifkan Row Level Security (RLS)
 alter table public.events enable row level security;
 alter table public.challenges enable row level security;
