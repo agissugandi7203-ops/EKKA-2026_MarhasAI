@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/constants/app_constants.dart';
@@ -146,7 +146,7 @@ class _SplashPageState extends State<SplashPage>
 
       // 2. Cek apakah ada SOFT UPDATE (Opsional)
       final hasNewerVersion = _isVersionOlder(currentVersion, latestVersion);
-      if (hasNewerVersion) {
+      if (hasNewerVersion && context.mounted) {
         final Completer<void> updateDialogCompleter = Completer<void>();
         
         showDialog(
@@ -176,7 +176,7 @@ class _SplashPageState extends State<SplashPage>
                   updateDialogCompleter.complete();
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.accent,
+                  backgroundColor: AppColors.gold,
                   foregroundColor: AppColors.navy900,
                 ),
                 child: const Text('Update Sekarang'),
@@ -253,18 +253,18 @@ class _SplashPageState extends State<SplashPage>
                 const Icon(
                   Icons.system_update_rounded,
                   size: 80,
-                  color: AppColors.accent,
+                  color: AppColors.gold,
                 ),
                 const SizedBox(height: 32),
                 Text(
                   'Pembaruan Wajib Tersedia',
-                  style: AppTextStyles.h2.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+                  style: AppTextStyles.headlineLarge.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Versi aplikasi Anda saat ini (${AppConstants.appVersion}) sudah tidak didukung.\n\nHarap perbarui ke versi terbaru (${_latestVersion}) untuk melanjutkan menggunakan layanan Genesis.id.',
-                  style: AppTextStyles.bodyLarge.copyWith(color: Colors.white.withOpacity(0.7)),
+                  'Versi aplikasi Anda saat ini ($currentVersion) sudah tidak didukung.\n\nHarap perbarui ke versi terbaru ($_latestVersion) untuk melanjutkan menggunakan layanan Genesis.id.',
+                  style: AppTextStyles.bodyLarge.copyWith(color: Colors.white70),
                   textAlign: TextAlign.center,
                 ),
                 const Spacer(),
@@ -274,7 +274,7 @@ class _SplashPageState extends State<SplashPage>
                   child: ElevatedButton(
                     onPressed: _launchUpdateUrl,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.accent,
+                      backgroundColor: AppColors.gold,
                       foregroundColor: AppColors.navy900,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
@@ -286,7 +286,7 @@ class _SplashPageState extends State<SplashPage>
                       children: [
                         Text(
                           'Update Sekarang',
-                          style: AppTextStyles.button.copyWith(
+                          style: AppTextStyles.labelLarge.copyWith(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
                           ),
