@@ -1,6 +1,18 @@
-# Panduan Lengkap Migrasi RAG Ke Google Cloud Vertex AI Search
+# Panduan Lengkap Migrasi RAG Ke Google Cloud (Gemini Enterprise Agent Platform)
 
-Dokumen ini memuat panduan langkah demi langkah untuk memindahkan basis pengetahuan (*knowledge base*) chatbot RAG Genesis.id dari Supabase (`pgvector`) ke **Google Cloud Vertex AI Search (Agent Builder)** untuk meningkatkan latensi dan akurasi pencarian hukum perda.
+> [!NOTE]
+> **Update Teknologi (2026):** Google Cloud telah menyatukan Vertex AI Agent Builder dan layanan terkait ke dalam **Gemini Enterprise Agent Platform**. Meskipun nama menu di konsol berubah, seluruh arsitektur API dan integrasi SDK tetap kompatibel penuh tanpa memerlukan perubahan kode tambahan.
+
+Dokumen ini memuat panduan langkah demi langkah untuk memindahkan basis pengetahuan (*knowledge base*) chatbot RAG Genesis.id dari Supabase (`pgvector`) ke **Google Cloud RAG (Gemini Enterprise Agent / Vertex AI Search)** untuk meningkatkan latensi dan akurasi pencarian hukum perda.
+
+---
+
+## 📅 Pembaruan Fitur RAG Google Cloud Terkini (2026)
+
+Sebelum memulai migrasi, berikut adalah beberapa fitur baru di Google Cloud Console yang bisa Anda manfaatkan:
+1. **Gemini Enterprise Agent Platform (Unified Console)**: Antarmuka baru yang menyatukan pembuatan Agent AI, RAG, dan dokumentasi alat dalam satu dashboard terpadu.
+2. **Auto-Tuning Vector Search 2.0**: Indeks pencarian vektor untuk dokumen regulasi kini otomatis diatur oleh Google Cloud. Anda tidak perlu lagi mengonfigurasi dimensi dan metrik kemiripan indeks secara manual.
+3. **Optimasi Biaya (VCPU Runtime)**: Google Cloud menurunkan biaya infrastruktur untuk container/konten pemrosesan data, sehingga RAG skala besar kini lebih ekonomis.
 
 ---
 
@@ -20,8 +32,8 @@ Dokumen ini memuat panduan langkah demi langkah untuk memindahkan basis pengetah
 5. Biarkan pengaturan lainnya default, lalu klik **Create**.
 6. Unggah dokumen perda Anda (format `.pdf`, `.txt`, `.docx`, atau `.html`) ke dalam bucket ini.
 
-### C. Konfigurasi Data Store di Vertex AI Search
-1. Cari menu **Agent Builder** di Google Cloud Console.
+### C. Konfigurasi Data Store di Gemini Enterprise Agent Platform
+1. Cari menu **Agent Builder** atau **Gemini Enterprise Agent Platform** di Google Cloud Console.
 2. Klik menu **Data Stores** di sebelah kiri, lalu klik **Create Data Store**.
 3. Pilih opsi **Cloud Storage** sebagai sumber data.
 4. Di bagian path, masukkan alamat bucket Anda: `gs://genesis-knowledge-bucket/*`.
