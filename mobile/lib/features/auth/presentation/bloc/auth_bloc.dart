@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show User, AuthChangeEvent;
 
 import '../../../../core/errors/app_exception.dart';
@@ -160,6 +161,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove('chat_history');
+        await prefs.remove('equipped_badge_code');
+      } catch (e) {
+        debugPrint('Failed to clear SharedPreferences on logout: $e');
+      }
       await _authRepository.signOut();
       emit(Unauthenticated());
     } catch (e) {

@@ -6,6 +6,7 @@ import '../router/app_router.dart';
 import 'genesis_error_widget.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/auth/presentation/bloc/auth_state.dart';
+import '../../features/chat/presentation/bloc/chat_bloc.dart';
 
 /// Widget pembungkus yang mendengarkan perubahan [AuthState] secara terpusat.
 ///
@@ -120,6 +121,13 @@ class _AuthListenerWrapperState extends State<AuthListenerWrapper> {
   }
 
   void _handleUnauthenticated(Unauthenticated state) {
+    // Reset ChatBloc state (clear memory and storage history) when user logs out
+    try {
+      context.read<ChatBloc>().add(ClearChatRequested());
+    } catch (e) {
+      debugPrint('Failed to clear ChatBloc on logout: $e');
+    }
+
     String? currentPath;
     try {
       currentPath = GoRouterState.of(context).matchedLocation;
