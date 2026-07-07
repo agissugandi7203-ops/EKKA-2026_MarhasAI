@@ -332,18 +332,19 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
         leading: widget.onClose != null
             ? IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary, size: 20),
+                icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
                 onPressed: widget.onClose,
               )
             : Navigator.canPop(context)
                 ? IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary, size: 20),
+                    icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
                     onPressed: () => Navigator.pop(context),
                   )
                 : null,
@@ -351,23 +352,43 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
           'Profil Eco Warrior',
           style: AppTextStyles.headlineSmall.copyWith(
             fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
+            color: Colors.white,
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout_rounded, color: AppColors.textSecondary),
+            icon: const Icon(Icons.logout_rounded, color: Colors.white),
             tooltip: 'Keluar',
             onPressed: _showLogoutConfirmDialog,
           ),
         ],
-        bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(1.0),
-          child: Divider(color: Color(0xFFE2E8F0), height: 1.0, thickness: 1.5),
-        ),
       ),
       body: Stack(
         children: [
+          // ── Curved Gradient Header Background ──
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              height: 260,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Color(0xFF0F172A), // Slate 900
+                    Color(0xFF1E293B), // Slate 800
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(40),
+                  bottomRight: Radius.circular(40),
+                ),
+              ),
+            ),
+          ),
+
           // Subtle blueprint grid pattern background to add premium character/texture
           Positioned.fill(
             child: RepaintBoundary(
@@ -384,10 +405,10 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
               child: Padding(
-                padding: const EdgeInsets.only(
+                padding: EdgeInsets.only(
                   left: AppConstants.pagePaddingH,
                   right: AppConstants.pagePaddingH,
-                  top: 20,
+                  top: kToolbarHeight + MediaQuery.of(context).padding.top + 20,
                   bottom: 110, // Avoid overlapping with floating bottom navbar
                 ),
                 child: Column(
@@ -403,18 +424,13 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                         borderRadius: BorderRadius.circular(28),
                         border: Border.all(
                           color: const Color(0xFFE2E8F0),
-                          width: 1.0,
+                          width: 1.5,
                         ),
-                        boxShadow: [
+                        boxShadow: const [
                           BoxShadow(
-                            color: const Color(0xFF0F172A).withValues(alpha: 0.06),
-                            offset: const Offset(0, 8),
-                            blurRadius: 16,
-                          ),
-                          BoxShadow(
-                            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
-                            offset: const Offset(0, 2),
-                            blurRadius: 4,
+                            color: Color(0xFFE2E8F0),
+                            offset: Offset(0, 6),
+                            blurRadius: 0,
                           ),
                         ],
                       ),
@@ -643,12 +659,12 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.0),
-                        boxShadow: [
+                        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
+                        boxShadow: const [
                           BoxShadow(
-                            color: const Color(0xFF0F172A).withValues(alpha: 0.06),
-                            offset: const Offset(0, 8),
-                            blurRadius: 16,
+                            color: Color(0xFFE2E8F0),
+                            offset: Offset(0, 6),
+                            blurRadius: 0,
                           ),
                         ],
                       ),
@@ -726,12 +742,12 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: const Color(0xFFE2E8F0), width: 1.0),
-          boxShadow: [
+          border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
+          boxShadow: const [
             BoxShadow(
-              color: const Color(0xFF0F172A).withValues(alpha: 0.06),
-              offset: const Offset(0, 6),
-              blurRadius: 12,
+              color: Color(0xFFE2E8F0),
+              offset: Offset(0, 6),
+              blurRadius: 0,
             ),
           ],
         ),

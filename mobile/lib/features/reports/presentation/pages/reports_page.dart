@@ -929,12 +929,10 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
                 final statusColor = _getStatusColor(report.status);
                 final statusLabel = _getStatusLabel(report.status);
 
-                return GestureDetector(
-                  onTap: () => _showReportDetailBottomSheet(context, report),
-                  child: FadeSlideEntrance(
-                    delay: Duration(milliseconds: 50 * index),
-                    child: Container(
-                      margin: const EdgeInsets.only(bottom: 16),
+                return FadeSlideEntrance(
+                  delay: Duration(milliseconds: 50 * index),
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 16),
                     decoration: BoxDecoration(
                       color: AppColors.cardBackground,
                       borderRadius: BorderRadius.circular(20),
@@ -947,132 +945,151 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
                         ),
                       ],
                     ),
-                    child: ClipRRect(
+                    child: Material(
+                      color: Colors.transparent,
                       borderRadius: BorderRadius.circular(20),
-                      child: Row(
-                        children: [
-                          // Thumbnail image
-                          _buildThumbnailImage(report.imageUrl),
-                          const SizedBox(width: 14),
-                          // Text info
-                          Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 12.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    report.wasteType ?? report.description ?? 'Laporan Lingkungan',
-                                    style: AppTextStyles.labelSmall.copyWith(
-                                      color: AppColors.textPrimary,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    report.createdAt.length > 10 ? report.createdAt.substring(0, 10) : report.createdAt,
-                                    style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary, fontSize: 10),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        '+50 XP',
-                                        style: AppTextStyles.labelSmall.copyWith(
-                                          color: AppColors.emerald,
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(20),
+                        onTap: () => _showReportDetailBottomSheet(context, report),
+                        child: Row(
+                          children: [
+                            // Thumbnail image
+                            ClipRRect(
+                              borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(20),
+                                bottomLeft: Radius.circular(20),
+                              ),
+                              child: _buildThumbnailImage(report.imageUrl),
+                            ),
+                            const SizedBox(width: 14),
+                            // Text info
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 12.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      report.wasteType ?? report.description ?? 'Laporan Lingkungan',
+                                      style: AppTextStyles.labelSmall.copyWith(
+                                        color: AppColors.textPrimary,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
                                       ),
-                                      // Status Badge & Delete option
-                                      Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Container(
-                                            margin: const EdgeInsets.only(right: 12),
-                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                            decoration: BoxDecoration(
-                                              color: statusColor.withValues(alpha: 0.1),
-                                              borderRadius: BorderRadius.circular(8),
-                                              border: Border.all(color: statusColor.withValues(alpha: 0.4), width: 1),
-                                            ),
-                                            child: Text(
-                                              statusLabel,
-                                              style: AppTextStyles.bodySmall.copyWith(
-                                                color: statusColor,
-                                                fontSize: 8,
-                                                fontWeight: FontWeight.bold,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      report.createdAt.length > 10 ? report.createdAt.substring(0, 10) : report.createdAt,
+                                      style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary, fontSize: 10),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          '+50 XP',
+                                          style: AppTextStyles.labelSmall.copyWith(
+                                            color: AppColors.emerald,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        // Status Badge & Delete option
+                                        Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Container(
+                                              margin: const EdgeInsets.only(right: 12),
+                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                              decoration: BoxDecoration(
+                                                color: statusColor.withValues(alpha: 0.1),
+                                                borderRadius: BorderRadius.circular(8),
+                                                border: Border.all(color: statusColor.withValues(alpha: 0.4), width: 1),
+                                              ),
+                                              child: Text(
+                                                statusLabel,
+                                                style: AppTextStyles.bodySmall.copyWith(
+                                                  color: statusColor,
+                                                  fontSize: 8,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
                                               ),
                                             ),
+                                            if (report.status.toLowerCase() == 'rejected')
+                                              IconButton(
+                                                icon: const Icon(Icons.delete_outline_rounded, color: AppColors.error, size: 20),
+                                                onPressed: () {
+                                                  showDialog(
+                                                    context: context,
+                                                    builder: (context) => AlertDialog(
+                                                      backgroundColor: AppColors.cardBackground,
+                                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                                                      title: const Text('Hapus Laporan?', style: TextStyle(fontWeight: FontWeight.bold)),
+                                                      content: const Text('Apakah Anda yakin ingin menghapus laporan yang ditolak ini?'),
+                                                      actions: [
+                                                        TextButton(
+                                                          onPressed: () => Navigator.pop(context),
+                                                          child: const Text('Batal', style: TextStyle(color: AppColors.textSecondary)),
+                                                        ),
+                                                        TextButton(
+                                                          onPressed: () {
+                                                            Navigator.pop(context);
+                                                            context.read<ReportsBloc>().add(DeleteReportRequested(report.id));
+                                                          },
+                                                          child: const Text('Hapus', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.bold)),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  );
+                                                },
+                                                padding: EdgeInsets.zero,
+                                                constraints: const BoxConstraints(),
+                                              ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                    if (report.adminNotes != null && report.adminNotes!.isNotEmpty) ...[
+                                      const SizedBox(height: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.navy50,
+                                          borderRadius: BorderRadius.circular(8),
+                                          border: Border.all(color: AppColors.divider),
+                                        ),
+                                        width: double.infinity,
+                                        child: Text(
+                                          'Pesan Admin: ${report.adminNotes}',
+                                          style: AppTextStyles.bodySmall.copyWith(
+                                            color: AppColors.textSecondary,
+                                            fontSize: 11,
+                                            fontStyle: FontStyle.italic,
                                           ),
-                                          if (report.status.toLowerCase() == 'rejected')
-                                            IconButton(
-                                              icon: const Icon(Icons.delete_outline_rounded, color: AppColors.error, size: 20),
-                                              onPressed: () {
-                                                showDialog(
-                                                  context: context,
-                                                  builder: (context) => AlertDialog(
-                                                    backgroundColor: AppColors.cardBackground,
-                                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                                                    title: const Text('Hapus Laporan?', style: TextStyle(fontWeight: FontWeight.bold)),
-                                                    content: const Text('Apakah Anda yakin ingin menghapus laporan yang ditolak ini?'),
-                                                    actions: [
-                                                      TextButton(
-                                                        onPressed: () => Navigator.pop(context),
-                                                        child: const Text('Batal', style: TextStyle(color: AppColors.textSecondary)),
-                                                      ),
-                                                      TextButton(
-                                                        onPressed: () {
-                                                          Navigator.pop(context);
-                                                          context.read<ReportsBloc>().add(DeleteReportRequested(report.id));
-                                                        },
-                                                        child: const Text('Hapus', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.bold)),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                );
-                                              },
-                                              padding: EdgeInsets.zero,
-                                              constraints: const BoxConstraints(),
-                                            ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                  if (report.adminNotes != null && report.adminNotes!.isNotEmpty) ...[
-                                    const SizedBox(height: 8),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.navy50,
-                                        borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(color: AppColors.divider),
-                                      ),
-                                      width: double.infinity,
-                                      child: Text(
-                                        'Pesan Admin: ${report.adminNotes}',
-                                        style: AppTextStyles.bodySmall.copyWith(
-                                          color: AppColors.textSecondary,
-                                          fontSize: 11,
-                                          fontStyle: FontStyle.italic,
                                         ),
                                       ),
-                                    ),
+                                    ],
                                   ],
-                                ],
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                            // Click Cue: Trailing Chevron Icon
+                            const Padding(
+                              padding: EdgeInsets.only(right: 16.0, left: 8.0),
+                              child: Icon(
+                                Icons.arrow_forward_ios_rounded,
+                                size: 14,
+                                color: AppColors.textDisabled,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              );
-            },
+                );
+              },
             );
           } else if (state is ReportsFailure) {
             return SingleChildScrollView(

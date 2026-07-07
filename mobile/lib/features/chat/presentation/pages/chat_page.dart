@@ -2125,9 +2125,23 @@ void _showCitationPreviewSheet(BuildContext context, String url, String title) {
                   child: ElevatedButton(
                     onPressed: () async {
                       Navigator.pop(context);
-                      final uri = Uri.tryParse(url);
-                      if (uri != null && await canLaunchUrl(uri)) {
-                        await launchUrl(uri, mode: LaunchMode.externalApplication);
+                      String finalUrl = url.trim();
+                      if (finalUrl.startsWith('gs://')) {
+                        finalUrl = finalUrl.replaceFirst('gs://', 'https://storage.googleapis.com/');
+                      } else if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
+                        finalUrl = 'https://$finalUrl';
+                      }
+                      final uri = Uri.tryParse(finalUrl);
+                      if (uri != null) {
+                        try {
+                          await launchUrl(uri, mode: LaunchMode.externalApplication);
+                        } catch (_) {
+                          try {
+                            await launchUrl(uri, mode: LaunchMode.platformDefault);
+                          } catch (e) {
+                            debugPrint('Error launching URL: $e');
+                          }
+                        }
                       }
                     },
                     style: ElevatedButton.styleFrom(

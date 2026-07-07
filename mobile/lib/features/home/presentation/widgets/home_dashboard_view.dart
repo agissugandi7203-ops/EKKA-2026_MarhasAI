@@ -765,18 +765,13 @@ class _HomeDashboardViewState extends State<HomeDashboardView> {
           borderRadius: BorderRadius.circular(24.0),
           border: Border.all(
             color: const Color(0xFFE2E8F0),
-            width: 1.0,
+            width: 1.5,
           ),
-          boxShadow: [
+          boxShadow: const [
             BoxShadow(
-              color: const Color(0xFF0F172A).withValues(alpha: 0.05),
-              offset: const Offset(0, 10),
-              blurRadius: 20,
-            ),
-            BoxShadow(
-              color: const Color(0xFF0F172A).withValues(alpha: 0.02),
-              offset: const Offset(0, 2),
-              blurRadius: 4,
+              color: Color(0xFFE2E8F0),
+              offset: Offset(0, 6),
+              blurRadius: 0,
             ),
           ],
         ),

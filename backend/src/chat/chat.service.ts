@@ -32,7 +32,14 @@ export class ChatService {
         xp: data.xp ?? 0,
         full_name: data.full_name || '',
       };
-    } catch (_) {
+    } catch (err) {
+      // Anti silent-catch: catat error agar dapat ditelusuri (profil bersifat opsional,
+      // jadi request tetap dilanjutkan tanpa data profil)
+      this.logger.warn(
+        `Gagal mengambil profil singkat user ${userId}: ${
+          err instanceof Error ? err.message : String(err)
+        }`,
+      );
       return null;
     }
   }
@@ -58,10 +65,15 @@ export class ChatService {
       // 1. Ambil data profil singkat warga
       const userProfile = await this.getUserProfileBrief(userId);
 
-      // 2. Cari konteks perda dari DB (RAG) - Lewati jika sapaan/chit-chat, atau kueri umum jika webSearch aktif
+      // 2. Tentukan penggunaan Vertex AI Search RAG (Grounding) atau Supabase RAG lokal
       const isGreeting = this.isChitChat(sanitizedMessage);
       const isRegulation = this.isRegulationQuery(sanitizedMessage);
-      const shouldSearchDB = !isGreeting && (isRegulation || !dto.webSearch);
+      
+      const datastoreId = process.env.VERTEX_AI_DATASTORE_ID;
+      const useRAG = !!datastoreId && !isGreeting && isRegulation && !dto.webSearch;
+      
+      // Jika menggunakan Vertex AI Search, kita lewati query database lokal Supabase
+      const shouldSearchDB = !useRAG && !isGreeting && (isRegulation || !dto.webSearch);
 
       const contextText = shouldSearchDB
         ? await this.retrieveContext(sanitizedMessage)
@@ -75,18 +87,21 @@ export class ChatService {
         userProfile,
       );
 
-      // 4. Panggil OpenRouter
+      // 4. Panggil OpenRouter / Vertex AI
       const result = await this.openRouterService.getChatCompletion(
         messages,
         dto.model,
         dto.webSearch,
         userId,
+        undefined,
+        useRAG,
       );
       return { reply: result.content, annotations: result.annotations };
     } catch (error) {
-      this.logger.error(`Error processing instant chat: ${error.message}`);
+      const errMsg = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Error processing instant chat: ${errMsg}`);
       throw new HttpException(
-        `Gagal memproses obrolan: ${error.message}`,
+        `Gagal memproses obrolan: ${errMsg}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -103,10 +118,15 @@ export class ChatService {
       // 1. Ambil data profil singkat warga
       const userProfile = await this.getUserProfileBrief(userId);
 
-      // 2. Cari konteks perda dari DB (RAG) - Lewati jika sapaan/chit-chat, atau kueri umum jika webSearch aktif
+      // 2. Tentukan penggunaan Vertex AI Search RAG (Grounding) atau Supabase RAG lokal
       const isGreeting = this.isChitChat(sanitizedMessage);
       const isRegulation = this.isRegulationQuery(sanitizedMessage);
-      const shouldSearchDB = !isGreeting && (isRegulation || !dto.webSearch);
+      
+      const datastoreId = process.env.VERTEX_AI_DATASTORE_ID;
+      const useRAG = !!datastoreId && !isGreeting && isRegulation && !dto.webSearch;
+      
+      // Jika menggunakan Vertex AI Search, kita lewati query database lokal Supabase
+      const shouldSearchDB = !useRAG && !isGreeting && (isRegulation || !dto.webSearch);
 
       const contextText = shouldSearchDB
         ? await this.retrieveContext(sanitizedMessage)
@@ -120,17 +140,20 @@ export class ChatService {
         userProfile,
       );
 
-      // 4. Panggil OpenRouter Stream API
+      // 4. Panggil OpenRouter / Vertex AI Stream API
       return await this.openRouterService.getChatCompletionStream(
         messages,
         dto.model,
         dto.webSearch,
         userId,
+        undefined,
+        useRAG,
       );
     } catch (error) {
-      this.logger.error(`Error starting chat stream: ${error.message}`);
+      const errMsg = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Error starting chat stream: ${errMsg}`);
       throw new HttpException(
-        `Gagal memulai aliran data obrolan: ${error.message}`,
+        `Gagal memulai aliran data obrolan: ${errMsg}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -184,7 +207,9 @@ export class ChatService {
         .join('\n\n');
     } catch (err) {
       this.logger.error(
-        `Failed to retrieve context from database: ${err.message}`,
+        `Failed to retrieve context from database: ${
+          err instanceof Error ? err.message : String(err)
+        }`,
       );
       return 'Gagal memuat regulasi resmi kota dari database.';
     }
@@ -559,9 +584,10 @@ export class ChatService {
       );
       return { text };
     } catch (error) {
-      this.logger.error(`Error in transcribeAudio service: ${error.message}`);
+      const errMsg = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Error in transcribeAudio service: ${errMsg}`);
       throw new HttpException(
-        `Gagal mentranskripsi audio: ${error.message}`,
+        `Gagal mentranskripsi audio: ${errMsg}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

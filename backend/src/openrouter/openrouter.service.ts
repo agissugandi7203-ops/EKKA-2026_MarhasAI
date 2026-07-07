@@ -8,6 +8,7 @@ import { SupabaseService } from '../supabase/supabase.service';
 export class OpenRouterService {
   private readonly logger = new Logger(OpenRouterService.name);
   private readonly ai: GoogleGenAI;
+  private readonly aiUS: GoogleGenAI;
   private readonly defaultModel: string;
   private readonly embeddingModel: string;
 
@@ -34,9 +35,14 @@ export class OpenRouterService {
         project: projectId,
         location: region,
       });
-      this.logger.log(`Google GenAI (Vertex AI) Client initialized successfully targeting ${region}.`);
-    } catch (err) {
-      this.logger.error(`Failed to initialize Google GenAI Client: ${err.message}`);
+      this.aiUS = new GoogleGenAI({
+        vertexai: true,
+        project: projectId,
+        location: 'global',
+      });
+      this.logger.log(`Google GenAI (Vertex AI) Clients initialized successfully targeting ${region} and global.`);
+    } catch (err: any) {
+      this.logger.error(`Failed to initialize Google GenAI Clients: ${err.message}`);
     }
 
     // Default to Gemini 2.5 Flash and automatically strip "google/" or "openai/" prefix if present
@@ -163,10 +169,39 @@ export class OpenRouterService {
       throw error;
     }
   }
+  /**
+   * Menentukan klien Google GenAI (Singapura vs US) berdasarkan model
+   */
+  private getClientForModel(modelName: string): GoogleGenAI {
+    if (modelName.includes('pro')) {
+      return this.aiUS;
+    }
+    return this.ai;
+  }
 
   /**
-   * Mengirim request chat completion dengan streaming (Dibungkus agar kompatibel dengan SSE OpenAI/OpenRouter)
+   * Memetakan nama model dari client ke model ID yang valid di Vertex AI
    */
+  private mapToVertexModel(model?: string): string {
+    if (!model) {
+      return this.defaultModel;
+    }
+
+    const cleanModel = model.replace(/^(google\/|openai\/)/i, '').toLowerCase();
+
+    // Jika model mengandung kata 'pro', gunakan gemini-3.1-pro-preview di region US
+    if (cleanModel.includes('pro')) {
+      return 'gemini-3.1-pro-preview';
+    }
+
+    // Jika model mengandung kata 'flash', gunakan defaultModel dari .env
+    if (cleanModel.includes('flash')) {
+      return this.defaultModel;
+    }
+
+    return cleanModel;
+  }
+
   /**
    * Mengirim request chat completion dengan streaming (Dibungkus agar kompatibel dengan SSE OpenAI/OpenRouter)
    */
@@ -175,18 +210,23 @@ export class OpenRouterService {
     model?: string,
     webSearch?: boolean,
     userId?: string,
+    systemInstructionOverride?: string,
+    useRAG?: boolean,
   ): Promise<Response> {
     try {
-      // Jika model dari client adalah flash (atau tidak ada), gunakan defaultModel dari .env (misal gemini-3.5-flash)
-      // Jika model dari client adalah pro/preview, gunakan model tersebut secara dinamis.
-      let selectedModel = this.defaultModel;
-      if (model) {
-        const cleanModel = model.replace(/^(google\/|openai\/)/i, '');
-        if (!cleanModel.toLowerCase().includes('flash')) {
-          selectedModel = cleanModel;
-        }
+      const selectedModel = this.mapToVertexModel(model);
+
+      let contents: any[];
+      let systemInstruction: string | undefined = systemInstructionOverride;
+
+      const isNativeContents = messages.length > 0 && messages[0].parts !== undefined;
+      if (isNativeContents) {
+        contents = messages;
+      } else {
+        const mapped = this.mapOpenAiToGemini(messages);
+        contents = mapped.contents;
+        systemInstruction = mapped.systemInstruction;
       }
-      const { contents, systemInstruction } = this.mapOpenAiToGemini(messages);
 
       const config: any = {};
       if (systemInstruction) {
@@ -194,38 +234,14 @@ export class OpenRouterService {
       }
 
       // Build tools
-      const toolsList: any[] = [];
-      if (webSearch) {
-        toolsList.push({ googleSearch: {} });
-      } else {
-        // Tambahkan function calling tools HANYA jika tidak menggunakan webSearch
-        toolsList.push({
-          functionDeclarations: [
-            {
-              name: 'getGamificationStats',
-              description: 'Mengambil data profil gamifikasi warga yang aktif saat ini, termasuk level, XP, streak, dan daftar lencana (badges).',
-              parameters: { type: 'OBJECT', properties: {} }
-            },
-            {
-              name: 'getRecentReports',
-              description: 'Mengambil daftar laporan masalah lingkungan terbaru yang dilaporkan oleh warga yang aktif beserta status penanganan terbarunya.',
-              parameters: { type: 'OBJECT', properties: {} }
-            },
-            {
-              name: 'getTopLeaderboard',
-              description: 'Mengambil peringkat 5 besar warga dengan XP tertinggi saat ini di kota.',
-              parameters: { type: 'OBJECT', properties: {} }
-            }
-          ]
-        });
-      }
-
+      const toolsList = this.buildTools(!!webSearch, !!useRAG);
       if (toolsList.length > 0) {
         config.tools = toolsList;
       }
 
       // Mulai streaming dari Vertex AI
-      const responseStream = await this.ai.models.generateContentStream({
+      const client = this.getClientForModel(selectedModel);
+      const responseStream = await client.models.generateContentStream({
         model: selectedModel,
         contents,
         config,
@@ -233,6 +249,7 @@ export class OpenRouterService {
 
       const self = this;
       let functionCallToExecute: any = null;
+      let modelContentToSave: any = null;
 
       // Buat ReadableStream kustom untuk membungkus data ke dalam format SSE OpenAI
       const readable = new ReadableStream({
@@ -255,6 +272,10 @@ export class OpenRouterService {
             let annotations: any[] | undefined = undefined;
 
             for await (const chunk of responseStream) {
+              if (chunk.candidates?.[0]?.content) {
+                modelContentToSave = chunk.candidates[0].content;
+              }
+
               if (chunk.functionCalls && chunk.functionCalls.length > 0) {
                 functionCallToExecute = chunk.functionCalls[0];
                 break;
@@ -268,10 +289,10 @@ export class OpenRouterService {
               
               if (searchChunks) {
                 for (const sc of searchChunks) {
-                  const rawUri = sc.web?.uri;
+                  const rawUri = sc.web?.uri || sc.retrievedContext?.uri || (sc.retrievedContext as any)?.gcsUri;
                   if (rawUri) {
                     const uri = self.extractDirectUrl(rawUri);
-                    const title = sc.web?.title || 'Sumber Terpercaya';
+                    const title = sc.web?.title || sc.retrievedContext?.title || 'Dokumen Regulasi';
                     if (!seenUris.has(uri)) {
                       seenUris.add(uri);
                       citationsList.push({ title, url: uri });
@@ -285,14 +306,16 @@ export class OpenRouterService {
                   const sourceIndices = support.groundingChunkIndices || [];
                   const firstSourceIndex = sourceIndices[0] ?? 0;
                   const searchChunk = searchChunks[firstSourceIndex];
-                  const directUrl = self.extractDirectUrl(searchChunk?.web?.uri || '');
+                  const rawUri = searchChunk?.web?.uri || searchChunk?.retrievedContext?.uri || (searchChunk?.retrievedContext as any)?.gcsUri || '';
+                  const directUrl = self.extractDirectUrl(rawUri);
+                  const title = searchChunk?.web?.title || searchChunk?.retrievedContext?.title || 'Dokumen Regulasi';
                   
                   return {
                     type: 'web_search_citation',
                     url_citation: {
                       url: directUrl,
-                      title: searchChunk?.web?.title || 'Sumber Terpercaya',
-                      content: searchChunk?.web?.title || '',
+                      title: title,
+                      content: title,
                       start_index: support.segment?.startIndex ?? 0,
                       end_index: support.segment?.endIndex ?? 0,
                     }
@@ -362,26 +385,31 @@ export class OpenRouterService {
                 userId,
               );
 
-              const updatedMessages = [
-                ...messages,
-                {
-                  role: 'assistant',
-                  functionCall: functionCallToExecute,
-                  content: '',
-                },
-                {
-                  role: 'tool',
-                  name: functionCallToExecute.name,
-                  response: { result },
-                  content: '',
-                }
-              ];
+              if (modelContentToSave) {
+                contents.push(modelContentToSave);
+              } else {
+                contents.push({
+                  role: 'model',
+                  parts: [{ functionCall: functionCallToExecute }]
+                });
+              }
+
+              contents.push({
+                role: 'user',
+                parts: [{
+                  functionResponse: {
+                    name: functionCallToExecute.name,
+                    response: { result }
+                  }
+                }]
+              });
 
               const recursiveResponse = await self.getChatCompletionStream(
-                updatedMessages,
+                contents,
                 model,
                 webSearch,
                 userId,
+                systemInstruction,
               );
 
               const reader = recursiveResponse.body?.getReader();
@@ -505,18 +533,23 @@ export class OpenRouterService {
     model?: string,
     webSearch?: boolean,
     userId?: string,
+    systemInstructionOverride?: string,
+    useRAG?: boolean,
   ): Promise<{ content: string; annotations?: Array<{ type: string; url_citation: { url: string; title: string; content?: string; start_index: number; end_index: number } }> }> {
     try {
-      // Jika model dari client adalah flash (atau tidak ada), gunakan defaultModel dari .env (misal gemini-3.5-flash)
-      // Jika model dari client adalah pro/preview, gunakan model tersebut secara dinamis.
-      let selectedModel = this.defaultModel;
-      if (model) {
-        const cleanModel = model.replace(/^(google\/|openai\/)/i, '');
-        if (!cleanModel.toLowerCase().includes('flash')) {
-          selectedModel = cleanModel;
-        }
+      const selectedModel = this.mapToVertexModel(model);
+
+      let contents: any[];
+      let systemInstruction: string | undefined = systemInstructionOverride;
+
+      const isNativeContents = messages.length > 0 && messages[0].parts !== undefined;
+      if (isNativeContents) {
+        contents = messages;
+      } else {
+        const mapped = this.mapOpenAiToGemini(messages);
+        contents = mapped.contents;
+        systemInstruction = mapped.systemInstruction;
       }
-      const { contents, systemInstruction } = this.mapOpenAiToGemini(messages);
 
       const config: any = {};
       if (systemInstruction) {
@@ -524,37 +557,13 @@ export class OpenRouterService {
       }
 
       // Build tools
-      const toolsList: any[] = [];
-      if (webSearch) {
-        toolsList.push({ googleSearch: {} });
-      } else {
-        // Tambahkan function calling tools HANYA jika tidak menggunakan webSearch
-        toolsList.push({
-          functionDeclarations: [
-            {
-              name: 'getGamificationStats',
-              description: 'Mengambil data profil gamifikasi warga yang aktif saat ini, termasuk level, XP, streak, dan daftar lencana (badges).',
-              parameters: { type: 'OBJECT', properties: {} }
-            },
-            {
-              name: 'getRecentReports',
-              description: 'Mengambil daftar laporan masalah lingkungan terbaru yang dilaporkan oleh warga yang aktif beserta status penanganan terbarunya.',
-              parameters: { type: 'OBJECT', properties: {} }
-            },
-            {
-              name: 'getTopLeaderboard',
-              description: 'Mengambil peringkat 5 besar warga dengan XP tertinggi saat ini di kota.',
-              parameters: { type: 'OBJECT', properties: {} }
-            }
-          ]
-        });
-      }
-
+      const toolsList = this.buildTools(!!webSearch, !!useRAG);
       if (toolsList.length > 0) {
         config.tools = toolsList;
       }
 
-      const response = await this.ai.models.generateContent({
+      const client = this.getClientForModel(selectedModel);
+      const response = await client.models.generateContent({
         model: selectedModel,
         contents,
         config,
@@ -565,22 +574,26 @@ export class OpenRouterService {
         const functionCall = response.functionCalls[0];
         const result = await this.executeFunctionCall(functionCall.name!, functionCall.args, userId);
         
-        const updatedMessages = [
-          ...messages,
-          {
-            role: 'assistant',
-            functionCall: functionCall,
-            content: '',
-          },
-          {
-            role: 'tool',
-            name: functionCall.name!,
-            response: { result },
-            content: '',
-          }
-        ];
+        if (response.candidates?.[0]?.content) {
+          contents.push(response.candidates[0].content);
+        } else {
+          contents.push({
+            role: 'model',
+            parts: [{ functionCall }]
+          });
+        }
 
-        return this.getChatCompletion(updatedMessages, model, webSearch, userId);
+        contents.push({
+          role: 'user',
+          parts: [{
+            functionResponse: {
+              name: functionCall.name!,
+              response: { result }
+            }
+          }]
+        });
+
+        return this.getChatCompletion(contents, model, webSearch, userId, systemInstruction);
       }
 
       // Proses pencarian web / grounding
@@ -593,14 +606,16 @@ export class OpenRouterService {
           const sourceIndices = support.groundingChunkIndices || [];
           const firstSourceIndex = sourceIndices[0] ?? 0;
           const chunk = searchChunks[firstSourceIndex];
-          const directUrl = this.extractDirectUrl(chunk?.web?.uri || '');
+          const rawUri = chunk?.web?.uri || chunk?.retrievedContext?.uri || (chunk?.retrievedContext as any)?.gcsUri || '';
+          const directUrl = this.extractDirectUrl(rawUri);
+          const title = chunk?.web?.title || chunk?.retrievedContext?.title || 'Dokumen Regulasi';
           
           return {
             type: 'web_search_citation',
             url_citation: {
               url: directUrl,
-              title: chunk?.web?.title || 'Sumber Terpercaya',
-              content: chunk?.web?.title || '',
+              title: title,
+              content: title,
               start_index: support.segment?.startIndex ?? 0,
               end_index: support.segment?.endIndex ?? 0,
             }
@@ -615,10 +630,10 @@ export class OpenRouterService {
         const parsedCitations: Array<{ title: string; url: string }> = [];
 
         for (const sc of searchChunks) {
-          const rawUri = sc.web?.uri;
+          const rawUri = sc.web?.uri || sc.retrievedContext?.uri || (sc.retrievedContext as any)?.gcsUri;
           if (rawUri) {
             const uri = this.extractDirectUrl(rawUri);
-            const title = sc.web?.title || 'Sumber Terpercaya';
+            const title = sc.web?.title || sc.retrievedContext?.title || 'Dokumen Regulasi';
             if (!seenUris.has(uri)) {
               seenUris.add(uri);
               parsedCitations.push({ title, url: uri });
@@ -879,5 +894,48 @@ export class OpenRouterService {
     } catch (_) {}
     
     return url;
+  }
+
+  /**
+   * Menyusun daftar tools (Google Search, Vertex AI Search RAG, atau Function Declarations lokal)
+   */
+  private buildTools(webSearch: boolean, useRAG?: boolean): any[] {
+    const toolsList: any[] = [];
+    if (webSearch) {
+      toolsList.push({ googleSearch: {} });
+    } else if (useRAG) {
+      const datastoreId = this.configService.get<string>('VERTEX_AI_DATASTORE_ID');
+      if (datastoreId) {
+        const projectId = this.configService.get<string>('GCS_PROJECT_ID') || 'arief-fajar';
+        toolsList.push({
+          retrieval: {
+            vertexAiSearch: {
+              datastore: `projects/${projectId}/locations/global/collections/default_collection/dataStores/${datastoreId}`
+            }
+          }
+        });
+      }
+    } else {
+      toolsList.push({
+        functionDeclarations: [
+          {
+            name: 'getGamificationStats',
+            description: 'Mengambil data profil gamifikasi warga yang aktif saat ini, termasuk level, XP, streak, dan daftar lencana (badges).',
+            parameters: { type: 'OBJECT', properties: {} }
+          },
+          {
+            name: 'getRecentReports',
+            description: 'Mengambil daftar laporan masalah lingkungan terbaru yang dilaporkan oleh warga yang aktif beserta status penanganan terbarunya.',
+            parameters: { type: 'OBJECT', properties: {} }
+          },
+          {
+            name: 'getTopLeaderboard',
+            description: 'Mengambil peringkat 5 besar warga dengan XP tertinggi saat ini di kota.',
+            parameters: { type: 'OBJECT', properties: {} }
+          }
+        ]
+      });
+    }
+    return toolsList;
   }
 }
