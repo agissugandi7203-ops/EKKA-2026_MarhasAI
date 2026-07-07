@@ -38,9 +38,9 @@ export class OpenRouterService {
       this.aiUS = new GoogleGenAI({
         vertexai: true,
         project: projectId,
-        location: 'global',
+        location: 'us-central1',
       });
-      this.logger.log(`Google GenAI (Vertex AI) Clients initialized successfully targeting ${region} and global.`);
+      this.logger.log(`Google GenAI (Vertex AI) Clients initialized successfully targeting ${region} and us-central1.`);
     } catch (err: any) {
       this.logger.error(`Failed to initialize Google GenAI Clients: ${err.message}`);
     }
@@ -242,15 +242,8 @@ export class OpenRouterService {
       // Jika model adalah Pro, otomatis aktifkan thinkingConfig (Proses Berpikir)
       if (selectedModel.includes('pro')) {
         config.thinkingConfig = {
-          includeThoughts: true,
+          thinkingBudget: 4096,
         };
-        // Jika versi 3.x, gunakan thinkingLevel
-        if (selectedModel.includes('3.')) {
-          config.thinkingConfig.thinkingLevel = 'medium';
-        } else {
-          // Fallback untuk 2.5
-          config.thinkingConfig.thinkingBudget = 2048;
-        }
       }
 
       // Mulai streaming dari Vertex AI
@@ -617,15 +610,8 @@ export class OpenRouterService {
       // Jika model adalah Pro, otomatis aktifkan thinkingConfig (Proses Berpikir)
       if (selectedModel.includes('pro')) {
         config.thinkingConfig = {
-          includeThoughts: true,
+          thinkingBudget: 4096,
         };
-        // Jika versi 3.x, gunakan thinkingLevel
-        if (selectedModel.includes('3.')) {
-          config.thinkingConfig.thinkingLevel = 'medium';
-        } else {
-          // Fallback untuk 2.5
-          config.thinkingConfig.thinkingBudget = 2048;
-        }
       }
 
       const client = this.getClientForModel(selectedModel);

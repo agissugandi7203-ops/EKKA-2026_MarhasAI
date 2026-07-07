@@ -44,6 +44,7 @@ import '../widgets/genesis_loading.dart';
 /// ```
 class AppRouter {
   final AuthBloc _authBloc;
+  final SetupCubit _setupCubit = SetupCubit();
   late final GoRouter _router;
 
   AppRouter({required AuthBloc authBloc}) : _authBloc = authBloc {
@@ -87,7 +88,7 @@ class AppRouter {
   // ROUTE DEFINITIONS
   // ══════════════════════════════════════════════════════════════════════
 
-  static List<RouteBase> _buildRoutes() {
+  List<RouteBase> _buildRoutes() {
     return [
       // ── Pre-Auth ──
       GoRoute(
@@ -156,8 +157,8 @@ class AppRouter {
       // Cubit ini otomatis di-dispose saat user keluar dari setup flow.
       ShellRoute(
         builder: (context, state, child) {
-          return BlocProvider<SetupCubit>(
-            create: (_) => SetupCubit(),
+          return BlocProvider<SetupCubit>.value(
+            value: _setupCubit,
             child: child,
           );
         },

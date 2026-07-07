@@ -51,8 +51,19 @@ class _SetupProfilePageState extends State<SetupProfilePage> {
       if (mounted) {
         setState(() {
           if (profile.username != null && profile.username!.isNotEmpty) {
-            _usernameController.text = profile.username!;
+            final rawUsername = profile.username!;
+            // Jika username tidak valid menurut standard regex, bersihkan otomatis
+            if (Validators.username(rawUsername) != null) {
+              _usernameController.text = Validators.sanitizeUsername(rawUsername);
+            } else {
+              _usernameController.text = rawUsername;
+            }
+          } else if (profile.fullName != null && profile.fullName!.isNotEmpty) {
+            // Jika username kosong tapi fullName ada (misal dari Google Sign-In pertama kali),
+            // buat username instan yang valid dari fullName.
+            _usernameController.text = Validators.sanitizeUsername(profile.fullName!);
           }
+          
           if (profile.fullName != null && profile.fullName!.isNotEmpty) {
             _fullNameController.text = profile.fullName!;
           }

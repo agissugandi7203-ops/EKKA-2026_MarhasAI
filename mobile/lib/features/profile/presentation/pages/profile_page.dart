@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shimmer/shimmer.dart';
@@ -337,14 +338,15 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
         leading: widget.onClose != null
             ? IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+                icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.navy900, size: 20),
                 onPressed: widget.onClose,
               )
             : Navigator.canPop(context)
                 ? IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+                    icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.navy900, size: 20),
                     onPressed: () => Navigator.pop(context),
                   )
                 : null,
@@ -352,12 +354,12 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
           'Profil Eco Warrior',
           style: AppTextStyles.headlineSmall.copyWith(
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: AppColors.navy900,
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout_rounded, color: Colors.white),
+            icon: const Icon(Icons.logout_rounded, color: AppColors.navy900),
             tooltip: 'Keluar',
             onPressed: _showLogoutConfirmDialog,
           ),
@@ -365,31 +367,7 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
       ),
       body: Stack(
         children: [
-          // ── Curved Gradient Header Background ──
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: Container(
-              height: 260,
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Color(0xFF0F172A), // Slate 900
-                    Color(0xFF1E293B), // Slate 800
-                  ],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(40),
-                  bottomRight: Radius.circular(40),
-                ),
-              ),
-            ),
-          ),
-
-          // Subtle blueprint grid pattern background to add premium character/texture
+          // Subtle blueprint grid pattern background to add premium character/texture (placed at the bottom of stack)
           Positioned.fill(
             child: RepaintBoundary(
               child: CustomPaint(
@@ -397,6 +375,8 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
               ),
             ),
           ),
+
+
 
           RefreshIndicator(
             onRefresh: _fetchProfile,

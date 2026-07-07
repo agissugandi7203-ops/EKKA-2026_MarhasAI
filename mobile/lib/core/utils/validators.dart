@@ -89,6 +89,29 @@ abstract final class Validators {
     return null;
   }
 
+  /// Otomatis membersihkan nama dari Google/Input menjadi format username yang valid.
+  /// Menghilangkan spasi, koma, titik, simbol, dan mengubah menjadi lowercase.
+  static String sanitizeUsername(String name) {
+    // 1. Ubah ke huruf kecil
+    String clean = name.toLowerCase();
+    
+    // 2. Hilangkan spasi, koma, titik, simbol, karakter khusus
+    // Hanya sisakan a-z, 0-9, dan underscore (_)
+    clean = clean.replaceAll(RegExp(r'[^a-z0-9_]'), '');
+    
+    // 3. Fallback jika kosong setelah pembersihan
+    if (clean.isEmpty) {
+      clean = 'warrior';
+    }
+
+    // 4. Batasi panjang maksimal 20 karakter agar lolos validasi usernameMaxLength
+    if (clean.length > 20) {
+      clean = clean.substring(0, 20);
+    }
+    
+    return clean;
+  }
+
   /// Validasi nama lengkap.
   static String? fullName(String? value) {
     if (value == null || value.trim().isEmpty) {

@@ -85,6 +85,11 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         serverClientId: '12178843429-lktd01tj39831ok404qssp246n3vblpf.apps.googleusercontent.com',
         scopes: ['email'],
       );
+      try {
+        await googleSignIn.signOut();
+      } catch (_) {
+        // Abaikan error sign out jika google_sign_in belum ter-sign-in sebelumnya
+      }
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
       if (googleUser == null) {
         throw AuthException.cancelled();
