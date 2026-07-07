@@ -106,8 +106,8 @@ class _SetupProfilePageState extends State<SetupProfilePage> {
       // JANGAN set _isSubmitting = false di sini agar loading overlay tetap tampil 
       // sampai AuthBloc mengalihkan halaman ke Welcome/Home secara otomatis.
 
-      // Memicu pengecekan ulang status autentikasi/onboarding di AuthBloc agar tersinkronisasi.
-      context.read<AuthBloc>().add(AuthCheckRequested());
+      // Memicu bypass onboarding status ke false secara instan untuk langsung beralih ke Welcome page.
+      context.read<AuthBloc>().add(OnboardingBypassed());
     } catch (e) {
       if (!mounted) return;
       setState(() {
