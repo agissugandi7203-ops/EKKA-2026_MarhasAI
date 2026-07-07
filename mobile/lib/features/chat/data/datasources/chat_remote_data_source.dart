@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import '../../../../core/network/dio_client.dart';
 import '../models/chat_message_model.dart';
@@ -90,57 +89,75 @@ class ChatRemoteDataSource {
         return;
       }
 
-      String buffer = '';
+      final lineStream = stream.cast<List<int>>().transform(utf8.decoder).transform(const LineSplitter());
       
-      final subscription = stream.listen(
-        (Uint8List chunk) {
-          // Decode binary data ke string UTF-8
-          final text = utf8.decode(chunk);
-          buffer += text;
+      bool inThought = false;
 
-          // Proses buffer per baris (Server-Sent Events dipisahkan dengan double newline)
-          while (buffer.contains('\n')) {
-            final index = buffer.indexOf('\n');
-            final line = buffer.substring(0, index).trim();
-            buffer = buffer.substring(index + 1);
+      final subscription = lineStream.listen(
+        (String line) {
+          final trimmedLine = line.trim();
+          if (trimmedLine.isEmpty) return;
 
-            if (line.isEmpty) continue;
+          // Jika baris berisi [DONE], matikan stream
+          if (trimmedLine == 'data: [DONE]') {
+            if (inThought) {
+              controller.add('</thought>');
+              inThought = false;
+            }
+            controller.close();
+            return;
+          }
 
-            // Jika baris berisi [DONE], matikan stream
-            if (line == 'data: [DONE]') {
-              controller.close();
+          // Jika baris dimulai dengan data:
+          if (trimmedLine.startsWith('data:')) {
+            final jsonStr = trimmedLine.substring(5).trim();
+            if (jsonStr.startsWith('[ERROR]')) {
+              controller.addError(FormatException(jsonStr));
               return;
             }
 
-            // Jika baris dimulai dengan data:
-            if (line.startsWith('data:')) {
-              final jsonStr = line.substring(5).trim();
-              if (jsonStr.startsWith('[ERROR]')) {
-                controller.addError(FormatException(jsonStr));
-                return;
-              }
-
-              try {
-                final Map<String, dynamic> dataMap = jsonDecode(jsonStr);
-                final choices = dataMap['choices'] as List?;
-                if (choices != null && choices.isNotEmpty) {
-                  final delta = choices[0]['delta'] as Map?;
-                  final content = delta?['content'] as String?;
-                  if (content != null && content.isNotEmpty) {
-                    controller.add(content);
+            try {
+              final Map<String, dynamic> dataMap = jsonDecode(jsonStr);
+              final choices = dataMap['choices'] as List?;
+              if (choices != null && choices.isNotEmpty) {
+                final delta = choices[0]['delta'] as Map?;
+                
+                // Cek reasoning_content (proses berpikir)
+                final reasoningContent = delta?['reasoning_content'] as String?;
+                if (reasoningContent != null && reasoningContent.isNotEmpty) {
+                  if (!inThought) {
+                    inThought = true;
+                    controller.add('<thought>');
                   }
+                  controller.add(reasoningContent);
                 }
-              } catch (_) {
-                // Abaikan kesalahan parse JSON untuk baris kosong atau keep-alive comments
+
+                // Cek content (jawaban utama)
+                final content = delta?['content'] as String?;
+                if (content != null && content.isNotEmpty) {
+                  if (inThought) {
+                    inThought = false;
+                    controller.add('</thought>');
+                  }
+                  controller.add(content);
+                }
               }
+            } catch (_) {
+              // Abaikan kesalahan parse JSON untuk baris kosong atau keep-alive comments
             }
           }
         },
         onError: (error) {
+          if (inThought) {
+            controller.add('</thought>');
+          }
           controller.addError(error);
           controller.close();
         },
         onDone: () {
+          if (inThought) {
+            controller.add('</thought>');
+          }
           if (!controller.isClosed) {
             controller.close();
           }

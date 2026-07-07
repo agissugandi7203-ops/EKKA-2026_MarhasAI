@@ -239,6 +239,20 @@ export class OpenRouterService {
         config.tools = toolsList;
       }
 
+      // Jika model adalah Pro, otomatis aktifkan thinkingConfig (Proses Berpikir)
+      if (selectedModel.includes('pro')) {
+        config.thinkingConfig = {
+          includeThoughts: true,
+        };
+        // Jika versi 3.x, gunakan thinkingLevel
+        if (selectedModel.includes('3.')) {
+          config.thinkingConfig.thinkingLevel = 'medium';
+        } else {
+          // Fallback untuk 2.5
+          config.thinkingConfig.thinkingBudget = 2048;
+        }
+      }
+
       // Mulai streaming dari Vertex AI
       const client = this.getClientForModel(selectedModel);
       const responseStream = await client.models.generateContentStream({
@@ -281,7 +295,23 @@ export class OpenRouterService {
                 break;
               }
 
-              const text = chunk.text;
+              // Ekstrak text dan thoughtText secara presisi dari parts
+              let text = '';
+              let thoughtText = '';
+
+              const parts = chunk.candidates?.[0]?.content?.parts || [];
+              for (const part of parts) {
+                if (part.thought && part.text) {
+                  thoughtText += part.text;
+                } else if (part.text) {
+                  text += part.text;
+                }
+              }
+
+              // Jika parts kosong tetapi ada chunk.text (untuk fallback SDK)
+              if (text === '' && thoughtText === '' && chunk.text) {
+                text = chunk.text;
+              }
               
               // Ekstrak metadata pencarian web (grounding) jika dikembalikan di chunk ini
               const searchChunks = chunk.candidates?.[0]?.groundingMetadata?.groundingChunks;
@@ -321,6 +351,28 @@ export class OpenRouterService {
                     }
                   };
                 });
+              }
+
+              // ── Kirim thoughtText ke client secara instan jika ada ──
+              if (thoughtText) {
+                const ssePayload = {
+                  id: streamId,
+                  object: 'chat.completion.chunk',
+                  created: Math.floor(Date.now() / 1000),
+                  model: selectedModel,
+                  provider: 'GoogleCloud',
+                  choices: [
+                    {
+                      index: 0,
+                      delta: {
+                        reasoning_content: thoughtText,
+                        role: 'assistant',
+                      },
+                      finish_reason: null,
+                    },
+                  ],
+                };
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify(ssePayload)}\n\n`));
               }
 
               if (text) {
@@ -562,6 +614,20 @@ export class OpenRouterService {
         config.tools = toolsList;
       }
 
+      // Jika model adalah Pro, otomatis aktifkan thinkingConfig (Proses Berpikir)
+      if (selectedModel.includes('pro')) {
+        config.thinkingConfig = {
+          includeThoughts: true,
+        };
+        // Jika versi 3.x, gunakan thinkingLevel
+        if (selectedModel.includes('3.')) {
+          config.thinkingConfig.thinkingLevel = 'medium';
+        } else {
+          // Fallback untuk 2.5
+          config.thinkingConfig.thinkingBudget = 2048;
+        }
+      }
+
       const client = this.getClientForModel(selectedModel);
       const response = await client.models.generateContent({
         model: selectedModel,
@@ -623,7 +689,25 @@ export class OpenRouterService {
         });
       }
 
-      let finalContent = response.text || '';
+      let finalContent = '';
+      let thoughtText = '';
+
+      const parts = response.candidates?.[0]?.content?.parts || [];
+      for (const part of parts) {
+        if (part.thought && part.text) {
+          thoughtText += part.text;
+        } else if (part.text) {
+          finalContent += part.text;
+        }
+      }
+
+      if (finalContent === '' && thoughtText === '' && response.text) {
+        finalContent = response.text;
+      }
+
+      if (thoughtText) {
+        finalContent = `<thought>${thoughtText}</thought>\n\n${finalContent}`;
+      }
       if (searchChunks && searchChunks.length > 0) {
         let citationText = '\n\n**Sumber Referensi:**';
         const seenUris = new Set<string>();

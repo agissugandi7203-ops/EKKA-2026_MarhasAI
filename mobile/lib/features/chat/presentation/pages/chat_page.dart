@@ -46,7 +46,8 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
   late AnimationController _orbAnimationController;
   late Animation<double> _orbScaleAnimation;
 
-  String _selectedModel = 'google/gemini-2.5-flash';
+  String _selectedModel = 'google/gemini-3.5-flash';
+  final Set<String> _expandedThoughtMessages = {};
   String? _attachedFileName;
   Uint8List? _attachedFileBytes;
   bool _isTyping = false;
@@ -724,8 +725,127 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
     String modelName = 'Geni-Flash';
     Color badgeColor = const Color(0xFF8B5CF6); // Lavender/purple
     if (msgModel.contains('pro')) {
-      modelName = 'Geni-Pro (3.1)';
+      modelName = 'Geni-Pro (Thinking)';
       badgeColor = const Color(0xFF10B981); // Emerald/Green
+    }
+
+    // Parse thought tags
+    String thoughtContent = '';
+    String mainContent = msg.message;
+
+    if (msg.message.contains('<thought>')) {
+      final parts = msg.message.split('</thought>');
+      if (parts.length > 1) {
+        thoughtContent = parts[0].replaceAll('<thought>', '').trim();
+        mainContent = parts.sublist(1).join('</thought>').trim();
+      } else {
+        // Thinking is still in progress (only open tag present)
+        thoughtContent = msg.message.replaceAll('<thought>', '').trim();
+        mainContent = '';
+      }
+    }
+
+    final collapsedKey = '${msg.id}_collapsed';
+    final isExpanded = _expandedThoughtMessages.contains(msg.id) || 
+        (isActiveStreaming && !_expandedThoughtMessages.contains(collapsedKey));
+
+    Widget? thoughtPanel;
+    if (thoughtContent.isNotEmpty) {
+      thoughtPanel = Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8FAFC), // Slate 50
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: const Color(0xFFE2E8F0), // Slate 200
+            width: 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            InkWell(
+              onTap: () => _toggleThoughtExpansion(msg.id, isActiveStreaming),
+              borderRadius: BorderRadius.circular(16),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.psychology_rounded,
+                      color: AppColors.navy500,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        isActiveStreaming && mainContent.isEmpty
+                            ? 'Geni AI sedang berpikir...'
+                            : 'Proses Berpikir',
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: AppColors.navy800,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                    Icon(
+                      isExpanded
+                          ? Icons.keyboard_arrow_up_rounded
+                          : Icons.keyboard_arrow_down_rounded,
+                      color: AppColors.textSecondary,
+                      size: 20,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            if (isExpanded) ...[
+              const Divider(color: Color(0xFFE2E8F0), height: 1, thickness: 1),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      thoughtContent,
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                        fontStyle: FontStyle.italic,
+                        height: 1.5,
+                        fontSize: 12.5,
+                      ),
+                    ),
+                    if (isActiveStreaming && mainContent.isEmpty) ...[
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          SizedBox(
+                            width: 12,
+                            height: 12,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 1.5,
+                              valueColor: AlwaysStoppedAnimation<Color>(AppColors.navy500),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Merumuskan jawaban...',
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppColors.textSecondary,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      );
     }
 
     return Column(
@@ -807,20 +927,27 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
                     ),
                   );
                 },
-                child: msg.message.isEmpty
+                child: (mainContent.isEmpty && thoughtContent.isEmpty)
                     ? SizedBox(
                         key: const ValueKey('thinking'),
                         child: _webSearchEnabled
                             ? const _WebSearchGroundingIndicator()
                             : const _ThinkingIndicator(),
                       )
-                    : SizedBox(
+                    : Column(
                         key: const ValueKey('content'),
-                        width: double.infinity,
-                        child: _MarkdownStreamRenderer(
-                          data: msg.message,
-                          isStreaming: isActiveStreaming,
-                        ),
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (thoughtPanel != null) thoughtPanel,
+                          if (mainContent.isNotEmpty)
+                            SizedBox(
+                              width: double.infinity,
+                              child: _MarkdownStreamRenderer(
+                                data: mainContent,
+                                isStreaming: isActiveStreaming,
+                              ),
+                            ),
+                        ],
                       ),
               ),
               _buildGroundingSources(msg.message),
@@ -1026,6 +1153,20 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
     }
   }
 
+  void _toggleThoughtExpansion(String msgId, bool isActiveStreaming) {
+    setState(() {
+      final collapsedKey = '${msgId}_collapsed';
+      if (_expandedThoughtMessages.contains(msgId) || 
+          (isActiveStreaming && !_expandedThoughtMessages.contains(collapsedKey))) {
+        _expandedThoughtMessages.remove(msgId);
+        _expandedThoughtMessages.add(collapsedKey);
+      } else {
+        _expandedThoughtMessages.add(msgId);
+        _expandedThoughtMessages.remove(collapsedKey);
+      }
+    });
+  }
+
   void _showAttachmentMenu() {
     showModalBottomSheet(
       context: context,
@@ -1087,8 +1228,8 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
                         ),
                         child: Row(
                           children: [
-                            _buildSheetModelItem('google/gemini-2.5-flash', '⚡ Geni Flash', setSheetState),
-                            _buildSheetModelItem('google/gemini-3.1-pro-preview', '💎 Geni Pro (3.1)', setSheetState),
+                            _buildSheetModelItem('google/gemini-3.5-flash', '⚡ Geni Flash (3.5)', setSheetState),
+                            _buildSheetModelItem('google/gemini-3.1-pro-preview', '🧠 Geni Pro (Thinking)', setSheetState),
                           ],
                         ),
                       ),
