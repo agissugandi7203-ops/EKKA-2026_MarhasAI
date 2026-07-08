@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Download, Menu, X, Key } from "lucide-react";
+import { liquidGlass } from "@/lib/liquid-glass";
 
 interface HeaderProps {
   onOpenLogin?: () => void;
@@ -13,6 +14,7 @@ export default function Header({ onOpenLogin }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const pathname = usePathname();
+  const headerRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -21,6 +23,15 @@ export default function Header({ onOpenLogin }: HeaderProps) {
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!isScrolled || !el) return;
+    const glass = liquidGlass(el, { blur: 12, saturate: 1.6, scale: -90 });
+    return () => {
+      glass.destroy();
+    };
+  }, [isScrolled]);
 
   const navLinks = [
     { label: "Solutions", href: "/solutions" },
@@ -43,9 +54,10 @@ export default function Header({ onOpenLogin }: HeaderProps) {
       isScrolled ? 'pt-0 px-0 md:pt-4 md:px-4' : 'pt-0 px-0'
     }`}>
       <header 
+        ref={headerRef}
         className={`pointer-events-auto w-full transition-all duration-300 flex flex-col gap-2 ${
           isScrolled 
-            ? "max-w-5xl rounded-none md:rounded-2xl bg-white md:bg-white/95 md:backdrop-blur-xl border-b md:border border-slate-100 md:border-black/5 shadow-md md:shadow-[0_8px_32px_rgba(0,0,0,0.08)] py-3 px-6 md:py-2.5 md:px-6" 
+            ? "max-w-5xl rounded-none md:rounded-2xl bg-white md:bg-transparent md:liquid-glass-dressing-light border-b md:border border-slate-100 md:border-white/20 shadow-md py-3 px-6 md:py-2.5 md:px-6" 
             : "max-w-full rounded-none bg-transparent border border-transparent py-5 px-6 sm:px-12 md:px-16"
         }`}
       >

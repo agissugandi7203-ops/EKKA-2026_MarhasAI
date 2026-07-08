@@ -105,6 +105,27 @@ body {
   pointer-events: none;
 }
 
+/* Premium Apple-Style Liquid Glass Material dressing */
+.liquid-glass-dressing {
+  background: linear-gradient(180deg,
+    rgba(14, 14, 22, 0.18), rgba(14, 14, 22, 0.32)) !important;
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.45),
+    inset 0 1px 1px rgba(255, 255, 255, 0.5),
+    inset 0 -8px 20px rgba(255, 255, 255, 0.06),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.13) !important;
+}
+
+.liquid-glass-dressing-light {
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.45)) !important;
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.08),
+    inset 0 1px 1px rgba(255, 255, 255, 0.6),
+    inset 0 -4px 12px rgba(255, 255, 255, 0.05),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.2) !important;
+}
+
 /* Fade-Up Entrance Animation */
 @keyframes fade-up {
   from {
