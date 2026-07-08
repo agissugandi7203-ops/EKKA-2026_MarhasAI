@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useRef } from "react";
 import BoomerangVideoBg from "@/components/BoomerangVideoBg";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -11,10 +11,83 @@ import {
   MessageSquare, 
   MapPin, 
   HelpCircle,
-  Clock
+  Clock,
+  X,
+  Sparkles,
+  Send,
+  Loader2,
+  CheckCircle2
 } from "lucide-react";
+import { useLiquidGlass } from "@/lib/useLiquidGlass";
 
 export default function Contact() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [transform, setTransform] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  
+  const dragStart = useRef({ x: 0, y: 0 });
+  const activeTransform = useRef({ x: 0, y: 0 });
+
+  // Form State
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  // Liquid Glass refs
+  const glassRef = useLiquidGlass<HTMLDivElement>();
+  const triggerRef = useLiquidGlass<HTMLButtonElement>();
+
+  // Pointer dragging handlers for premium desktop/mobile gesture tracking
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return; // Only allow drag on left mouse click
+    setIsDragging(true);
+    dragStart.current = { x: e.clientX, y: e.clientY };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDragging) return;
+    const dx = e.clientX - dragStart.current.x;
+    const dy = e.clientY - dragStart.current.y;
+    
+    // Containment boundary check helper
+    let newX = activeTransform.current.x + dx;
+    let newY = activeTransform.current.y + dy;
+
+    setTransform({ x: newX, y: newY });
+  };
+
+  const onPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    e.currentTarget.releasePointerCapture(e.pointerId);
+    
+    const dx = e.clientX - dragStart.current.x;
+    const dy = e.clientY - dragStart.current.y;
+    activeTransform.current = {
+      x: activeTransform.current.x + dx,
+      y: activeTransform.current.y + dy
+    };
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name || !email || !message) return;
+    setLoading(true);
+    
+    // Simulate API Submission
+    setTimeout(() => {
+      setLoading(false);
+      setSuccess(true);
+      setName("");
+      setEmail("");
+      setMessage("");
+      setTimeout(() => setSuccess(false), 5000);
+    }, 1500);
+  };
+
   return (
     <main className="relative w-full min-h-screen bg-slate-50 flex flex-col font-sans">
       
@@ -167,6 +240,130 @@ export default function Contact() {
           </div>
         </div>
       </section>
+
+      {/* Floating Draggable Contact Card */}
+      {isOpen && (
+        <div 
+          ref={glassRef}
+          style={{
+            position: "fixed",
+            bottom: "100px",
+            right: "24px",
+            width: "320px",
+            zIndex: 999,
+            transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+            transition: isDragging ? "none" : "transform 0.15s cubic-bezier(0.25, 0.8, 0.25, 1)",
+            touchAction: "none"
+          }}
+          className="liquid-glass-dressing rounded-[28px] p-6 shadow-2xl overflow-hidden border border-white/10"
+        >
+          {/* Card Header (Drag Handler) */}
+          <div 
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            className="flex items-center justify-between pb-3 border-b border-white/10 cursor-move select-none"
+          >
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[10px] font-bold text-white uppercase tracking-wider">Refractive Live Chat</span>
+            </div>
+            <button 
+              onClick={() => setIsOpen(false)}
+              className="text-slate-400 hover:text-white transition-colors cursor-pointer"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          {/* Card Content */}
+          <div className="mt-4 flex flex-col gap-4">
+            {success ? (
+              <div className="flex flex-col items-center text-center gap-3 py-6 animate-fade-up">
+                <div className="h-12 w-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                  <CheckCircle2 className="h-6 w-6" />
+                </div>
+                <h4 className="text-sm font-bold text-white">Pesan Terkirim!</h4>
+                <p className="text-[10px] text-slate-400 font-light max-w-[200px]">
+                  Terima kasih, tim dukungan kami akan segera menghubungi Anda melalui email.
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+                <p className="text-[11px] text-slate-350 font-light leading-relaxed">
+                  Tulis pesan Anda di bawah ini untuk terhubung langsung dengan sistem crowdsourcing Genesis.
+                </p>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[9px] font-bold uppercase tracking-wider text-slate-400 pl-0.5">Nama</label>
+                  <input 
+                    type="text" 
+                    required 
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Nama Anda" 
+                    className="w-full bg-white/5 border border-white/10 rounded-xl py-2 px-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-white/20 focus:bg-white/10 transition-colors"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[9px] font-bold uppercase tracking-wider text-slate-400 pl-0.5">Email</label>
+                  <input 
+                    type="email" 
+                    required 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="email@example.com" 
+                    className="w-full bg-white/5 border border-white/10 rounded-xl py-2 px-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-white/20 focus:bg-white/10 transition-colors"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[9px] font-bold uppercase tracking-wider text-slate-400 pl-0.5">Pesan</label>
+                  <textarea 
+                    rows={2}
+                    required 
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder="Bagaimana kami bisa membantu?" 
+                    className="w-full bg-white/5 border border-white/10 rounded-xl py-2 px-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-white/20 focus:bg-white/10 transition-colors resize-none"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="mt-2 w-full rounded-xl bg-white hover:bg-slate-100 text-navy-950 py-2.5 text-xs font-semibold shadow-md flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      Mengirim...
+                    </>
+                  ) : (
+                    <>
+                      Kirim Pesan
+                      <Send className="h-3 w-3" />
+                    </>
+                  )}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Floating Sparkles Glass Trigger Button */}
+      <button 
+        ref={triggerRef}
+        onClick={() => setIsOpen(!isOpen)}
+        style={{
+          position: "fixed",
+          bottom: "24px",
+          right: "24px",
+          zIndex: 998,
+        }}
+        className="liquid-glass-dressing h-14 w-14 rounded-full shadow-2xl flex items-center justify-center text-white hover:scale-110 active:scale-95 transition-transform duration-200 cursor-pointer border border-white/15"
+        title="Live Support Chat"
+      >
+        <MessageSquare className="h-6 w-6" />
+      </button>
 
       {/* Reusable Footer */}
       <Footer />
