@@ -99,12 +99,18 @@ class AppRouter {
       GoRoute(
         path: Routes.preOnboarding,
         name: Routes.preOnboardingName,
-        builder: (context, state) => const PreOnboardingPage(),
+        pageBuilder: (context, state) => _fadeTransitionPage(
+          state: state,
+          child: const PreOnboardingPage(),
+        ),
       ),
       GoRoute(
         path: Routes.introduction,
         name: Routes.introductionName,
-        builder: (context, state) => const IntroductionPage(),
+        pageBuilder: (context, state) => _fadeTransitionPage(
+          state: state,
+          child: const IntroductionPage(),
+        ),
       ),
 
       // ── Auth Flow ──

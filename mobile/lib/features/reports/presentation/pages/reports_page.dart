@@ -132,6 +132,10 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
         _isCameraPermissionGranted = true;
       });
 
+      // Tambahkan jeda waktu singkat jika izin baru saja diberikan pertama kali
+      // agar OS memiliki waktu memperbarui cache izin & me-resume service kamera.
+      await Future.delayed(const Duration(milliseconds: 300));
+
       try {
         _cameras = await availableCameras();
         if (_cameras.isNotEmpty) {
