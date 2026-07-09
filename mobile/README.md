@@ -179,3 +179,68 @@ Penyematan gambar di dalam dokumentasi menggunakan format:
 ```markdown
 <img src="../docs/assets/screenshots/mobile/nama_file.png" width="280" alt="Deskripsi Halaman" />
 ```
+
+---
+
+## 6. Detail Arsitektur State Management & Lifecycle BLoC (Deep Dive)
+
+Untuk mempermudah audit teknis bagi dewan juri, bagian ini menjelaskan secara terperinci aliran logika bisnis dan siklus hidup komponen gawai pada aplikasi Genesis:
+
+### A. Aliran Autentikasi & Integrasi Token JWT Supabase
+Aplikasi mobile Genesis mengamankan seluruh request API menggunakan otentikasi token JWT dinamis yang dipasok oleh Supabase:
+*   **`AuthBloc`**: Mengelola status masuk/keluar pengguna (`Unauthenticated`, `Authenticating`, `Authenticated`, `AuthError`).
+*   **Interceptor Dio Client**: Kustom `DioClient` mengimplementasikan interceptor penjelajah header untuk menyisipkan token JWT secara asinkron dari session aktif Supabase pada setiap request keluar:
+    ```dart
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) async {
+          final session = Supabase.instance.client.auth.currentSession;
+          if (session != null) {
+            options.headers['Authorization'] = 'Bearer ${session.accessToken}';
+          }
+          return handler.next(options);
+        },
+      ),
+    );
+    ```
+*   **Refresh Token**: Dio Interceptor secara otomatis menangani error `401 Unauthorized` dengan menembak penyedia refresh session Supabase, memperbarui token secara in-memory, dan mengulang kembali (*retry*) request klien yang tertunda tanpa gangguan visual bagi pengguna.
+
+### B. Setup Onboarding Wizard BLoC Lifecycle & AuthListenerWrapper
+Wizard onboarding berjalan melalui status terverifikasi bertahap. Masalah kritis di mana state loading memutus navigasi telah diselesaikan:
+*   **Geolokasi & Izin Notifikasi**: GPS mengambil data koordinat lintang/bujur dan mengirimkannya ke endpoint `/profiles/onboard` bersamaan dengan status persetujuan `POST_NOTIFICATIONS`.
+*   **Aligning `AuthListenerWrapper`**: Agar `BlocListener<AuthBloc, AuthState>` tidak terhapus dari memori (*unmounted*) sewaktu memicu state loading, ia diposisikan pada root widget tree tertinggi halaman `SetupProfilePage`. Hal ini menjamin status listener tetap aktif mengawasi perubahan ke state `Authenticated` untuk memicu aksi navigasi GoRouter `context.go('/home')` secara instan dan bebas kedip.
+
+### C. Sinkronisasi Modul Kamera Fisik & Anti-Race Condition
+Akses kamera pada menu `reports_page.dart` menangani transisi izin perangkat keras dengan aman:
+*   **Jeda OS Native**: Ketika sistem dialog izin kamera OS Android muncul, status aplikasi Flutter beralih ke `AppLifecycleState.inactive`. Seketika pengguna menekan "Allow", aplikasi aktif kembali dan langsung menjalankan pendeteksian perangkat keras.
+*   **Delay 300ms**: Tanpa jeda, OS belum selesai mengalokasikan memori hardware ke driver kamera, memicu error `CameraAccessDenied`. Solusinya adalah menyisipkan jeda sinkronisasi:
+    ```dart
+    final status = await Permission.camera.request();
+    if (status.isGranted) {
+      // Jeda 300ms yang menjamin sinkronisasi OS native selesai
+      await Future.delayed(const Duration(milliseconds: 300));
+      final cameras = await availableCameras();
+      _initializeCameraController(cameras.first);
+    }
+    ```
+
+### D. Optimasi Scroll Viewport-Sensitive & Typewriter Streaming SSE
+Respons visual Markdown obrolan dari Geni AI dirancang sangat mulus tanpa stutters:
+*   **PostFrameCallback**: Setiap karakter baru yang mengalir masuk dari Server-Sent Events (SSE) memicu pembaruan UI. Pemanggilan scroll diprogram menggunakan `WidgetsBinding.instance.addPostFrameCallback` agar bergulir pasca frame selesai dirender, mencegah konflik pengukuran tinggi konten dinamis.
+*   **Ambang Batas 150px**: Untuk melindungi pengalaman membaca pengguna, auto-scroll dinonaktifkan sementara jika jarak scroll viewport pengguna ke batas bawah melebihi 150px (artinya pengguna sengaja scroll ke atas untuk meninjau pesan lama).
+
+### E. Manajemen Memori & Pembuangan Sumber Daya (Disposal)
+Semua halaman/widget mematuhi standar bebas kebocoran memori (*memory leak-free*) sesuai dengan **`AGENTS.md`**:
+*   Penggunaan `TextEditingController` untuk input bar, `ScrollController` untuk viewport chat, dan `CameraController` untuk sensor kamera dibersihkan secara eksplisit di dalam metode lifecycle `dispose()`:
+    ```dart
+    @override
+    void dispose() {
+      _textController.dispose();
+      _scrollController.dispose();
+      _cameraController?.dispose();
+      _streamSubscription?.cancel();
+      super.dispose();
+    }
+    ```
+*   Setiap animasi transisi Lottie diatur agar berhenti berputar ketika elemen visual bergeser keluar dari layar (*off-screen*).
+

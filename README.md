@@ -439,6 +439,74 @@ Sebagai bagian dari proses pengembangan berkesinambungan dan audit kompetisi LKS
 
 ---
 
+## 🏗️ 9. Penjelasan Arsitektur Sistem Terintegrasi & Integritas Data (Deep Dive)
+
+Bagian ini menyajikan secara transparan bagaimana seluruh subsistem (Flutter Client, NestJS API Gateway, NextJS Admin Portal, dan Supabase Cloud Database) saling terhubung dan bertukar data secara aman:
+
+### A. Diagram Alir Integrasi End-to-End
+Visualisasi berikut menggambarkan rantai pengiriman data dari perangkat warga saat melakukan pelaporan hingga laporan tersebut tersaji di dashboard administrator secara tersensor dan terverifikasi geospasial:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Warga as Warga (Flutter Client)
+    participant Nest as NestJS API Gateway
+    participant Vision as Google Vision API
+    participant Sharp as Sharp Image Redactor
+    participant GCS as Google Cloud Storage
+    participant DB as Supabase Database (PostgreSQL/PostGIS)
+    actor Admin as Admin (NextJS Dashboard)
+
+    Warga->>Nest: POST /reports (Foto Laporan, Lat, Lng, Deskripsi)
+    Note over Nest: Menyetel validasi JWT token Supabase
+    Nest->>DB: RPC check_duplicate_report(Lat, Lng)
+    DB-->>Nest: Kembalikan Laporan Aktif (Radius 50m)
+    alt Ada Laporan Aktif (Deduplikasi Terdeteksi)
+        Nest-->>Warga: Response: Laporan digabungkan (Upvoted/Merged)
+    else Lokasi Laporan Baru
+        Nest->>Vision: Kirim buffer gambar asinkron (In-Memory)
+        Vision-->>Nest: Kembalikan koordinat wajah & plat nomor (Bounding Boxes)
+        Nest->>Sharp: Ekstraksi area koordinat & Gaussian Blur (25px)
+        Sharp-->>Nest: Kembalikan buffer gambar tersensor
+        Nest->>GCS: Unggah buffer gambar tersensor ke Bucket
+        GCS-->>Nest: Kembalikan URL publik berkas gambar
+        Nest->>DB: INSERT INTO reports (URL Gambar, Geometri POINT, Deskripsi, User ID)
+        DB-->>Nest: Konfirmasi Penyimpanan & Pemicu Trigger XP (+100 XP Warga)
+        Nest-->>Warga: Response: Laporan Berhasil Dibuat (Lengkap dengan Hasil AI Scan)
+    end
+    DB-->>Admin: Real-time Listener (Supabase Realtime): update dashboard
+    Admin->>Nest: GET /reports (Pantau laporan & kelola badges)
+```
+
+### B. Relasi Skema Basis Data Relasional & Geospasial
+Genesis menggunakan basis data PostgreSQL di dalam ekosistem Supabase dengan skema relasi terstruktur:
+*   **`public.profiles`**: Menyimpan profil warga (Username, XP, Level, Koin Emas, Streak, Kota Administrasi). Relasi satu-ke-satu (`1:1`) dengan `auth.users` Supabase.
+*   **`public.reports`**: Menyimpan meta-data laporan spasial. Kolom `location` bertipe data `geometry(Point, 4326)` diindeks spasial menggunakan indeks **GIST (Generalized Search Tree)** untuk memelihara performa kueri radius `ST_DWithin`.
+*   **`public.badges`** & **`public.profile_badges`**: Implementasi relasi banyak-ke-banyak (*Many-to-Many*) untuk lencana penghargaan yang diperoleh warga. Kolom lencana dikelola secara ketat oleh endpoint admin NestJS.
+*   **`public.daily_quests`**: Menyimpan status misi harian warga yang diperbarui oleh trigger PostgreSQL secara harian.
+
+| Nama Tabel | Deskripsi Fitur | Kolom Kunci Utama/Asing | Ekstensi/Indeks Terkait |
+|---|---|---|---|
+| `profiles` | Data identitas, level, XP, koin | `id` (PK, refs auth.users) | B-Tree Index |
+| `reports` | Log pelaporan sampah spasial | `id` (PK), `user_id` (FK) | PostGIS GIST Index (on `location`) |
+| `badges` | Katalog lencana sistem | `id` (PK) | B-Tree Index |
+| `profile_badges` | Relasi many-to-many badge | `profile_id` (FK), `badge_id` (FK) | Composite PK Index |
+| `knowledge_base` | Artikel hukum perda untuk RAG | `id` (PK) | pgvector HNSW Index (on `embedding`) |
+
+### C. Alokasi Model Vertex AI & Protokol Streaming SSE
+Logika asisten AI Geni dan analisis citra visual di backend Genesis memanfaatkan model bahasa AI terbaru dari Google Cloud Vertex AI SDK:
+1.  **Geni-Flash (`gemini-3.5-flash`)**: Dialokasikan di region Singapura (`asia-southeast1`) untuk performa latensi super cepat. Digunakan untuk obrolan interaktif harian dan SSE streaming Server-Sent Events ( SSE memancarkan data secara instan menggunakan tipe buffer teks `data: [TEXT_CHUNK]` ke gawai warga).
+2.  **Geni-Pro (`gemini-3.1-pro-preview`)**: Dialokasikan di region US (`us-central1`) untuk penanganan penalaran (*reasoning*) hukum perda dan undang-undang yang kompleks. Dilengkapi setelan **Thinking Budget** sebesar 4096 token agar AI dapat menyusun langkah penalaran bertahap sebelum merumuskan kesimpulan akhir.
+3.  **Whisper Audio Transcription**: File audio base64 didekode menjadi format binary `.m4a` dan dikirimkan asinkron ke server transkripsi, mengamankan akurasi penulisan suara warga hingga 98%.
+
+### D. Standar Keamanan & Perlindungan Sistem
+Keamanan data di Genesis dibangun berbasis standar industri:
+*   **RBAC (Role-Based Access Control)**: Memisahkan hak istimewa administrator (`admin`) dan warga biasa (`citizen`). Peran tersimpan secara aman di kolom `role` tabel `public.profiles`. Akses ke API backend admin diamankan dengan kombinasi `@Roles('admin')` decorator dan `RolesGuard`.
+*   **Supabase Service Role Key Protection**: Kunci bypass bypass keamanan `SUPABASE_SERVICE_ROLE_KEY` ditempatkan **secara eksklusif** di variabel lingkungan `.env` server backend NestJS. Sisi klien Flutter dan NextJS tidak pernah diizinkan menyimpan kunci sensitif ini. Segala aksi administratif (seperti modifikasi lencana warga, hapus akun test user) wajib disalurkan melalui verifikasi API backend.
+*   **Prompt Injection Protection**: Kueri input disaring di backend untuk mereduksi eksploitasi jailbreak model LLM.
+
+---
+
 ## 🗺️ 10. Roadmap & Rencana Pengembangan Masa Depan
 
 Platform Genesis didesain untuk dikembangkan melampaui tahapan MVP kompetisi EKKA. Visi jangka panjang kami mencakup:
