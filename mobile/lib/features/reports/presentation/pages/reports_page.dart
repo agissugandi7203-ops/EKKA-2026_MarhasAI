@@ -1732,6 +1732,7 @@ class _AIScanBottomSheet extends StatefulWidget {
 class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
   final TextEditingController _chatController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final FocusNode _chatFocusNode = FocusNode();
   final List<Map<String, String>> _messages = [];
   bool _isTyping = false;
   bool _webSearchEnabled = false;
@@ -1742,6 +1743,7 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
   @override
   void initState() {
     super.initState();
+    _chatFocusNode.addListener(_onFocusChanged);
     if (widget.initialMessages.isNotEmpty) {
       _messages.addAll(widget.initialMessages);
     } else {
@@ -1749,10 +1751,17 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
     }
   }
 
+  void _onFocusChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
   @override
   void dispose() {
     _chatController.dispose();
     _scrollController.dispose();
+    _chatFocusNode.dispose();
     _streamingTextNotifier.dispose();
     super.dispose();
   }
@@ -1974,8 +1983,9 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     final screenHeight = MediaQuery.of(context).size.height;
+    final isKeyboardActiveForSheet = bottomInset > 0 && _chatFocusNode.hasFocus;
     return Container(
-      height: bottomInset > 0 
+      height: isKeyboardActiveForSheet 
           ? (screenHeight - MediaQuery.of(context).padding.top) 
           : screenHeight * 0.82,
       decoration: const BoxDecoration(
@@ -2036,7 +2046,12 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
             child: ListView.builder(
               controller: _scrollController,
               physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-              padding: const EdgeInsets.only(left: 20, right: 20, top: 20, bottom: 120),
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 20,
+                bottom: MediaQuery.of(context).size.height * 0.42,
+              ),
               itemCount: _messages.length + (_isTyping ? 1 : 0),
               itemBuilder: (context, index) {
                 if (index == _messages.length && _isTyping) {
@@ -2131,6 +2146,7 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
                     Expanded(
                       child: TextField(
                         controller: _chatController,
+                        focusNode: _chatFocusNode,
                         enabled: !_isTyping,
                         style: AppTextStyles.bodyMedium.copyWith(
                           color: _isTyping ? AppColors.textDisabled : AppColors.navy900,
