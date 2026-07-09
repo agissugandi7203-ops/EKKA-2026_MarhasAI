@@ -52,9 +52,9 @@ Setiap fitur dirancang secara modular dengan pemisahan tanggung jawab (*Separati
 - Menggunakan pustaka **Sharp** untuk memburamkan (*blurring*) koordinat wajah dan plat nomor secara Gaussian sebelum gambar disimpan di **Google Cloud Storage (GCS)**.
 
 ### D. Chatbot AI RAG (Retrieval-Augmented Generation) & Whisper STT
-- **Vektor Similarity Search**: Menghasilkan embedding teks (768 dimensi) melalui OpenRouter dan mencari regulasi kota yang relevan di tabel Supabase `knowledge_base` menggunakan indeks HNSW.
+- **Vektor Similarity Search**: Menghasilkan embedding teks (768 dimensi) melalui Google GenAI SDK (Vertex AI) dan mencari regulasi kota yang relevan di tabel Supabase `knowledge_base` menggunakan indeks HNSW.
 - **SSE Streaming**: Mengirimkan jawaban asisten AI secara real-time chunk-by-chunk melalui Server-Sent Events (SSE).
-- **Whisper STT**: Menerima unggahan rekaman suara warga dalam format base64 `.m4a` dan memanggil model Whisper-1 via OpenRouter untuk menghasilkan transkripsi teks secara presisi.
+- **Whisper STT**: Menerima unggahan rekaman suara warga dalam format base64 `.m4a` dan memanggil model Whisper-1 via Vertex AI / OpenRouter adapter untuk menghasilkan transkripsi teks secara presisi.
 - **Prompt Injection Guardrails**: Sistem filter input lokal untuk mendeteksi dan meredaksi serangan bypass system prompt (misalnya character-spaced evasion, encoding evasion, dan typoglycemia).
 
 ### E. Gamifikasi & Leaderboard Engine
@@ -73,7 +73,7 @@ src/
 ├── leaderboard/        # Endpoint data peringkat global & wilayah
 ├── reports/            # API pelaporan masalah lingkungan spasial
 ├── storage/            # Integrasi GCS & sensor gambar PII
-├── openrouter/         # Integrasi global API OpenRouter (LLM, Whisper, Embeddings)
+├── openrouter/         # Integrasi Google GenAI SDK (Vertex AI) - *nama modul tetap openrouter demi kompatibilitas*
 ├── knowledge-base/     # CRUD dokumen hukum perda bagi admin
 ├── chat/               # Chatbot AI RAG & Transkripsi Audio
 └── common/             # Interceptor, guard, & decorator global
@@ -86,8 +86,8 @@ src/
 ### Prasyarat
 - Node.js (v18+)
 - Supabase Project dengan ekstensi `postgis` dan `vector`
-- Akun Google Cloud dengan akses Google Cloud Storage dan Cloud Vision API
-- API Key OpenRouter
+- Akun Google Cloud dengan akses Google Cloud Storage, Cloud Vision API, dan Vertex AI
+- Kunci API Google Cloud / OpenRouter (disimpan dalam variabel OPENROUTER_API_KEY)
 
 ### Langkah Pemasangan
 

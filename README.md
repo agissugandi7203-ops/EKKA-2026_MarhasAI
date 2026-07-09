@@ -31,7 +31,7 @@
     <img src="https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?logo=supabase&logoColor=white" alt="Supabase" />
   </a>
   <a href="#arsitektur--teknologi">
-    <img src="https://img.shields.io/badge/OpenRouter-AI-8A2BE2?logo=openai&logoColor=white" alt="AI Models" />
+    <img src="https://img.shields.io/badge/Vertex_AI-Google_Cloud-4285F4?logo=google-cloud&logoColor=white" alt="Vertex AI" />
   </a>
 </div>
 
@@ -162,7 +162,7 @@ sequenceDiagram
     participant BE as NestJS Backend
     participant Guard as Guardrails Engine
     participant DB as Supabase pgvector
-    participant LLM as OpenRouter LLM
+    participant LLM as Vertex AI LLM
 
     Client->>BE: POST /chat/stream (Teks Query)
     BE->>Guard: Analisis Teks Input
@@ -204,7 +204,7 @@ Integritas basis data dilindungi melalui prinsip *Least Privilege*:
 - **Server (Backend)**: Operasi eskalasi *privilege*, seperti manipulasi *Experience Points (XP)*, pencabutan *Badges*, atau penghapusan akun spam, dilakukan eksklusif oleh backend NestJS menggunakan `SUPABASE_SERVICE_ROLE_KEY`. Rute sensitif ini dikawal oleh dekorator `@Roles('admin')` dan `JwtAuthGuard`.
 
 ### 4.5. Rate Limiting Terhadap API Spamming
-Infrastruktur AI berbasis penggunaan *token* berbiaya tinggi. Untuk mencegah bot menguras batas kuota penagihan OpenRouter, endpoint `/chat/stream` dilindungi oleh `ThrottlerGuard` berbasis IP dan User ID. Warga dibatasi maksimum 10 pertanyaan per menit.
+Infrastruktur AI berbasis penggunaan *token* berbiaya tinggi. Untuk mencegah bot menguras batas kuota penagihan Vertex AI, endpoint `/chat/stream` dilindungi oleh `ThrottlerGuard` berbasis IP dan User ID. Warga dibatasi maksimum 10 pertanyaan per menit.
 
 ---
 
@@ -223,7 +223,7 @@ Genesis adalah sistem *full-stack* modern yang menggunakan perpaduan teknologi p
 ### 5.2. Backend API & AI Gateway
 - **Framework**: NestJS (TypeScript) dengan adapter Fastify
 - **Validasi Data**: class-validator & class-transformer (DTO)
-- **Koneksi AI**: OpenRouter SDK (Kompatibel dengan antarmuka OpenAI)
+- **Koneksi AI**: Google GenAI SDK (Vertex AI) - *menggunakan nama config OPENROUTER untuk kompatibilitas*
 - **Pemrosesan Gambar**: Sharp (High-performance Node.js image processing)
 - **Geospasial DB**: TypeORM dengan PostGIS Driver
 
@@ -281,7 +281,7 @@ Pastikan perangkat lunak berikut telah terpasang:
 - **Node.js**: Versi 18 LTS atau 20 LTS.
 - **Flutter SDK**: Versi 3.19 ke atas (Pastikan `flutter doctor` tidak mendeteksi error fatal).
 - **Git**: Untuk manajemen versi.
-- **Kredensial**: Akun Supabase (untuk database) dan OpenRouter (untuk layanan AI).
+- **Kredensial**: Akun Supabase (untuk database) dan Google Cloud Service Account / API Key (untuk layanan Vertex AI).
 
 ---
 
@@ -302,7 +302,7 @@ Backend bertindak sebagai fondasi utama. Jalankan ini terlebih dahulu.
    ```bash
    cp .env.example .env
    ```
-   *Edit berkas `.env` dan pastikan Anda mengisi `DATABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `OPENROUTER_API_KEY`.*
+    *Edit berkas `.env` dan pastikan Anda mengisi `DATABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `OPENROUTER_API_KEY` (yang berfungsi sebagai kunci otentikasi Google Cloud).*
 4. **Jalankan Skrip Migrasi (Opsional jika skema baru)**:
    ```bash
    npm run typeorm migration:run
