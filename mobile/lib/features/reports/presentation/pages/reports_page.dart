@@ -1703,23 +1703,25 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
     super.dispose();
   }
 
-  void _scrollToBottom() {
+  void _scrollToBottom({bool force = false, bool isStreaming = false}) {
     if (_scrollController.hasClients) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        Future.delayed(const Duration(milliseconds: 50), () {
-          if (_scrollController.hasClients && mounted) {
+        if (!_scrollController.hasClients) return;
+        final position = _scrollController.position;
+        if (force || (position.maxScrollExtent - position.pixels < 150)) {
+          if (isStreaming) {
+            _scrollController.jumpTo(position.maxScrollExtent);
+          } else {
             _scrollController.animateTo(
-              _scrollController.position.maxScrollExtent,
+              position.maxScrollExtent,
               duration: const Duration(milliseconds: 250),
               curve: Curves.easeOut,
             );
           }
-        });
+        }
       });
     }
   }
-
-
 
   void _typewriterEffect(String fullText) async {
     setState(() {
@@ -1743,20 +1745,12 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
         _messages[index]['text'] = displayed;
       });
       
-      if (_scrollController.hasClients) {
-        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-      }
+      _scrollToBottom(isStreaming: true);
       
       await Future.delayed(delay);
     }
 
-    if (_scrollController.hasClients) {
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeOut,
-      );
-    }
+    _scrollToBottom(force: true);
     widget.onMessagesUpdated(_messages);
   }
 
@@ -1956,83 +1950,93 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
                 final msg = _messages[index];
                 final isUser = msg['sender'] == 'user';
 
-                return Align(
-                  alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-                  child: Container(
-                    margin: const EdgeInsets.only(bottom: 14),
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: isUser ? AppColors.navy700 : AppColors.navy50,
-                      borderRadius: BorderRadius.only(
-                        topLeft: const Radius.circular(16),
-                        topRight: const Radius.circular(16),
-                        bottomLeft: Radius.circular(isUser ? 16 : 4),
-                        bottomRight: Radius.circular(isUser ? 4 : 16),
+                if (isUser) {
+                  return Align(
+                    alignment: Alignment.centerRight,
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 14),
+                      padding: const EdgeInsets.all(14),
+                      decoration: const BoxDecoration(
+                        color: AppColors.navy700,
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(20),
+                          topRight: Radius.circular(20),
+                          bottomLeft: Radius.circular(20),
+                          bottomRight: Radius.circular(4),
+                        ),
                       ),
-                      border: Border.all(
-                        color: isUser ? Colors.transparent : AppColors.divider,
-                        width: 1,
+                      child: Text(
+                        msg['text']!,
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: Colors.white,
+                          fontSize: 15,
+                        ),
                       ),
                     ),
-                    child: isUser
-                        ? Text(
-                            msg['text']!,
-                            style: AppTextStyles.bodyMedium.copyWith(
-                              color: Colors.white,
-                              fontSize: 15,
+                  );
+                } else {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(left: 8.0, right: 8.0, bottom: 12.0),
+                        child: MarkdownBody(
+                          data: msg['text']!,
+                          selectable: true,
+                          builders: {
+                            'pre': DraftMarkdownBuilder(),
+                            'img': PremiumImageMarkdownBuilder(),
+                          },
+                          onTapLink: (text, href, title) {
+                            if (href != null) {
+                              _showCitationPreviewSheet(context, href, text);
+                            }
+                          },
+                          styleSheet: MarkdownStyleSheet(
+                            p: AppTextStyles.bodyLarge.copyWith(
+                              color: AppColors.navy900,
+                              fontSize: 15.5,
+                              height: 1.55,
                             ),
-                          )
-                        : MarkdownBody(
-                            data: msg['text']!,
-                            selectable: true,
-                            builders: {
-                              'pre': DraftMarkdownBuilder(),
-                              'img': PremiumImageMarkdownBuilder(),
-                            },
-                            onTapLink: (text, href, title) {
-                              if (href != null) {
-                                _showCitationPreviewSheet(context, href, text);
-                              }
-                            },
-                            styleSheet: MarkdownStyleSheet(
-                              p: AppTextStyles.bodyLarge.copyWith(
-                                color: AppColors.navy900,
-                                fontSize: 15.5,
-                                height: 1.55,
-                              ),
-                              strong: AppTextStyles.bodyLarge.copyWith(
-                                color: AppColors.navy900,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 15.5,
-                                height: 1.55,
-                              ),
-                              h1: AppTextStyles.titleMedium.copyWith(
-                                color: AppColors.navy900,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18,
-                                height: 1.4,
-                              ),
-                              h2: AppTextStyles.titleMedium.copyWith(
-                                color: AppColors.navy900,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16.5,
-                                height: 1.4,
-                              ),
-                              h3: AppTextStyles.titleMedium.copyWith(
-                                color: AppColors.navy900,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 15,
-                                height: 1.4,
-                              ),
-                              listBullet: AppTextStyles.bodyLarge.copyWith(
-                                color: AppColors.navy900,
-                                fontSize: 15.5,
-                                height: 1.55,
-                              ),
+                            strong: AppTextStyles.bodyLarge.copyWith(
+                              color: AppColors.navy900,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15.5,
+                              height: 1.55,
+                            ),
+                            h1: AppTextStyles.titleMedium.copyWith(
+                              color: AppColors.navy900,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                              height: 1.4,
+                            ),
+                            h2: AppTextStyles.titleMedium.copyWith(
+                              color: AppColors.navy900,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16.5,
+                              height: 1.4,
+                            ),
+                            h3: AppTextStyles.titleMedium.copyWith(
+                              color: AppColors.navy900,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                              height: 1.4,
+                            ),
+                            listBullet: AppTextStyles.bodyLarge.copyWith(
+                              color: AppColors.navy900,
+                              fontSize: 15.5,
+                              height: 1.55,
                             ),
                           ),
-                  ),
-                );
+                        ),
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 8.0),
+                        child: Divider(color: AppColors.divider, height: 24, thickness: 1),
+                      ),
+                    ],
+                  );
+                }
               },
             ),
           ),
@@ -2049,82 +2053,134 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
                       ? MediaQuery.of(context).padding.bottom + 10.0
                       : 20.0),
             ),
-            child: Row(
-              children: [
-                // Integrated Web Search button
-                Tooltip(
-                  message: _webSearchEnabled ? 'Pencarian Web Aktif' : 'Pencarian Web Nonaktif',
-                  child: InkWell(
-                    onTap: _isTyping ? null : () {
-                      setState(() {
-                        _webSearchEnabled = !_webSearchEnabled;
-                      });
-                    },
-                    borderRadius: BorderRadius.circular(20),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: _webSearchEnabled 
-                            ? (_isTyping ? AppColors.navy100 : AppColors.gold).withValues(alpha: 0.15) 
-                            : Colors.transparent,
-                        shape: BoxShape.circle,
-                      ),
-                      child: AnimatedRotation(
-                        turns: _webSearchEnabled ? 1.0 : 0.0,
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeInOutBack,
-                        child: Icon(
-                          Icons.language_rounded,
-                          color: _isTyping
-                              ? AppColors.textDisabled
-                              : (_webSearchEnabled ? AppColors.gold : AppColors.textSecondary),
-                          size: 22,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24.0),
+                border: Border.all(
+                  color: const Color(0xFFE2E8F0),
+                  width: 1.5,
+                ),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0xFFE2E8F0),
+                    offset: Offset(0, 4),
+                    blurRadius: 0,
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    // Text input field (flexible width, auto-expands from 1 to 5 lines)
+                    Expanded(
+                      child: TextField(
+                        controller: _chatController,
+                        enabled: !_isTyping,
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: _isTyping ? AppColors.textDisabled : AppColors.navy900,
+                        ),
+                        keyboardType: TextInputType.multiline,
+                        minLines: 1,
+                        maxLines: 5,
+                        textInputAction: TextInputAction.newline,
+                        decoration: InputDecoration(
+                          hintText: _isTyping ? 'Geni sedang mengetik...' : 'Tanyakan hasil deteksi...',
+                          hintStyle: AppTextStyles.bodyMedium.copyWith(color: AppColors.textDisabled),
+                          contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          disabledBorder: InputBorder.none,
+                          filled: false,
                         ),
                       ),
                     ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: AppColors.navy50,
-                      borderRadius: BorderRadius.circular(28),
-                      border: Border.all(color: AppColors.divider),
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: TextField(
-                      controller: _chatController,
-                      style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary),
-                      onSubmitted: (_) => _sendMessage(),
-                      decoration: InputDecoration(
-                        hintText: 'Tanyakan hasil deteksi...',
-                        hintStyle: AppTextStyles.bodyMedium.copyWith(color: AppColors.textDisabled),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                    const SizedBox(width: 8),
+
+                    // Web Search (Globe icon)
+                    Tooltip(
+                      message: _webSearchEnabled ? 'Pencarian Web Aktif' : 'Pencarian Web Nonaktif',
+                      child: InkWell(
+                        onTap: _isTyping ? null : () {
+                          setState(() {
+                            _webSearchEnabled = !_webSearchEnabled;
+                          });
+                        },
+                        borderRadius: BorderRadius.circular(20),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: _webSearchEnabled 
+                                ? (_isTyping ? AppColors.disabled : AppColors.gold).withValues(alpha: 0.15) 
+                                : Colors.transparent,
+                            shape: BoxShape.circle,
+                          ),
+                          child: AnimatedRotation(
+                            turns: _webSearchEnabled ? 1.0 : 0.0,
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOutBack,
+                            child: Icon(
+                              Icons.language_rounded,
+                              color: _isTyping
+                                  ? AppColors.textDisabled
+                                  : (_webSearchEnabled ? AppColors.gold : AppColors.textSecondary),
+                              size: 20,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                GestureDetector(
-                  onTap: _sendMessage,
-                  child: Container(
-                    width: 44,
-                    height: 44,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppColors.navy800,
+                    const SizedBox(width: 10),
+
+                    // Send Button with premium gradient
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 2),
+                      child: GestureDetector(
+                        onTap: _isTyping ? null : _sendMessage,
+                        child: AnimatedScale(
+                          scale: 1.0,
+                          duration: const Duration(milliseconds: 150),
+                          child: Container(
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: LinearGradient(
+                                colors: _isTyping
+                                    ? [AppColors.disabled, AppColors.disabled.withValues(alpha: 0.8)]
+                                    : [
+                                        const Color(0xFF0F2042),
+                                        const Color(0xFF0A1628),
+                                      ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: _isTyping 
+                                      ? AppColors.disabled.withValues(alpha: 0.3)
+                                      : const Color(0xFF0A1628).withValues(alpha: 0.2),
+                                  offset: const Offset(0, 2),
+                                  blurRadius: 2,
+                                ),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.send_rounded,
+                              color: Colors.white,
+                              size: 16,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
-                    child: const Icon(
-                      Icons.send_rounded,
-                      color: Colors.white,
-                      size: 18,
-                    ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ],
