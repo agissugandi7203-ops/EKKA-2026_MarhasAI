@@ -10,6 +10,7 @@ import '../../../../core/network/dio_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:camera/camera.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shimmer/shimmer.dart';
@@ -224,7 +225,39 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
       setState(() {
         _isCapturing = false;
       });
-      context.showErrorSnackBar('Gagal mengambil foto dari kamera hardware. Silakan coba lagi.');
+      context.showWarningSnackBar('Kamera hardware bermasalah. Mengalihkan ke Kamera Sistem...');
+      await _pickImage(ImageSource.camera);
+    }
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: source,
+        imageQuality: 85,
+      );
+
+      if (image == null) return;
+
+      _disposeCamera();
+
+      setState(() {
+        _isCaptured = true;
+        _capturedImagePath = image.path;
+        _isCapturing = false;
+      });
+      
+      if (!mounted) return;
+      context.showSuccessSnackBar(
+        source == ImageSource.camera 
+          ? '📸 Foto terambil via Kamera Sistem!' 
+          : '🖼️ Foto dipilih dari Galeri!'
+      );
+    } catch (err) {
+      debugPrint('Error picking image: $err');
+      if (!mounted) return;
+      context.showErrorSnackBar('Gagal mengambil gambar: $err');
     }
   }
 
@@ -516,16 +549,33 @@ class _ReportsPageState extends State<ReportsPage> with SingleTickerProviderStat
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.navy700,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              ),
-              onPressed: _initializeCamera,
-              icon: const Icon(Icons.refresh_rounded, size: 18),
-              label: const Text('Coba Lagi', style: TextStyle(fontWeight: FontWeight.bold)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.navy700,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  onPressed: _initializeCamera,
+                  icon: const Icon(Icons.refresh_rounded, size: 18),
+                  label: const Text('Coba Lagi', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.emerald,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  onPressed: () => _pickImage(ImageSource.camera),
+                  icon: const Icon(Icons.camera_rounded, size: 18),
+                  label: const Text('Kamera Sistem', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                ),
+              ],
             ),
           ],
         ),
@@ -1685,6 +1735,8 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
   bool _isTyping = false;
   bool _webSearchEnabled = false;
   String _loadingText = 'Geni sedang melihat gambar...';
+  bool _isStreamingActive = false;
+  final ValueNotifier<String> _streamingTextNotifier = ValueNotifier<String>('');
 
   @override
   void initState() {
@@ -1700,32 +1752,39 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
   void dispose() {
     _chatController.dispose();
     _scrollController.dispose();
+    _streamingTextNotifier.dispose();
     super.dispose();
   }
 
   void _scrollToBottom({bool force = false, bool isStreaming = false}) {
     if (_scrollController.hasClients) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!_scrollController.hasClients) return;
-        final position = _scrollController.position;
-        if (force || (position.maxScrollExtent - position.pixels < 150)) {
+      // With reverse: true, the bottom of the list is at offset 0.
+      final double offset = _scrollController.offset;
+
+      // Only trigger auto-scroll if forced or user is already at the bottom (within 150px)
+      if (force || offset < 150) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!_scrollController.hasClients) return;
           if (isStreaming) {
-            _scrollController.jumpTo(position.maxScrollExtent);
+            _scrollController.jumpTo(0);
           } else {
             _scrollController.animateTo(
-              position.maxScrollExtent,
+              0,
               duration: const Duration(milliseconds: 250),
               curve: Curves.easeOut,
             );
           }
-        }
-      });
+        });
+      }
     }
   }
 
   void _typewriterEffect(String fullText) async {
+    _streamingTextNotifier.value = '';
+
     setState(() {
       _isTyping = false;
+      _isStreamingActive = true;
       _messages.add({
         'sender': 'ai',
         'text': '',
@@ -1733,22 +1792,39 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
     });
 
     final int index = _messages.length - 1;
-    String displayed = '';
-    const int chunkSize = 6;
-    const delay = Duration(milliseconds: 15);
+    final stopwatch = Stopwatch()..start();
+    
+    // Kecepatan target: 0.15 karakter per milidetik (sekitar 150 karakter per detik)
+    // Memberikan tampilan reveal huruf yang sangat cepat, responsif, namun tetap mengalir mulus
+    const double charsPerMs = 0.15; 
+    const frameDuration = Duration(milliseconds: 16); // Sinkron dengan 60 FPS (~16.6ms)
 
-    for (int i = 0; i < fullText.length; i += chunkSize) {
-      if (!mounted) return;
-      final end = (i + chunkSize < fullText.length) ? i + chunkSize : fullText.length;
-      displayed += fullText.substring(i, end);
-      setState(() {
-        _messages[index]['text'] = displayed;
-      });
+    while (true) {
+      if (!mounted) break;
       
-      _scrollToBottom(isStreaming: true);
+      final int elapsedMs = stopwatch.elapsedMilliseconds;
+      final int targetLength = (elapsedMs * charsPerMs).toInt();
       
-      await Future.delayed(delay);
+      if (targetLength >= fullText.length) {
+        _messages[index]['text'] = fullText;
+        _streamingTextNotifier.value = fullText;
+        break;
+      }
+      
+      final String displayed = fullText.substring(0, targetLength);
+      
+      // Update data di daftar pesan & ValueNotifier secara terisolasi tanpa global rebuild
+      _messages[index]['text'] = displayed;
+      _streamingTextNotifier.value = displayed;
+      
+      await Future.delayed(frameDuration);
     }
+
+    stopwatch.stop();
+
+    setState(() {
+      _isStreamingActive = false;
+    });
 
     _scrollToBottom(force: true);
     widget.onMessagesUpdated(_messages);
@@ -1940,14 +2016,17 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
           Expanded(
             child: ListView.builder(
               controller: _scrollController,
+              reverse: true,
               physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
               padding: const EdgeInsets.all(20),
               itemCount: _messages.length + (_isTyping ? 1 : 0),
               itemBuilder: (context, index) {
-                if (index == _messages.length && _isTyping) {
+                if (_isTyping && index == 0) {
                   return _buildTypingIndicator();
                 }
-                final msg = _messages[index];
+                
+                final msgIndex = _isTyping ? _messages.length - index : _messages.length - 1 - index;
+                final msg = _messages[msgIndex];
                 final isUser = msg['sender'] == 'user';
 
                 if (isUser) {
@@ -1975,6 +2054,77 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
                     ),
                   );
                 } else {
+                  final isLastStreaming = (msgIndex == _messages.length - 1) && _isStreamingActive;
+
+                  if (isLastStreaming) {
+                    return ValueListenableBuilder<String>(
+                      valueListenable: _streamingTextNotifier,
+                      builder: (context, text, child) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(left: 8.0, right: 8.0, bottom: 12.0),
+                              child: MarkdownBody(
+                                data: '$text █',
+                                selectable: true,
+                                builders: {
+                                  'pre': DraftMarkdownBuilder(),
+                                  'img': PremiumImageMarkdownBuilder(),
+                                },
+                                onTapLink: (text, href, title) {
+                                  if (href != null) {
+                                    _showCitationPreviewSheet(context, href, text);
+                                  }
+                                },
+                                styleSheet: MarkdownStyleSheet(
+                                  p: AppTextStyles.bodyLarge.copyWith(
+                                    color: AppColors.navy900,
+                                    fontSize: 15.5,
+                                    height: 1.55,
+                                  ),
+                                  strong: AppTextStyles.bodyLarge.copyWith(
+                                    color: AppColors.navy900,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15.5,
+                                    height: 1.55,
+                                  ),
+                                  h1: AppTextStyles.titleMedium.copyWith(
+                                    color: AppColors.navy900,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                    height: 1.4,
+                                  ),
+                                  h2: AppTextStyles.titleMedium.copyWith(
+                                    color: AppColors.navy900,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16.5,
+                                    height: 1.4,
+                                  ),
+                                  h3: AppTextStyles.titleMedium.copyWith(
+                                    color: AppColors.navy900,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                    height: 1.4,
+                                  ),
+                                  listBullet: AppTextStyles.bodyLarge.copyWith(
+                                    color: AppColors.navy900,
+                                    fontSize: 15.5,
+                                    height: 1.55,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 8.0),
+                              child: Divider(color: AppColors.divider, height: 24, thickness: 1),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  }
+
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -2191,19 +2341,13 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
   Widget _buildTypingIndicator() {
     return Align(
       alignment: Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 14),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-        decoration: BoxDecoration(
-          color: AppColors.navy50,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.divider),
-        ),
+      child: Padding(
+        padding: const EdgeInsets.only(left: 8.0, bottom: 14),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             SizedBox(
-              width: 36,
+              width: 32,
               height: 24,
               child: Lottie.asset(
                 'assets/animations/global/ai_thinking.json',

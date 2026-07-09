@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/router/app_router.dart';
@@ -36,6 +37,9 @@ class _SetupLocationPageState extends State<SetupLocationPage> {
     });
 
     try {
+      // Proactively request camera permission during onboarding
+      await Permission.camera.request();
+
       // Cek izin lokasi
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
@@ -150,7 +154,7 @@ class _SetupLocationPageState extends State<SetupLocationPage> {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Text(
-                        'Lokasimu digunakan untuk memasukkanmu ke papan peringkat kota. Data ini tidak akan dibagikan.',
+                        'Demi transparansi dan keamanan data Anda, berikut adalah informasi izin sistem yang kami butuhkan:',
                         style: AppTextStyles.bodyMedium.copyWith(
                           color: AppColors.textSecondary,
                           height: 1.5,
@@ -159,7 +163,72 @@ class _SetupLocationPageState extends State<SetupLocationPage> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: AppConstants.spacing32),
+                  const SizedBox(height: 16),
+
+                  // Prominent Disclosure Card for user clearance
+                  FadeSlideEntrance(
+                    delay: const Duration(milliseconds: 550),
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 12),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.75),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.divider.withValues(alpha: 0.5)),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 10,
+                            offset: Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: const [
+                              Icon(Icons.security_rounded, color: AppColors.emerald, size: 20),
+                              SizedBox(width: 8),
+                              Text(
+                                'Transparansi Izin Penggunaan Data',
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.navy900),
+                              ),
+                            ],
+                          ),
+                          const Divider(height: 20, thickness: 1, color: AppColors.divider),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: const [
+                              Icon(Icons.location_on_rounded, color: AppColors.emerald, size: 18),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Akses Lokasi GPS digunakan eksklusif untuk melacak koordinat pemetaan laporan penumpukan sampah geospasial real-time serta mengelompokkan Anda ke papan peringkat wilayah.',
+                                  style: TextStyle(fontSize: 11, color: AppColors.textSecondary, height: 1.45),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: const [
+                              Icon(Icons.camera_alt_rounded, color: AppColors.emerald, size: 18),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Izin Kamera diaktifkan untuk menangkap gambar sampah secara langsung saat pelaporan. Foto dikirimkan secara sadar dan hanya digunakan untuk validasi jenis sampah via AI Scan.',
+                                  style: TextStyle(fontSize: 11, color: AppColors.textSecondary, height: 1.45),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppConstants.spacing16),
 
                   // ── Hasil Deteksi ──
                   if (_hasLocation)

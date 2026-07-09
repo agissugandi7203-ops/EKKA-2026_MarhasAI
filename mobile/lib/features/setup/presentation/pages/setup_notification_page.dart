@@ -150,6 +150,22 @@ class _SetupNotificationPageState extends State<SetupNotificationPage> {
                       ).toList(),
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  FadeSlideEntrance(
+                    delay: const Duration(milliseconds: 680),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Text(
+                        '🛡️ Genesis.id berkomitmen penuh menjaga keamanan data Anda. Izin notifikasi hanya digunakan untuk aktivitas pelaporan dan informasi aplikasi secara internal.',
+                        style: AppTextStyles.labelSmall.copyWith(
+                          color: AppColors.textSecondary,
+                          fontSize: 10,
+                          height: 1.4,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
 
                   const Spacer(),
 

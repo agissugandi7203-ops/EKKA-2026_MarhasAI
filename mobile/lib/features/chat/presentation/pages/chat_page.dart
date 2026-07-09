@@ -54,6 +54,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
   bool _isVoiceRecording = false;
   bool _isTranscribing = false;
   bool _webSearchEnabled = false;
+  bool _previousIsStreaming = false;
   OverlayEntry? _topToastOverlayEntry;
 
   final AudioRecorder _audioRecorder = AudioRecorder();
@@ -111,20 +112,24 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
   }
   void _scrollToBottom({bool force = false, bool isStreaming = false}) {
     if (_scrollController.hasClients) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        final position = _scrollController.position;
-        if (force || (position.maxScrollExtent - position.pixels < 150)) {
+      // With reverse: true, the bottom of the list is at offset 0.
+      final double offset = _scrollController.offset;
+
+      // Only scroll if forced or user is already near the bottom (within 150px)
+      if (force || offset < 150) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!_scrollController.hasClients) return;
           if (isStreaming) {
-            _scrollController.jumpTo(position.maxScrollExtent);
+            _scrollController.jumpTo(0);
           } else {
             _scrollController.animateTo(
-              position.maxScrollExtent,
+              0,
               duration: const Duration(milliseconds: 250),
               curve: Curves.easeOut,
             );
           }
-        }
-      });
+        });
+      }
     }
   }
 
@@ -440,7 +445,14 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
         if (state.errorMessage != null && state.errorMessage!.isNotEmpty) {
           context.showErrorSnackBar(state.errorMessage!);
         }
-        _scrollToBottom(force: false, isStreaming: state.isStreaming);
+
+        final wasStreaming = _previousIsStreaming;
+        _previousIsStreaming = state.isStreaming;
+
+        // Only scroll to bottom (offset 0) when a stream just completed, or when a new user message is sent
+        if ((wasStreaming && !state.isStreaming) || (state.messages.isNotEmpty && state.messages.last.sender == 'user')) {
+          _scrollToBottom(force: true);
+        }
       },
       builder: (context, state) {
         final messages = state.messages;
@@ -507,16 +519,20 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
                       ? _buildWelcomeDashboard()
                       : ListView.builder(
                           controller: _scrollController,
+                          reverse: true,
                           physics: const BouncingScrollPhysics(),
                           padding: const EdgeInsets.all(AppConstants.pagePaddingH),
                           itemCount: messages.length + (_isTranscribing ? 1 : 0),
                           itemBuilder: (context, index) {
-                            if (index == messages.length && _isTranscribing) {
+                            if (_isTranscribing && index == 0) {
                               return _buildTranscribingIndicator();
                             }
-                            final msg = messages[index];
+                            
+                            final msgIndex = _isTranscribing ? messages.length - index : messages.length - 1 - index;
+                            final msg = messages[msgIndex];
+                            
                             final isActiveStreaming = isStreaming &&
-                                (index == messages.length - 1) &&
+                                (msgIndex == messages.length - 1) &&
                                 msg.sender == 'bot';
                             return Padding(
                               padding: const EdgeInsets.only(bottom: AppConstants.spacing12),
