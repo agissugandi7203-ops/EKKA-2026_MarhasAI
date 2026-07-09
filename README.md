@@ -42,7 +42,7 @@
 Untuk mempermudah dewan juri melakukan peninjauan teknis, seluruh instrumen sistem Genesis telah diunggah dan dapat diakses secara publik melalui tautan resmi di bawah ini:
 
 <div align="center">
-  <a href="https://storage.googleapis.com/arisa-opsi-bucket-2026/apps/aplikasi/genesis.apk">
+  <a href="https://storage.googleapis.com/arisa-opsi-bucket-2026/aplikasi/genesis.apk">
     <img src="https://img.shields.io/badge/📥_DOWNLOAD_APLIKASI_MOBILE-02569B?style=for-the-badge&logo=android&logoColor=white" alt="Download APK Android" />
   </a>
 </div>
