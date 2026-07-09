@@ -88,6 +88,15 @@ Untuk memudahkan dewan juri menguji dan meninjau seluruh fitur unggulan pada eko
 ### 2. 💻 Web Dashboard (Admin - Next.js)
 1. Buka portal dashboard admin di `https://genesisHub.web.id`.
 2. Masuk dengan akun administrator untuk melihat data geospasial real-time, peta panas (*heatmap*) sebaran laporan, grafik penanganan sampah, verifikasi/validasi laporan warga, serta katalog manajemen lencana warga.
+   
+   <details>
+     <summary>🔑 Lihat Kredensial Akun Administrator (Khusus Dewan Juri)</summary>
+     
+     Gunakan kredensial berikut untuk login ke halaman admin:
+     * **Email**: `admin@genesis.id`
+     * **Password**: `cocArief2510`
+   </details>
+
 
 ### 3. ⚙️ Portal API & Swagger Docs (Developer)
 1. Kunjungi portal dokumentasi Swagger API terintegrasi di `https://genesisHub.my.id/docs`.
