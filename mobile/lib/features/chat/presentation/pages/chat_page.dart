@@ -118,7 +118,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
 
       // Only scroll if forced or user is already near the bottom (within 150px)
       if (force || distanceToBottom < 150) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
+        Future.delayed(const Duration(milliseconds: 100), () {
           if (!_scrollController.hasClients) return;
           final newMax = _scrollController.position.maxScrollExtent;
           if (isStreaming) {

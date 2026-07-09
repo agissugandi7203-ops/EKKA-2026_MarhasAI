@@ -1764,7 +1764,7 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
 
       // Only trigger auto-scroll if forced or user is already at the bottom (within 150px)
       if (force || distanceToBottom < 150) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
+        Future.delayed(const Duration(milliseconds: 100), () {
           if (!_scrollController.hasClients) return;
           final newMax = _scrollController.position.maxScrollExtent;
           if (isStreaming) {
@@ -1973,8 +1973,11 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final screenHeight = MediaQuery.of(context).size.height;
     return Container(
-      height: MediaQuery.of(context).size.height * 0.82,
+      height: bottomInset > 0 
+          ? (screenHeight - MediaQuery.of(context).padding.top) 
+          : screenHeight * 0.82,
       decoration: const BoxDecoration(
         color: AppColors.cardBackground,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
