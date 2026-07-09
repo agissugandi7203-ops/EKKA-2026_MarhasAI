@@ -24,22 +24,28 @@ Genesis Mobile adalah aplikasi gawai berbasis Android yang dirancang khusus untu
 
 Berikut adalah log pembaruan kritis di sisi aplikasi mobile (Flutter) untuk menjamin keandalan fungsionalitas dan konsistensi UI/UX:
 
-1. **Inisialisasi Kamera Mulus (First-Time Camera Access Fix)**
-   * *Akar Masalah*: OS native membutuhkan waktu beberapa milidetik untuk memperbarui cache izin dan mengaktifkan kembali sensor kamera setelah dialog pop-up disetujui pertama kali. Pemanggilan `availableCameras()` secara langsung memicu error `CameraAccessDenied`.
-   * *Perbaikan*: Menambahkan jeda waktu (*delay*) singkat sebesar 300ms setelah izin kamera diberikan agar OS menyelesaikan sinkronisasi hardware native sebelum dipanggil oleh Flutter.
-2. **Unifikasi Desain Input Obrolan AI Analisis**
-   * *Perbaikan*: Desain input obrolan AI Analisis (`reports_page.dart`) kini disamakan persis dengan halaman obrolan utama (`chat_page.dart`):
-     * Kotak input bergaya 3D flat dengan radius 24px, ketebalan border 1.5px, bayangan flat, dan tombol kirim bergradien navy.
-     * Fitur auto-expand (tinggi input membesar otomatis dari 1 hingga 5 baris) saat mengetik pesan panjang/paragraf baru.
-     * Penghapusan balon background abu-abu (`AppColors.navy50`) pada respons AI (respons markdown kini dirender langsung di atas layar secara bersih mirip ChatGPT/Geni Chat dengan pembatas garis tipis di bawahnya).
-3. **Optimasi Scroll & Typewriter Smooth**
-   * *Perbaikan*: Logika scroll pada typewriter obrolan AI Analisis ditingkatkan menggunakan `WidgetsBinding.instance.addPostFrameCallback` untuk pergeseran baris baru pasca rendering frame teks baru, dan hanya melakukan auto-scroll jika posisi layar berada di dasar obrolan.
-4. **Deklarasi Izin Notifikasi Android 13+**
-   * *Perbaikan*: Mendaftarkan `<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />` di `AndroidManifest.xml` agar dialog permohonan izin notifikasi tidak terbypass secara otomatis pada gawai Android terbaru.
-5. **Fix Onboarding Stuck (Setup Profile Stuck)**
-   * *Perbaikan*: Memindahkan `AuthListenerWrapper` ke root utama widget tree `SetupProfilePage` agar status BLoC listener tetap aktif selama proses pendaftaran disubmit. Pengguna kini langsung dialihkan otomatis ke dashboard beranda setelah submit profil selesai.
-6. **Transisi Tour Bebas Kedip**
-   * *Perbaikan*: Menggunakan transisi custom cross-fade (`_fadeTransitionPage`) pada GoRouter untuk rute tour pra-onboarding (`preOnboarding` dan `introduction`), menghilangkan efek flicker transisi bawaan OS.
+### 1. 📷 Inisialisasi Kamera Mulus (First-Time Camera Access Fix)
+*   **Akar Masalah**: OS native membutuhkan waktu beberapa milidetik untuk memperbarui cache izin dan mengaktifkan kembali sensor kamera setelah dialog pop-up disetujui pertama kali. Pemanggilan `availableCameras()` secara langsung dalam mikrodetik yang sama memicu error `CameraAccessDenied`.
+*   **Perbaikan**: Menambahkan jeda waktu (*delay*) singkat sebesar 300ms (`await Future.delayed(const Duration(milliseconds: 300));`) setelah izin kamera diberikan agar OS menyelesaikan sinkronisasi hardware native sebelum dipanggil oleh Flutter.
+
+### 2. 💬 Unifikasi Desain Input Obrolan AI Analisis
+*   **Perbaikan**: Desain input obrolan AI Analisis (`reports_page.dart`) kini disamakan persis dengan halaman obrolan utama (`chat_page.dart`):
+    *   **Visual 3D Flat**: Kotak input bergaya 3D flat premium dengan border radius 24px, ketebalan border 1.5px warna Slate (`#E2E8F0`), bayangan flat, dan tombol kirim bergradien navy.
+    *   **Auto-Expanding TextField**: Mengonfigurasi `TextField` dengan `minLines: 1` dan `maxLines: 5` serta input multiline. Tinggi kotak input membesar otomatis menyesuaikan jumlah baris/paragraf teks masukan pengguna.
+    *   **Clean Markdown View**: Penghapusan balon background abu-abu (`AppColors.navy50`) pada respons AI. Teks markdown kini dirender langsung di atas layar secara bersih mirip ChatGPT/Geni Chat dengan pembatas garis tipis (`Divider`) di bawahnya.
+
+### 3. 🌊 Optimasi Scroll & Typewriter Smooth
+*   **Perbaikan**: Logika scroll pada typewriter obrolan AI Analisis ditingkatkan menggunakan `WidgetsBinding.instance.addPostFrameCallback` untuk pergeseran baris baru pasca rendering frame teks baru.
+*   **Threshold Checking**: Sistem hanya melakukan auto-scroll jika posisi layar berada di dasar obrolan (jarak scroll < 150px), mencegah lompatan paksa layar saat pengguna sedang menelusuri riwayat obrolan di atas.
+
+### 4. 🔔 Deklarasi Izin Notifikasi Android 13+
+*   **Perbaikan**: Mendaftarkan `<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />` di `AndroidManifest.xml` agar dialog permohonan izin notifikasi tidak terbypass secara otomatis pada gawai Android terbaru (API level 33 ke atas).
+
+### 5. 🧩 Fix Onboarding Stuck (Setup Profile Stuck)
+*   **Perbaikan**: Memindahkan `AuthListenerWrapper` ke root utama widget tree `SetupProfilePage` agar status BLoC listener tetap aktif selama proses pendaftaran disubmit. Pengguna kini langsung dialihkan otomatis ke dashboard beranda setelah submit profil selesai tanpa tersangkut di loading screen.
+
+### 6. 🎬 Transisi Tour Bebas Kedip
+*   **Perbaikan**: Menggunakan transisi custom cross-fade (`_fadeTransitionPage`) pada GoRouter untuk rute tour pra-onboarding (`preOnboarding` dan `introduction`), menghilangkan efek flicker transisi bawaan OS.
 
 ---
 

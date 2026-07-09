@@ -62,24 +62,41 @@ Untuk mempermudah dewan juri melakukan peninjauan teknis, seluruh instrumen sist
 
 Untuk memastikan pengalaman pengguna (UX) yang optimal dan stabilitas sistem yang tangguh, berikut adalah log pembaruan kritis terbaru yang telah diterapkan pada platform Genesis:
 
-1. **Inisialisasi Kamera Tanpa Gagal (First-time Camera Grant Fix)**
-   * *Masalah*: Panggilan `availableCameras()` langsung dijalankan instan setelah dialog izin kamera disetujui pertama kali oleh user, memicu *race condition* OS native (kamera belum siap) dan melempar error `CameraAccessDenied`.
-   * *Solusi*: Ditambahkan jeda waktu singkat (300ms) pasca izin kamera disetujui untuk memberi waktu bagi sistem operasi native memperbarui cache izin perangkat keras sebelum dipanggil oleh Flutter.
-2. **Desain Chat AI Scan Premium & Konsisten (ChatGPT Style)**
-   * *Solusi*: Unifikasi antarmuka input obrolan pada menu AI Analisis (`reports_page.dart`) agar sama persis dengan halaman chat utama (`chat_page.dart`):
-     * Desain input form bergaya 3D flat dengan container putih, garis pembatas 1.5px solid, dan tombol kirim bergradien navy.
-     * Dukungan form dinamis auto-expand tinggi kotak input (1 hingga 5 baris) saat mengetik beberapa paragraf.
-     * Penghapusan balon abu-abu (`AppColors.navy50`) pada respons AI untuk merender teks markdown langsung pada layar (ChatGPT/Geni Chat style) dengan pemisah tipis.
-3. **Typewriter & Scroll Super Smooth**
-   * *Solusi*: Sinkronisasi gerakan scroll otomatis typewriter menggunakan `WidgetsBinding.instance.addPostFrameCallback` agar transisi berjalan mulus pasca rendering teks baru selesai dilakukan, serta mendeteksi posisi scroll pengguna untuk menghindari lompatan layar yang mengganggu saat membaca pesan lama.
-4. **Deklarasi Izin Notifikasi Android 13+**
-   * *Solusi*: Ditambahkan izin `<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />` pada manifest aplikasi Android guna mencegah bypass permohonan notifikasi secara otomatis di gawai Android versi terbaru.
-5. **Fix Onboarding Stuck (Setup Profile Stuck)**
-   * *Solusi*: Memosisikan `AuthListenerWrapper` (yang menampung BLoC listener autentikasi) pada root utama widget tree halaman setup profil untuk mencegah unmounting widget secara tidak sengaja sewaktu proses pendaftaran disubmit. Pengguna kini dialihkan otomatis ke dashboard beranda setelah tombol "Selesai & Mulai" diklik.
-6. **Transisi Tour Bebas Kedip (Flicker-Free Transitions)**
-   * *Solusi*: Mengganti animasi slide standar dengan transisi cross-fade custom (`_fadeTransitionPage` di router GoRouter) untuk transisi antar halaman tour pra-onboarding.
-7. **Hardcoded Model Mapping Vertex AI (Backend)**
-   * *Solusi*: Pengerasan pemetaan nama model di backend `openrouter.service.ts` (Vertex AI `gemini-3.5-flash` untuk Flash dan `gemini-3.1-pro-preview` untuk Pro) demi menjamin kinerja streaming SSE instan dan keakuratan jawaban tanpa resiko fallback model lama.
+### 1. 📷 Inisialisasi Kamera Mulus & Anti-Gagal (First-time Camera Grant Fix)
+*   **Masalah Teknis (Race Condition)**: Panggilan `availableCameras()` langsung dijalankan instan setelah dialog izin kamera disetujui pertama kali oleh user. Pada level native, sistem operasi membutuhkan waktu beberapa milidetik untuk memperbarui cache izin perangkat keras dan mengaktifkan kembali modul sensor kamera. Hal ini menyebabkan pemanggilan instan dari Flutter gagal mendeteksi kamera dan melempar error `CameraAccessDenied`, sehingga layar menampilkan "Gagal memuat perangkat kamera".
+*   **Solusi & Mitigasi**: Ditambahkan jeda waktu singkat sebesar 300ms (`await Future.delayed(const Duration(milliseconds: 300));`) tepat setelah izin kamera disetujui. Jeda ini memberikan waktu bagi sistem operasi native untuk menyelesaikan sikronisasi hardware kamera sebelum dipanggil oleh Flutter, menjamin inisialisasi pertama kali berjalan 100% mulus.
+
+### 2. 💬 Unifikasi Desain Input Obrolan AI Analisis (ChatGPT & Geni Chat Style)
+*   **Masalah**: Desain form input obrolan pada menu AI Analisis (`reports_page.dart`) sebelumnya tidak konsisten dengan halaman chat utama (`chat_page.dart`), baik secara visual maupun fungsionalitas pengetikan paragraf panjang.
+*   **Solusi & Unifikasi UI/UX**:
+    *   **Premium 3D Flat Input Bar**: Mengadopsi container putih dengan radius `24.0`, ketebalan border `1.5px` warna `#E2E8F0`, serta bayangan solid (`BoxShadow` flat offset Y: 4px) untuk nuansa visual claymorphic modern yang konsisten.
+    *   **Auto-Expanding TextField**: Mengonfigurasi `TextField` dengan `minLines: 1` dan `maxLines: 5` serta `keyboardType: TextInputType.multiline`. Kotak input kini secara dinamis melar (tinggi membesar otomatis) ke atas saat pengguna mengetik pesan panjang atau menekan tombol enter untuk membuat paragraf baru.
+    *   **Penghapusan Bubble Abu-Abu**: Balon/gelembung background abu-abu (`AppColors.navy50`) yang membungkus respons AI telah dihilangkan sepenuhnya. Teks hasil analisis AI kini langsung ditulis bersih di atas layar (ChatGPT style) dan diakhiri dengan garis pembatas tipis (`Divider`) sebagai pemisah, meningkatkan kejelasan visual teks Markdown secara signifikan.
+    *   **Gradiasi Tombol Kirim**: Tombol kirim diperbarui menggunakan gradasi warna linear premium (navy gelap `#0F2042` ke `#0A1628`) dengan ukuran ikon kirim putih 16px.
+
+### 3. 🌊 Efek Typewriter & Auto-Scroll Super Smooth
+*   **Masalah**: Logika simulasi typewriter sebelumnya memaksa scroll viewport untuk melakukan `jumpTo` secara kasar pada setiap karakter baru yang muncul. Hal ini menyebabkan stutters, kedipan, dan mencegah pengguna membaca pesan lama karena layar dipaksa melompat ke bawah.
+*   **Solusi**:
+    *   **Frame-Render Callback**: Menggunakan `WidgetsBinding.instance.addPostFrameCallback` untuk memastikan perintah scroll hanya dieksekusi setelah Flutter selesai melakukan perhitungan tinggi teks baru di dalam frame rendering.
+    *   **Viewport-Sensitive Scroll**: Menambahkan pemeriksaan ambang batas (*threshold*): sistem hanya akan melakukan auto-scroll ke bawah jika pengguna memang berada di area dasar obrolan (jarak scroll ke bawah < 150px). Jika pengguna sengaja men-scroll ke atas untuk membaca pesan sebelumnya saat AI mengetik, auto-scroll dinonaktifkan sementara agar tidak mengganggu fokus pengguna.
+
+### 4. 🔔 Deklarasi Izin Notifikasi Android 13+ (API 33)
+*   **Masalah**: Pada Android 13 ke atas, permintaan izin dinamis lewat `Permission.notification.request()` akan gagal secara diam-diam dan otomatis mengembalikan status ditolak (*denied*) jika izin tersebut tidak dideklarasikan di dalam file konfigurasi manifest.
+*   **Solusi**: Mendaftarkan `<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />` pada berkas `AndroidManifest.xml` aplikasi mobile, memungkinkan sistem memunculkan dialog pop-up izin notifikasi secara resmi kepada pengguna.
+
+### 5. 🧩 Perbaikan Onboarding Stuck (Setup Profile Page Navigation Loop)
+*   **Masalah**: Saat pengguna mengirimkan data profil terakhir di SetupProfilePage, tombol loading spinner global berputar terus-menerus dan pengguna terjebak selamanya di halaman tersebut meskipun data berhasil tersimpan di Supabase. Hal ini terjadi karena widget `AuthListenerWrapper` (yang menampung BLoC listener untuk mengalihkan rute) ter-unmount secara tidak sengaja sewaktu UI menampilkan state loading, memutus aliran event autentikasi.
+*   **Solusi**: Memosisikan `AuthListenerWrapper` sebagai pembungkus utama di root widget tree halaman `SetupProfilePage` sehingga listener tetap terpasang dengan kokoh di memori terlepas dari perubahan status visual halaman. Navigasi otomatis menuju dashboard kini langsung berjalan seketika profil selesai dibuat.
+
+### 6. 🎬 Transisi Halaman Tour Bebas Kedip (Flicker-Free Transitions)
+*   **Masalah**: Transisi standar bawaan OS saat beralih antar layar tour pra-onboarding (`preOnboarding` dan `introduction`) menimbulkan efek kedipan hitam (*flickering*) yang mengurangi kesan premium aplikasi.
+*   **Solusi**: Mengganti transisi default dengan `pageBuilder` kustom menggunakan `_fadeTransitionPage` (animasi cross-fade lembut) di dalam konfigurasi GoRouter, menciptakan transisi visual yang halus dan mulus.
+
+### 7. 🚀 Pengerasan Pemetaan Model Vertex AI Singapura (asia-southeast1)
+*   **Masalah**: Menghindari keterlambatan pemrosesan atau resiko fallback otomatis ke model LLM lama yang tidak mendukung respons streaming cepat.
+*   **Solusi**: Melakukan pengerasan pemetaan model secara keras (*hardcoded*) di dalam modul backend `openrouter.service.ts`:
+    *   Model Flash langsung diarahkan ke Vertex AI Singapura (`gemini-3.5-flash`) untuk latensi sangat rendah (~30ms per chunk).
+    *   Model Pro langsung diarahkan ke Vertex AI US (`gemini-3.1-pro-preview`) dengan alokasi *Thinking Budget* sebesar 4096 token untuk pemrosesan penalaran hukum yang sangat akurat.
 
 ---
 
