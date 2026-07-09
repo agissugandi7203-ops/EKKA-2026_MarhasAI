@@ -21,20 +21,6 @@ Layanan backend **Genesis** dirancang menggunakan arsitektur modular **NestJS** 
 
 ---
 
-## 📢 Pembaruan Backend Terbaru (Latest Backend Updates)
-
-Berikut adalah log pembaruan kritis di sisi layanan backend (NestJS + Fastify) untuk optimalisasi latency dan integrasi model LLM:
-
-1. **Pengerasan Pemetaan Model Vertex AI (Hardcoded Model Mapping)**
-   * *Akar Masalah*: Menghindari resiko keterlambatan respons atau *fallback* otomatis ke model Gemini versi lama yang kurang optimal atau lambat di server.
-   * *Perbaikan*: Memaksakan pemetaan nama model di `openrouter.service.ts` secara keras (*hardcoded*) untuk model Vertex AI:
-     * Model Flash memetakan langsung ke Vertex AI `'gemini-3.5-flash'` (mendukung kecepatan respons sangat tinggi dan *thinking capabilities*).
-     * Model Pro memetakan langsung ke Vertex AI `'gemini-3.1-pro-preview'` (mendukung penalaran hukum/perda yang kompleks & pgvector search RAG).
-2. **Pembersihan Database Otomatis (Database Purge Script)**
-   * *Perbaikan*: Dibuat script pemeliharaan admin di `scripts/delete_test_users.js` untuk membersihkan seluruh akun pengujian warga secara otomatis dari tabel `profiles` dan `auth.users` Supabase jika email mengandung unsur nama `arieffajar` atau `testing`.
-
----
-
 ## 1. Fitur Utama & Modul Sistem
 
 Setiap fitur dirancang secara modular dengan pemisahan tanggung jawab (*Separation of Concerns*) yang ketat:
@@ -56,10 +42,14 @@ Setiap fitur dirancang secara modular dengan pemisahan tanggung jawab (*Separati
 - **SSE Streaming**: Mengirimkan jawaban asisten AI secara real-time chunk-by-chunk melalui Server-Sent Events (SSE).
 - **Whisper STT**: Menerima unggahan rekaman suara warga dalam format base64 `.m4a` dan memanggil model Whisper-1 via Vertex AI / OpenRouter adapter untuk menghasilkan transkripsi teks secara presisi.
 - **Prompt Injection Guardrails**: Sistem filter input lokal untuk mendeteksi dan meredaksi serangan bypass system prompt (misalnya character-spaced evasion, encoding evasion, dan typoglycemia).
+- **Pengerasan Pemetaan Model (Hardcoded Model Mapping)**: Nama model dipetakan secara keras (*hardcoded*) di backend (`openrouter.service.ts`) ke Google Cloud Vertex AI: `'gemini-3.5-flash'` untuk Flash (kecepatan streaming SSE instan) dan `'gemini-3.1-pro-preview'` untuk Pro (dengan *thinking config* penalaran hukum/perda).
 
 ### E. Gamifikasi & Leaderboard Engine
 - Mengelola XP warga, streak harian, dan lencana (*badges*).
 - Menyediakan endpoint peringkat warga global (*Global Leaderboard*) dan kabupaten/kota terbersih (*City Leaderboard*) yang ditarik dari Postgres Views.
+
+### F. Skrip Pemeliharaan Admin (Maintenance Scripts)
+- **`delete_test_users.js`**: Skrip pemeliharaan admin untuk mendeteksi dan menghapus seluruh akun pengujian dari tabel `profiles` dan `auth.users` Supabase secara otomatis (menggunakan SDK Admin) jika alamat email/metadata mengandung unsur kata `arieffajar` atau `testing` guna menjaga integritas data dashboard.
 
 ---
 

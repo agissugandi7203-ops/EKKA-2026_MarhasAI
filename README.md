@@ -133,15 +133,20 @@ Memanfaatkan kapabilitas spasial **PostGIS**, Genesis secara otomatis memindai s
 
 ### 2.2. Sensor Privasi Gambar (PII Redaction) Otomatis
 Mengedepankan etika AI, sebelum file gambar diunggah ke *cloud storage*, backend kami memproses *buffer* gambar di dalam memori server (in-memory). Menggunakan model Vision API, sistem mendeteksi *bounding box* untuk wajah manusia dan teks (plat nomor kendaraan). Modul **Sharp** kemudian mengaplikasikan filter *Gaussian Blur* secara destruktif ke koordinat tersebut. Gambar yang tersimpan di cloud dijamin aman dan bebas dari Pelanggaran Informasi Identitas Pribadi (PII).
+- *Inisialisasi Kamera Mulus (First-Time Access)*: Akses kamera fisik di Flutter untuk pengambilan gambar dilengkapi jeda waktu singkat 300ms setelah izin pertama kali diberikan, mencegah *race condition* native OS agar terhindar dari kegagalan inisialisasi `CameraAccessDenied`.
 
 ### 2.3. Kurasi Sampah Otomatis Berbasis Visi Komputer
 Sistem mengeliminasi kebutuhan kurasi manual dengan memanfaatkan model klasifikasi gambar. AI menganalisis foto yang dikirimkan warga untuk mengkategorikan limbah ke dalam kelompok spesifik (Plastik, Organik, B3, Kertas, Logam, Kaca). Selain klasifikasi jenis, AI memberikan skor tingkat keparahan (severity) untuk membantu dashboard pemerintah melakukan *sorting* prioritas penanganan.
 
 ### 2.4. Asisten Regulasi Hukum Cerdas (RAG)
 Genesis menyediakan chatbot AI interaktif yang dilatih khusus menggunakan dokumen peraturan daerah, Peraturan Presiden, dan Undang-Undang terkait lingkungan hidup. Menggunakan arsitektur *Retrieval-Augmented Generation* (RAG) dengan **pgvector**, chatbot mampu memberikan referensi hukum yang presisi, faktual, dan kontekstual tanpa risiko halusinasi. Chatbot mendukung mode input suara yang ditranskrip menggunakan model **Whisper**.
+- *Unifikasi UI Chat AI Scan (ChatGPT Style)*: Input form obrolan pada asisten utama dan asisten hasil analisis AI disatukan secara visual dengan desain container 3D flat premium (radius 24px, border Slate 1.5px, bayangan solid, dan tombol kirim bergradien navy) yang mendukung multiline *auto-expand* 1-5 baris. Respons AI disajikan bersih langsung di atas layar tanpa gelembung abu-abu (ChatGPT style) dengan typewriter effect dan auto-scroll yang super smooth (menggunakan `WidgetsBinding.instance.addPostFrameCallback`).
+- *Pemetaan Model Keras (Hardcoded Model Mapping)*: Backend `openrouter.service.ts` memetakan model secara keras langsung ke Google Cloud Vertex AI Singapura (`gemini-3.5-flash` untuk performa streaming SSE instan) dan US (`gemini-3.1-pro-preview` dengan thinking config penalaran hukum).
 
 ### 2.5. Ekosistem Gamifikasi dan Reward
 Untuk menjaga tingkat partisipasi (retensi) pengguna, Genesis menerapkan sistem gamifikasi. Warga yang laporannya diverifikasi dan ditangani akan mendapatkan poin pengalaman (XP) dan koin virtual. Akumulasi XP akan meningkatkan level (*Citizen*, *Guardian*, *Hero*), dan membuka lencana (*Badges*) pencapaian. Warga dengan kontribusi tertinggi akan ditampilkan di *Leaderboard* tingkat kota.
+- *Onboarding Setup Tanpa Hambatan*: Alur pembuatan profil setup wizard dikawal oleh `AuthListenerWrapper` terpadu di root halaman setup profil untuk memastikan pengalihan navigasi ke beranda berjalan otomatis tanpa tersangkut di loading screen. Dilengkapi dengan deklarasi izin `<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />` pada manifest Android gawai Android 13+.
+- *Skrip Pemeliharaan Admin*: Dilengkapi skrip admin `delete_test_users.js` untuk mendeteksi dan menghapus akun pengujian secara otomatis dari tabel `profiles` dan `auth.users` Supabase jika email mengandung kata `arieffajar` atau `testing` guna menjaga kebersihan basis data.
 
 ---
 

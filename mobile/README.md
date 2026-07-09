@@ -18,37 +18,6 @@ Genesis Mobile adalah aplikasi gawai berbasis Android yang dirancang khusus untu
 
 **Backend API**: `https://genesisHub.my.id` | **Web Dashboard**: `https://genesisHub.web.id`
 
----
-
-## 📢 Pembaruan Mobile Terbaru (Latest Mobile Updates)
-
-Berikut adalah log pembaruan kritis di sisi aplikasi mobile (Flutter) untuk menjamin keandalan fungsionalitas dan konsistensi UI/UX:
-
-### 1. 📷 Inisialisasi Kamera Mulus (First-Time Camera Access Fix)
-*   **Akar Masalah**: OS native membutuhkan waktu beberapa milidetik untuk memperbarui cache izin dan mengaktifkan kembali sensor kamera setelah dialog pop-up disetujui pertama kali. Pemanggilan `availableCameras()` secara langsung dalam mikrodetik yang sama memicu error `CameraAccessDenied`.
-*   **Perbaikan**: Menambahkan jeda waktu (*delay*) singkat sebesar 300ms (`await Future.delayed(const Duration(milliseconds: 300));`) setelah izin kamera diberikan agar OS menyelesaikan sinkronisasi hardware native sebelum dipanggil oleh Flutter.
-
-### 2. 💬 Unifikasi Desain Input Obrolan AI Analisis
-*   **Perbaikan**: Desain input obrolan AI Analisis (`reports_page.dart`) kini disamakan persis dengan halaman obrolan utama (`chat_page.dart`):
-    *   **Visual 3D Flat**: Kotak input bergaya 3D flat premium dengan border radius 24px, ketebalan border 1.5px warna Slate (`#E2E8F0`), bayangan flat, dan tombol kirim bergradien navy.
-    *   **Auto-Expanding TextField**: Mengonfigurasi `TextField` dengan `minLines: 1` dan `maxLines: 5` serta input multiline. Tinggi kotak input membesar otomatis menyesuaikan jumlah baris/paragraf teks masukan pengguna.
-    *   **Clean Markdown View**: Penghapusan balon background abu-abu (`AppColors.navy50`) pada respons AI. Teks markdown kini dirender langsung di atas layar secara bersih mirip ChatGPT/Geni Chat dengan pembatas garis tipis (`Divider`) di bawahnya.
-
-### 3. 🌊 Optimasi Scroll & Typewriter Smooth
-*   **Perbaikan**: Logika scroll pada typewriter obrolan AI Analisis ditingkatkan menggunakan `WidgetsBinding.instance.addPostFrameCallback` untuk pergeseran baris baru pasca rendering frame teks baru.
-*   **Threshold Checking**: Sistem hanya melakukan auto-scroll jika posisi layar berada di dasar obrolan (jarak scroll < 150px), mencegah lompatan paksa layar saat pengguna sedang menelusuri riwayat obrolan di atas.
-
-### 4. 🔔 Deklarasi Izin Notifikasi Android 13+
-*   **Perbaikan**: Mendaftarkan `<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />` di `AndroidManifest.xml` agar dialog permohonan izin notifikasi tidak terbypass secara otomatis pada gawai Android terbaru (API level 33 ke atas).
-
-### 5. 🧩 Fix Onboarding Stuck (Setup Profile Stuck)
-*   **Perbaikan**: Memindahkan `AuthListenerWrapper` ke root utama widget tree `SetupProfilePage` agar status BLoC listener tetap aktif selama proses pendaftaran disubmit. Pengguna kini langsung dialihkan otomatis ke dashboard beranda setelah submit profil selesai tanpa tersangkut di loading screen.
-
-### 6. 🎬 Transisi Tour Bebas Kedip
-*   **Perbaikan**: Menggunakan transisi custom cross-fade (`_fadeTransitionPage`) pada GoRouter untuk rute tour pra-onboarding (`preOnboarding` dan `introduction`), menghilangkan efek flicker transisi bawaan OS.
-
----
-
 ## 1. Fitur Utama & Logika Bisnis
 
 Aplikasi mobile Genesis mengimplementasikan fitur-fitur kompleks berikut:
@@ -57,14 +26,17 @@ Aplikasi mobile Genesis mengimplementasikan fitur-fitur kompleks berikut:
 - **Onboarding Setup Wizard (4 Langkah)**:
   - *Langkah 1: Welcome Screen*: Penjelasan awal proses pendaftaran profil.
   - *Langkah 2: Geolokasi & Geocoding*: Mendapatkan izin GPS perangkat, mengambil koordinat, dan melakukan reverse geocoding untuk menentukan wilayah administrasi kota secara otomatis.
-  - *Langkah 3: Izin Notifikasi*: Meminta izin notifikasi perangkat secara elegan.
-  - *Langkah 4: Kelengkapan Profil*: Mengisi nama lengkap dan username unik yang langsung divalidasi ke backend.
+  - *Langkah 3: Izin Notifikasi*: Meminta izin notifikasi perangkat secara elegan. Mengintegrasikan izin `<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />` pada manifest Android guna menjamin dialog izin berjalan dinamis pada Android 13+ (API 33+).
+  - *Langkah 4: Kelengkapan Profil*: Mengisi nama lengkap dan username unik. Menggunakan widget `AuthListenerWrapper` terpadu di root halaman setup profil untuk memastikan BLoC listener tetap aktif selama proses pendaftaran disubmit, sehingga pengguna langsung dialihkan otomatis ke dashboard beranda setelah submit selesai tanpa tersangkut di loading screen.
+- **Transisi Tour Bebas Kedip**: Menggunakan transisi custom cross-fade (`_fadeTransitionPage` di GoRouter) untuk rute tour pra-onboarding (`preOnboarding` dan `introduction`), menghilangkan efek flicker transisi bawaan OS.
 - **Laporan Masalah Lingkungan (Kamera & GPS)**: Mengakses kamera fisik untuk memotret sampah/limbah, mengambil koordinat GPS real-time, dan mengirimkannya ke server. Sistem dilengkapi deteksi duplikasi laporan serupa dalam radius 50 meter.
-- **Asisten AI Chatbot Warga (Geni)**:
+  - *Inisialisasi Kamera Mulus (First-Time Access Fix)*: Menambahkan jeda waktu (*delay*) singkat sebesar 300ms setelah izin kamera pertama kali diberikan sebelum mendeteksi daftar kamera (`availableCameras()`), memberi waktu bagi OS native untuk sinkronisasi perangkat keras agar terhindar dari error `CameraAccessDenied`.
+- **Asisten AI Chatbot Warga (Geni & Obrolan Analisis)**:
   - **Streaming SSE**: Menerima respons teks secara mengalir (Server-Sent Events) untuk latensi visual yang rendah.
   - **Speech-to-Text (STT)**: Perekaman suara lokal yang dikirim ke backend untuk ditranskripsi otomatis menggunakan model Whisper-1.
-  - **Dinamis Model Selector**: Warga dapat memilih model AI (`Geni-Flash`, `Geni-Pro`, atau `DeepSeek-Chat`) melalui bottom sheet.
+  - **Dinamis Model Selector**: Warga dapat memilih model AI (`Geni-Flash`, `Geni-Pro` dengan thinking configuration, atau `DeepSeek-Chat`) melalui bottom sheet.
   - **Multimodal Input**: Mendukung pengiriman file PDF dan gambar untuk dianalisis oleh AI.
+  - **Unifikasi UI Premium Obrolan (ChatGPT Style)**: Kotak input obrolan pada asisten utama dan asisten hasil analisis AI disamakan menggunakan container 3D flat (radius 24px, border 1.5px, bayangan solid, dan tombol kirim bergradien navy) yang mendukung *auto-expand* (melebar dari 1 hingga 5 baris). Respons AI ditampilkan secara bersih tanpa balon abu-abu (ChatGPT style) dengan typewriter effect dan auto-scroll yang super smooth (viewport-sensitive menggunakan `WidgetsBinding` frame callbacks).
 - **Gamification & Poin Sembako**:
   - Papan peringkat (*Leaderboard*) global dan per kota.
   - Leveling system (XP bertambah +100 setiap laporan disetujui, naik level setiap kelipatan 1000 XP).
