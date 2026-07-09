@@ -1762,8 +1762,8 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
       final position = _scrollController.position;
       final double distanceToBottom = position.maxScrollExtent - position.pixels;
 
-      // Only trigger auto-scroll if forced or user is already at the bottom (within 150px)
-      if (force || distanceToBottom < 150) {
+      // Only trigger auto-scroll if forced or user is already at the bottom (within 30px)
+      if (force || distanceToBottom < 30) {
         Future.delayed(const Duration(milliseconds: 100), () {
           if (!_scrollController.hasClients) return;
           final newMax = _scrollController.position.maxScrollExtent;
@@ -2036,12 +2036,9 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
             child: ListView.builder(
               controller: _scrollController,
               physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-              padding: const EdgeInsets.all(20),
-              itemCount: _messages.length + (_isTyping ? 1 : 0) + (_isStreamingActive ? 1 : 0),
+              padding: const EdgeInsets.only(left: 20, right: 20, top: 20, bottom: 120),
+              itemCount: _messages.length + (_isTyping ? 1 : 0),
               itemBuilder: (context, index) {
-                if (_isStreamingActive && index == _messages.length + (_isTyping ? 1 : 0)) {
-                  return SizedBox(height: MediaQuery.of(context).size.height * 0.45);
-                }
                 if (index == _messages.length && _isTyping) {
                   return _buildTypingIndicator();
                 }

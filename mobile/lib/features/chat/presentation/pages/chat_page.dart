@@ -116,8 +116,8 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
       final position = _scrollController.position;
       final double distanceToBottom = position.maxScrollExtent - position.pixels;
 
-      // Only scroll if forced or user is already near the bottom (within 150px)
-      if (force || distanceToBottom < 150) {
+      // Only scroll if forced or user is already near the bottom (within 30px)
+      if (force || distanceToBottom < 30) {
         Future.delayed(const Duration(milliseconds: 100), () {
           if (!_scrollController.hasClients) return;
           final newMax = _scrollController.position.maxScrollExtent;
@@ -531,12 +531,14 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
                       : ListView.builder(
                           controller: _scrollController,
                           physics: const BouncingScrollPhysics(),
-                          padding: const EdgeInsets.all(AppConstants.pagePaddingH),
-                          itemCount: messages.length + (_isTranscribing ? 1 : 0) + (isStreaming ? 1 : 0),
+                          padding: const EdgeInsets.only(
+                            left: AppConstants.pagePaddingH,
+                            right: AppConstants.pagePaddingH,
+                            top: AppConstants.pagePaddingH,
+                            bottom: 120,
+                          ),
+                          itemCount: messages.length + (_isTranscribing ? 1 : 0),
                           itemBuilder: (context, index) {
-                            if (isStreaming && index == messages.length + (_isTranscribing ? 1 : 0)) {
-                              return SizedBox(height: MediaQuery.of(context).size.height * 0.45);
-                            }
                             if (index == messages.length && _isTranscribing) {
                               return _buildTranscribingIndicator();
                             }
