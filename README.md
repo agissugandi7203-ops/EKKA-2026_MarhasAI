@@ -51,7 +51,7 @@ Untuk mempermudah dewan juri melakukan peninjauan teknis, seluruh instrumen sist
   <a href="https://genesisHub.web.id">
     <img src="https://img.shields.io/badge/🌐_Buka_Web_Dashboard-000000?style=for-the-badge&logo=next.js&logoColor=white" alt="Web Dashboard" />
   </a>
-  <a href="https://genesisHub.my.id/api">
+  <a href="https://genesisHub.my.id/docs">
     <img src="https://img.shields.io/badge/⚙️_Buka_API_Swagger-E0234E?style=for-the-badge&logo=nestjs&logoColor=white" alt="API Gateway" />
   </a>
 </div>
