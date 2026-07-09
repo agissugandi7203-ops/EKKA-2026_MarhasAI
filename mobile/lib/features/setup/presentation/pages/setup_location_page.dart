@@ -116,209 +116,221 @@ class _SetupLocationPageState extends State<SetupLocationPage> {
             ),
           ),
           child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppConstants.pagePaddingH,
-                vertical: AppConstants.pagePaddingV,
-              ),
-              child: Column(
-                children: [
-                  const SetupProgressBar(currentStep: 1, totalSteps: 4),
-                  const Spacer(),
-
-                  // Ilustrasi dengan entrance animation
-                  const FadeSlideEntrance(
-                    delay: Duration(milliseconds: 150),
-                    child: SetupIllustration(
-                      lottieAsset: 'assets/animations/onboarding/location_permission.json',
-                      color: AppColors.emerald,
+            child: CustomScrollView(
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppConstants.pagePaddingH,
+                      vertical: AppConstants.pagePaddingV,
                     ),
-                  ),
-                  const SizedBox(height: AppConstants.spacing32),
-
-                  FadeSlideEntrance(
-                    delay: const Duration(milliseconds: 300),
-                    child: Text(
-                      'Lokasi Wilayahmu',
-                      style: AppTextStyles.headlineLarge.copyWith(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w700,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  const SizedBox(height: AppConstants.spacing12),
-
-                  FadeSlideEntrance(
-                    delay: const Duration(milliseconds: 450),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(
-                        'Demi transparansi dan keamanan data Anda, berikut adalah informasi izin sistem yang kami butuhkan:',
-                        style: AppTextStyles.bodyMedium.copyWith(
-                          color: AppColors.textSecondary,
-                          height: 1.5,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Prominent Disclosure Card for user clearance
-                  FadeSlideEntrance(
-                    delay: const Duration(milliseconds: 550),
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 12),
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.75),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.divider.withValues(alpha: 0.5)),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 10,
-                            offset: Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: const [
-                              Icon(Icons.security_rounded, color: AppColors.emerald, size: 20),
-                              SizedBox(width: 8),
-                              Text(
-                                'Transparansi Izin Penggunaan Data',
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.navy900),
-                              ),
-                            ],
-                          ),
-                          const Divider(height: 20, thickness: 1, color: AppColors.divider),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: const [
-                              Icon(Icons.location_on_rounded, color: AppColors.emerald, size: 18),
-                              SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'Akses Lokasi GPS digunakan eksklusif untuk melacak koordinat pemetaan laporan penumpukan sampah geospasial real-time serta mengelompokkan Anda ke papan peringkat wilayah.',
-                                  style: TextStyle(fontSize: 11, color: AppColors.textSecondary, height: 1.45),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: const [
-                              Icon(Icons.camera_alt_rounded, color: AppColors.emerald, size: 18),
-                              SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'Izin Kamera diaktifkan untuk menangkap gambar sampah secara langsung saat pelaporan. Foto dikirimkan secara sadar dan hanya digunakan untuk validasi jenis sampah via AI Scan.',
-                                  style: TextStyle(fontSize: 11, color: AppColors.textSecondary, height: 1.45),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: AppConstants.spacing16),
-
-                  // ── Hasil Deteksi ──
-                  if (_hasLocation)
-                    FadeSlideEntrance(
-                      delay: const Duration(milliseconds: 600),
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(AppConstants.spacing16),
-                        decoration: BoxDecoration(
-                          color: AppColors.emeraldLight,
-                          borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
-                          border: Border.all(
-                            color: AppColors.emerald.withValues(alpha: 0.15),
-                            width: 1,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.emerald.withValues(alpha: 0.04),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          children: [
-                            const Icon(Icons.check_circle_rounded,
-                                color: AppColors.emerald, size: 32),
-                            const SizedBox(height: AppConstants.spacing8),
-                            Text(
-                              '$_detectedCity',
-                              style: AppTextStyles.headlineSmall.copyWith(
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.emerald,
-                              ),
-                            ),
-                            Text(
-                              '$_detectedProvince',
-                              style: AppTextStyles.bodyMedium.copyWith(
-                                color: AppColors.emerald.withValues(alpha: 0.8),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                  // ── Error ──
-                  if (_errorMessage != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: AppConstants.spacing16),
-                      child: Text(
-                        _errorMessage!,
-                        style: AppTextStyles.bodySmall.copyWith(color: AppColors.error),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-
-                  const Spacer(),
-
-                  // Buttons container
-                  FadeSlideEntrance(
-                    delay: const Duration(milliseconds: 700),
                     child: Column(
-                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        // ── Tombol Deteksi ──
-                        if (!_hasLocation)
-                          GenesisButton(
-                            text: _isDetecting ? 'Mendeteksi...' : 'Deteksi Lokasi Otomatis',
-                            onPressed: _isDetecting ? null : _detectLocation,
-                            isLoading: _isDetecting,
-                            prefixIcon: Icons.my_location_rounded,
+                        const SetupProgressBar(currentStep: 1, totalSteps: 4),
+                        const Spacer(),
+
+                        // Ilustrasi dengan entrance animation
+                        const FadeSlideEntrance(
+                          delay: Duration(milliseconds: 150),
+                          child: SetupIllustration(
+                            lottieAsset: 'assets/animations/onboarding/location_permission.json',
+                            color: AppColors.emerald,
+                          ),
+                        ),
+                        const SizedBox(height: AppConstants.spacing32),
+
+                        FadeSlideEntrance(
+                          delay: const Duration(milliseconds: 300),
+                          child: Text(
+                            'Lokasi Wilayahmu',
+                            style: AppTextStyles.headlineLarge.copyWith(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        const SizedBox(height: AppConstants.spacing12),
+
+                        FadeSlideEntrance(
+                          delay: const Duration(milliseconds: 450),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Text(
+                              'Demi transparansi dan keamanan data Anda, berikut adalah informasi izin sistem yang kami butuhkan:',
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                color: AppColors.textSecondary,
+                                height: 1.5,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Prominent Disclosure Card for user clearance
+                        FadeSlideEntrance(
+                          delay: const Duration(milliseconds: 550),
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 12),
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.75),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: AppColors.divider.withValues(alpha: 0.5)),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Colors.black12,
+                                  blurRadius: 10,
+                                  offset: Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: const [
+                                    Icon(Icons.security_rounded, color: AppColors.emerald, size: 20),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Transparansi Izin Penggunaan Data',
+                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.navy900),
+                                    ),
+                                  ],
+                                ),
+                                const Divider(height: 20, thickness: 1, color: AppColors.divider),
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: const [
+                                    Icon(Icons.location_on_rounded, color: AppColors.emerald, size: 18),
+                                    SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        'Akses Lokasi GPS digunakan eksklusif untuk melacak koordinat pemetaan laporan penumpukan sampah geospasial real-time serta mengelompokkan Anda ke papan peringkat wilayah.',
+                                        style: TextStyle(fontSize: 11, color: AppColors.textSecondary, height: 1.45),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: const [
+                                    Icon(Icons.camera_alt_rounded, color: AppColors.emerald, size: 18),
+                                    SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        'Izin Kamera diaktifkan untuk menangkap gambar sampah secara langsung saat pelaporan. Foto dikirimkan secara sadar dan hanya digunakan untuk validasi jenis sampah via AI Scan.',
+                                        style: TextStyle(fontSize: 11, color: AppColors.textSecondary, height: 1.45),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: AppConstants.spacing16),
+
+                        // ── Hasil Deteksi ──
+                        if (_hasLocation)
+                          FadeSlideEntrance(
+                            delay: const Duration(milliseconds: 600),
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(AppConstants.spacing16),
+                              decoration: BoxDecoration(
+                                color: AppColors.emerald.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: AppColors.emerald.withValues(alpha: 0.3),
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: Column(
+                                children: [
+                                  const Icon(
+                                    Icons.check_circle_rounded,
+                                    color: AppColors.emerald,
+                                    size: 32,
+                                  ),
+                                  const SizedBox(height: AppConstants.spacing8),
+                                  Text(
+                                    'Lokasi Berhasil Dideteksi',
+                                    style: AppTextStyles.bodyMedium.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.emerald,
+                                    ),
+                                  ),
+                                  const SizedBox(height: AppConstants.spacing4),
+                                  Text(
+                                    '$_detectedCity',
+                                    style: AppTextStyles.headlineSmall.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.emerald,
+                                    ),
+                                  ),
+                                  Text(
+                                    '$_detectedProvince',
+                                    style: AppTextStyles.bodyMedium.copyWith(
+                                      color: AppColors.emerald.withValues(alpha: 0.8),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
 
-                        // ── Tombol Lanjut ──
-                        if (_hasLocation) ...[
-                          GenesisButton(
-                            text: 'Lanjutkan',
-                            onPressed: () =>
-                                context.goNamed(Routes.setupNotificationName),
-                            prefixIcon: Icons.arrow_forward_rounded,
+                        // ── Error ──
+                        if (_errorMessage != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: AppConstants.spacing16),
+                            child: Text(
+                              _errorMessage!,
+                              style: AppTextStyles.bodySmall.copyWith(color: AppColors.error),
+                              textAlign: TextAlign.center,
+                            ),
                           ),
-                        ],
 
+                        const Spacer(),
+
+                        // Buttons container
+                        FadeSlideEntrance(
+                          delay: const Duration(milliseconds: 700),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // ── Tombol Deteksi ──
+                              if (!_hasLocation)
+                                GenesisButton(
+                                  text: _isDetecting ? 'Mendeteksi...' : 'Deteksi Lokasi Otomatis',
+                                  onPressed: _isDetecting ? null : _detectLocation,
+                                  isLoading: _isDetecting,
+                                  prefixIcon: Icons.my_location_rounded,
+                                ),
+
+                              // ── Tombol Lanjut ──
+                              if (_hasLocation) ...[
+                                GenesisButton(
+                                  text: 'Lanjutkan',
+                                  onPressed: () =>
+                                      context.goNamed(Routes.setupNotificationName),
+                                  prefixIcon: Icons.arrow_forward_rounded,
+                                ),
+                              ],
+
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: AppConstants.spacing16),
                       ],
                     ),
                   ),
-                  const SizedBox(height: AppConstants.spacing16),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),

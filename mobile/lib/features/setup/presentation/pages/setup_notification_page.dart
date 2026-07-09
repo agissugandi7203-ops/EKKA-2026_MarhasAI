@@ -67,133 +67,141 @@ class _SetupNotificationPageState extends State<SetupNotificationPage> {
             ),
           ),
           child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppConstants.pagePaddingH,
-                vertical: AppConstants.pagePaddingV,
-              ),
-              child: Column(
-                children: [
-                  const SetupProgressBar(currentStep: 2, totalSteps: 4),
-                  const Spacer(),
-
-                  // Ilustrasi dengan entrance animation
-                  const FadeSlideEntrance(
-                    delay: Duration(milliseconds: 150),
-                    child: SetupIllustration(
-                      lottieAsset: 'assets/animations/onboarding/notification_permission.json',
-                      color: AppColors.gold,
+            child: CustomScrollView(
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppConstants.pagePaddingH,
+                      vertical: AppConstants.pagePaddingV,
                     ),
-                  ),
-                  const SizedBox(height: AppConstants.spacing32),
-
-                  FadeSlideEntrance(
-                    delay: const Duration(milliseconds: 300),
-                    child: Text(
-                      'Aktifkan Notifikasi',
-                      style: AppTextStyles.headlineLarge.copyWith(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w700,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  const SizedBox(height: AppConstants.spacing12),
-
-                  FadeSlideEntrance(
-                    delay: const Duration(milliseconds: 450),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(
-                        'Dapatkan notifikasi saat laporanmu diverifikasi, kamu naik level, atau ada pencapaian baru!',
-                        style: AppTextStyles.bodyLarge.copyWith(
-                          color: AppColors.textSecondary,
-                          height: 1.5,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: AppConstants.spacing24),
-
-                  // ── Benefit List ──
-                  FadeSlideEntrance(
-                    delay: const Duration(milliseconds: 600),
                     child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: _benefits.map(
-                        (benefit) => Padding(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: AppConstants.spacing8,
-                            horizontal: AppConstants.spacing16,
+                      children: [
+                        const SetupProgressBar(currentStep: 2, totalSteps: 4),
+                        const Spacer(),
+
+                        // Ilustrasi dengan entrance animation
+                        const FadeSlideEntrance(
+                          delay: Duration(milliseconds: 150),
+                          child: SetupIllustration(
+                            lottieAsset: 'assets/animations/onboarding/notification_permission.json',
+                            color: AppColors.gold,
                           ),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.check_circle_rounded,
-                                color: AppColors.emerald,
-                                size: 20,
+                        ),
+                        const SizedBox(height: AppConstants.spacing32),
+
+                        FadeSlideEntrance(
+                          delay: const Duration(milliseconds: 300),
+                          child: Text(
+                            'Aktifkan Notifikasi',
+                            style: AppTextStyles.headlineLarge.copyWith(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        const SizedBox(height: AppConstants.spacing12),
+
+                        FadeSlideEntrance(
+                          delay: const Duration(milliseconds: 450),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Text(
+                              'Dapatkan notifikasi saat laporanmu diverifikasi, kamu naik level, atau ada pencapaian baru!',
+                              style: AppTextStyles.bodyLarge.copyWith(
+                                color: AppColors.textSecondary,
+                                height: 1.5,
                               ),
-                              const SizedBox(width: AppConstants.spacing12),
-                              Expanded(
-                                child: Text(
-                                  benefit,
-                                  style: AppTextStyles.bodyMedium.copyWith(
-                                    color: AppColors.textPrimary,
-                                    fontWeight: FontWeight.w500,
-                                  ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: AppConstants.spacing24),
+
+                        // ── Benefit List ──
+                        FadeSlideEntrance(
+                          delay: const Duration(milliseconds: 600),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: _benefits.map(
+                              (benefit) => Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: AppConstants.spacing8,
+                                  horizontal: AppConstants.spacing16,
                                 ),
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.check_circle_rounded,
+                                      color: AppColors.emerald,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: AppConstants.spacing12),
+                                    Expanded(
+                                      child: Text(
+                                        benefit,
+                                        style: AppTextStyles.bodyMedium.copyWith(
+                                          color: AppColors.textPrimary,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ).toList(),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        FadeSlideEntrance(
+                          delay: const Duration(milliseconds: 680),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                            child: Text(
+                              '🛡️ Genesis.id berkomitmen penuh menjaga keamanan data Anda. Izin notifikasi hanya digunakan untuk aktivitas pelaporan dan informasi aplikasi secara internal.',
+                              style: AppTextStyles.labelSmall.copyWith(
+                                color: AppColors.textSecondary,
+                                fontSize: 10,
+                                height: 1.4,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+
+                        const Spacer(),
+
+                        // Buttons container
+                        FadeSlideEntrance(
+                          delay: const Duration(milliseconds: 750),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              GenesisButton(
+                                text: 'Aktifkan Notifikasi',
+                                onPressed: _isRequesting ? null : _requestPermission,
+                                isLoading: _isRequesting,
+                                prefixIcon: Icons.notifications_rounded,
+                              ),
+                              const SizedBox(height: AppConstants.spacing8),
+
+                              GenesisButton(
+                                text: 'Nanti Saja',
+                                variant: GenesisButtonVariant.text,
+                                onPressed: _skip,
                               ),
                             ],
                           ),
                         ),
-                      ).toList(),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  FadeSlideEntrance(
-                    delay: const Duration(milliseconds: 680),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: Text(
-                        '🛡️ Genesis.id berkomitmen penuh menjaga keamanan data Anda. Izin notifikasi hanya digunakan untuk aktivitas pelaporan dan informasi aplikasi secara internal.',
-                        style: AppTextStyles.labelSmall.copyWith(
-                          color: AppColors.textSecondary,
-                          fontSize: 10,
-                          height: 1.4,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
-
-                  const Spacer(),
-
-                  // Buttons container
-                  FadeSlideEntrance(
-                    delay: const Duration(milliseconds: 750),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        GenesisButton(
-                          text: 'Aktifkan Notifikasi',
-                          onPressed: _isRequesting ? null : _requestPermission,
-                          isLoading: _isRequesting,
-                          prefixIcon: Icons.notifications_rounded,
-                        ),
-                        const SizedBox(height: AppConstants.spacing8),
-
-                        GenesisButton(
-                          text: 'Nanti Saja',
-                          variant: GenesisButtonVariant.text,
-                          onPressed: _skip,
-                        ),
+                        const SizedBox(height: AppConstants.spacing16),
                       ],
                     ),
                   ),
-                  const SizedBox(height: AppConstants.spacing16),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
