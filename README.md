@@ -56,47 +56,42 @@ Untuk mempermudah dewan juri melakukan peninjauan teknis, seluruh instrumen sist
   </a>
 </div>
 
----
+## 🎬 Panduan Peninjauan Juri (Quick Tour & Review Guide)
 
-## 📢 Pembaruan & Fitur Terbaru (Latest Updates)
+Untuk memudahkan dewan juri menguji dan meninjau seluruh fitur unggulan pada ekosistem **Genesis**, silakan ikuti skenario pengujian langkah-demi-langkah di bawah ini:
 
-Untuk memastikan pengalaman pengguna (UX) yang optimal dan stabilitas sistem yang tangguh, berikut adalah log pembaruan kritis terbaru yang telah diterapkan pada platform Genesis:
+### 1. 📱 Aplikasi Mobile (Warga - Flutter)
+*   **Langkah 1: Pendaftaran & Onboarding Sesi**
+    1. Unduh dan buka aplikasi **Genesis** menggunakan tautan APK di atas.
+    2. Daftarkan akun baru menggunakan email valid Anda, atau login dengan akun pengujian jika sudah ada.
+    3. Ikuti **Setup Onboarding Wizard (4 Langkah)**:
+       * Setujui izin lokasi GPS untuk membiarkan backend melakukan *reverse-geocoding* wilayah administrasi kota Anda secara otomatis.
+       * Setujui izin notifikasi gawai.
+       * Lengkapi data profil (Username unik).
+*   **Langkah 2: Pelaporan Spasial & Analisis AI Scan**
+    1. Klik ikon kamera di navigasi bawah untuk membuat laporan masalah lingkungan baru.
+    2. Ambil foto pelanggaran sampah/limbah di sekitar Anda.
+    3. Klik tombol **"AI Scan"** sebelum mengirim. AI di backend akan menganalisis klasifikasi jenis sampah, tingkat keparahan, persentase akurasi, dan pasal hukum perda yang dilanggar secara langsung.
+    4. Anda bisa menanyakan detail hasil analisis AI di input obrolan premium yang baru (mendukung multi-line auto-expand 1-5 baris dan antarmuka Markdown bersih ChatGPT style).
+    5. Klik **"Kirim Laporan"**. Sistem geospasial PostGIS di backend akan memvalidasi radius 50m secara real-time untuk mencegah laporan duplikat/spam.
+*   **Langkah 3: Asisten AI Cerdas Warga (Geni Chatbot RAG & Whisper)**
+    1. Masuk ke halaman **Chat Geni** di beranda.
+    2. Ajukan pertanyaan seputar regulasi lingkungan hidup daerah.
+    3. **Speech-to-Text**: Tekan dan tahan tombol mikrofon untuk merekam suara Anda, backend akan mentranskripsinya secara otomatis menggunakan model **Whisper STT**.
+    4. **Multimodal Input**: Coba klik ikon "+" untuk mengunggah berkas PDF hukum atau gambar tambahan untuk dianalisis oleh AI.
+    5. **Dinamis Model Selector**: Geser menu bawah untuk mengganti model AI antara `Geni-Flash`, `Geni-Pro` (proses berpikir bertahap/thinking budget), atau `DeepSeek-Chat`.
+*   **Langkah 4: Toko Rewards & Gamifikasi**
+    1. Buka tab **Profil** untuk melihat pencapaian Level, akumulasi XP, lencana (*Badges*), dan riwayat *Daily Quests*.
+    2. Masuk ke **Toko Sembako** untuk menukarkan koin emas Anda secara interaktif dengan Minyak Goreng, Beras Premium, Gula, dll.
+    3. Buka tab **Leaderboard** untuk melihat podium peringkat warga terbersih secara global atau per kabupaten/kota.
 
-### 1. 📷 Inisialisasi Kamera Mulus & Anti-Gagal (First-time Camera Grant Fix)
-*   **Masalah Teknis (Race Condition)**: Panggilan `availableCameras()` langsung dijalankan instan setelah dialog izin kamera disetujui pertama kali oleh user. Pada level native, sistem operasi membutuhkan waktu beberapa milidetik untuk memperbarui cache izin perangkat keras dan mengaktifkan kembali modul sensor kamera. Hal ini menyebabkan pemanggilan instan dari Flutter gagal mendeteksi kamera dan melempar error `CameraAccessDenied`, sehingga layar menampilkan "Gagal memuat perangkat kamera".
-*   **Solusi & Mitigasi**: Ditambahkan jeda waktu singkat sebesar 300ms (`await Future.delayed(const Duration(milliseconds: 300));`) tepat setelah izin kamera disetujui. Jeda ini memberikan waktu bagi sistem operasi native untuk menyelesaikan sikronisasi hardware kamera sebelum dipanggil oleh Flutter, menjamin inisialisasi pertama kali berjalan 100% mulus.
+### 2. 💻 Web Dashboard (Admin - Next.js)
+1. Buka portal dashboard admin di `https://genesisHub.web.id`.
+2. Masuk dengan akun administrator untuk melihat data geospasial real-time, peta panas (*heatmap*) sebaran laporan, grafik penanganan sampah, verifikasi/validasi laporan warga, serta katalog manajemen lencana warga.
 
-### 2. 💬 Unifikasi Desain Input Obrolan AI Analisis (ChatGPT & Geni Chat Style)
-*   **Masalah**: Desain form input obrolan pada menu AI Analisis (`reports_page.dart`) sebelumnya tidak konsisten dengan halaman chat utama (`chat_page.dart`), baik secara visual maupun fungsionalitas pengetikan paragraf panjang.
-*   **Solusi & Unifikasi UI/UX**:
-    *   **Premium 3D Flat Input Bar**: Mengadopsi container putih dengan radius `24.0`, ketebalan border `1.5px` warna `#E2E8F0`, serta bayangan solid (`BoxShadow` flat offset Y: 4px) untuk nuansa visual claymorphic modern yang konsisten.
-    *   **Auto-Expanding TextField**: Mengonfigurasi `TextField` dengan `minLines: 1` dan `maxLines: 5` serta `keyboardType: TextInputType.multiline`. Kotak input kini secara dinamis melar (tinggi membesar otomatis) ke atas saat pengguna mengetik pesan panjang atau menekan tombol enter untuk membuat paragraf baru.
-    *   **Penghapusan Bubble Abu-Abu**: Balon/gelembung background abu-abu (`AppColors.navy50`) yang membungkus respons AI telah dihilangkan sepenuhnya. Teks hasil analisis AI kini langsung ditulis bersih di atas layar (ChatGPT style) dan diakhiri dengan garis pembatas tipis (`Divider`) sebagai pemisah, meningkatkan kejelasan visual teks Markdown secara signifikan.
-    *   **Gradiasi Tombol Kirim**: Tombol kirim diperbarui menggunakan gradasi warna linear premium (navy gelap `#0F2042` ke `#0A1628`) dengan ukuran ikon kirim putih 16px.
-
-### 3. 🌊 Efek Typewriter & Auto-Scroll Super Smooth
-*   **Masalah**: Logika simulasi typewriter sebelumnya memaksa scroll viewport untuk melakukan `jumpTo` secara kasar pada setiap karakter baru yang muncul. Hal ini menyebabkan stutters, kedipan, dan mencegah pengguna membaca pesan lama karena layar dipaksa melompat ke bawah.
-*   **Solusi**:
-    *   **Frame-Render Callback**: Menggunakan `WidgetsBinding.instance.addPostFrameCallback` untuk memastikan perintah scroll hanya dieksekusi setelah Flutter selesai melakukan perhitungan tinggi teks baru di dalam frame rendering.
-    *   **Viewport-Sensitive Scroll**: Menambahkan pemeriksaan ambang batas (*threshold*): sistem hanya akan melakukan auto-scroll ke bawah jika pengguna memang berada di area dasar obrolan (jarak scroll ke bawah < 150px). Jika pengguna sengaja men-scroll ke atas untuk membaca pesan sebelumnya saat AI mengetik, auto-scroll dinonaktifkan sementara agar tidak mengganggu fokus pengguna.
-
-### 4. 🔔 Deklarasi Izin Notifikasi Android 13+ (API 33)
-*   **Masalah**: Pada Android 13 ke atas, permintaan izin dinamis lewat `Permission.notification.request()` akan gagal secara diam-diam dan otomatis mengembalikan status ditolak (*denied*) jika izin tersebut tidak dideklarasikan di dalam file konfigurasi manifest.
-*   **Solusi**: Mendaftarkan `<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />` pada berkas `AndroidManifest.xml` aplikasi mobile, memungkinkan sistem memunculkan dialog pop-up izin notifikasi secara resmi kepada pengguna.
-
-### 5. 🧩 Perbaikan Onboarding Stuck (Setup Profile Page Navigation Loop)
-*   **Masalah**: Saat pengguna mengirimkan data profil terakhir di SetupProfilePage, tombol loading spinner global berputar terus-menerus dan pengguna terjebak selamanya di halaman tersebut meskipun data berhasil tersimpan di Supabase. Hal ini terjadi karena widget `AuthListenerWrapper` (yang menampung BLoC listener untuk mengalihkan rute) ter-unmount secara tidak sengaja sewaktu UI menampilkan state loading, memutus aliran event autentikasi.
-*   **Solusi**: Memosisikan `AuthListenerWrapper` sebagai pembungkus utama di root widget tree halaman `SetupProfilePage` sehingga listener tetap terpasang dengan kokoh di memori terlepas dari perubahan status visual halaman. Navigasi otomatis menuju dashboard kini langsung berjalan seketika profil selesai dibuat.
-
-### 6. 🎬 Transisi Halaman Tour Bebas Kedip (Flicker-Free Transitions)
-*   **Masalah**: Transisi standar bawaan OS saat beralih antar layar tour pra-onboarding (`preOnboarding` dan `introduction`) menimbulkan efek kedipan hitam (*flickering*) yang mengurangi kesan premium aplikasi.
-*   **Solusi**: Mengganti transisi default dengan `pageBuilder` kustom menggunakan `_fadeTransitionPage` (animasi cross-fade lembut) di dalam konfigurasi GoRouter, menciptakan transisi visual yang halus dan mulus.
-
-### 7. 🚀 Pengerasan Pemetaan Model Vertex AI Singapura (asia-southeast1)
-*   **Masalah**: Menghindari keterlambatan pemrosesan atau resiko fallback otomatis ke model LLM lama yang tidak mendukung respons streaming cepat.
-*   **Solusi**: Melakukan pengerasan pemetaan model secara keras (*hardcoded*) di dalam modul backend `openrouter.service.ts`:
-    *   Model Flash langsung diarahkan ke Vertex AI Singapura (`gemini-3.5-flash`) untuk latensi sangat rendah (~30ms per chunk).
-    *   Model Pro langsung diarahkan ke Vertex AI US (`gemini-3.1-pro-preview`) dengan alokasi *Thinking Budget* sebesar 4096 token untuk pemrosesan penalaran hukum yang sangat akurat.
+### 3. ⚙️ Portal API & Swagger Docs (Developer)
+1. Kunjungi portal dokumentasi Swagger API terintegrasi di `https://genesisHub.my.id/docs`.
+2. Seluruh katalog endpoint B2G (Data-as-a-Service) dapat diuji secara interaktif dari browser untuk peninjauan kontrak data OpenAPI.
 
 ---
 
