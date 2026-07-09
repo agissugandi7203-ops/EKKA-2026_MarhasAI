@@ -2033,8 +2033,11 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
               controller: _scrollController,
               physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
               padding: const EdgeInsets.all(20),
-              itemCount: _messages.length + (_isTyping ? 1 : 0),
+              itemCount: _messages.length + (_isTyping ? 1 : 0) + (_isStreamingActive ? 1 : 0),
               itemBuilder: (context, index) {
+                if (_isStreamingActive && index == _messages.length + (_isTyping ? 1 : 0)) {
+                  return SizedBox(height: MediaQuery.of(context).size.height * 0.45);
+                }
                 if (index == _messages.length && _isTyping) {
                   return _buildTypingIndicator();
                 }
@@ -2356,30 +2359,13 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
       alignment: Alignment.centerLeft,
       child: Padding(
         padding: const EdgeInsets.only(left: 8.0, bottom: 14),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(
-              width: 32,
-              height: 24,
-              child: Lottie.asset(
-                'assets/animations/global/ai_thinking.json',
-                fit: BoxFit.contain,
-                frameRate: FrameRate.max,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Flexible(
-              child: Text(
-                _loadingText,
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.textSecondary,
-                  fontSize: 13,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-            ),
-          ],
+        child: Text(
+          _loadingText,
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: AppColors.textSecondary,
+            fontSize: 14,
+            fontStyle: FontStyle.italic,
+          ),
         ),
       ),
     );

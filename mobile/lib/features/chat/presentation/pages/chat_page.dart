@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
@@ -526,8 +527,11 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
                           controller: _scrollController,
                           physics: const BouncingScrollPhysics(),
                           padding: const EdgeInsets.all(AppConstants.pagePaddingH),
-                          itemCount: messages.length + (_isTranscribing ? 1 : 0),
+                          itemCount: messages.length + (_isTranscribing ? 1 : 0) + (isStreaming ? 1 : 0),
                           itemBuilder: (context, index) {
+                            if (isStreaming && index == messages.length + (_isTranscribing ? 1 : 0)) {
+                              return SizedBox(height: MediaQuery.of(context).size.height * 0.45);
+                            }
                             if (index == messages.length && _isTranscribing) {
                               return _buildTranscribingIndicator();
                             }
@@ -1859,7 +1863,7 @@ class _ThinkingIndicatorState extends State<_ThinkingIndicator> {
   }
 }
 
-class _MarkdownStreamRenderer extends StatelessWidget {
+class _MarkdownStreamRenderer extends StatefulWidget {
   final String data;
   final bool isStreaming;
 
@@ -1869,8 +1873,87 @@ class _MarkdownStreamRenderer extends StatelessWidget {
   });
 
   @override
+  State<_MarkdownStreamRenderer> createState() => _MarkdownStreamRendererState();
+}
+
+class _MarkdownStreamRendererState extends State<_MarkdownStreamRenderer> with SingleTickerProviderStateMixin {
+  String _displayedText = '';
+  late final Ticker _ticker;
+  double _charsToReveal = 0.0;
+  
+  @override
+  void initState() {
+    super.initState();
+    _displayedText = widget.data;
+    
+    // Ticker berjalan setiap frame (60 FPS / ~16.7ms) sinkron dengan layar gawai
+    _ticker = createTicker((elapsed) {
+      if (!mounted) return;
+      _updateText();
+    });
+    
+    if (widget.isStreaming) {
+      _ticker.start();
+    }
+  }
+
+  @override
+  void didUpdateWidget(_MarkdownStreamRenderer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isStreaming) {
+      if (!_ticker.isActive) {
+        _ticker.start();
+      }
+    } else {
+      // Jika streaming selesai, tampilkan teks utuh secara instan
+      if (_ticker.isActive) {
+        _ticker.stop();
+      }
+      setState(() {
+        _displayedText = widget.data;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _ticker.dispose();
+    super.dispose();
+  }
+
+  void _updateText() {
+    final target = widget.data;
+    final currentGraphemes = _displayedText.characters;
+    final targetGraphemes = target.characters;
+
+    if (currentGraphemes.length >= targetGraphemes.length) {
+      // Jika sudah menyamai target, tunggu token berikutnya
+      return;
+    }
+
+    // Hitung berapa karakter (Grapheme Clusters) tertinggal
+    final int diff = targetGraphemes.length - currentGraphemes.length;
+    
+    // Kecepatan adaptif: jika tertinggal jauh (misal saat network buffer), kejar lebih cepat.
+    // Minimal reveal 1.5 karakter per frame (sekitar 90 karakter per detik) agar tidak terlalu lambat.
+    final double step = (diff > 50) ? (diff / 10.0) : 1.5;
+
+    _charsToReveal += step;
+    int revealCount = _charsToReveal.toInt();
+
+    if (revealCount > 0) {
+      _charsToReveal -= revealCount;
+      final nextCount = currentGraphemes.length + revealCount;
+      
+      setState(() {
+        _displayedText = targetGraphemes.take(nextCount).toString();
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final text = isStreaming ? '$data █' : data;
+    final text = widget.isStreaming ? '$_displayedText █' : _displayedText;
 
     return MarkdownBody(
       data: text,
@@ -1887,30 +1970,30 @@ class _MarkdownStreamRenderer extends StatelessWidget {
       styleSheet: MarkdownStyleSheet(
         p: AppTextStyles.bodyLarge.copyWith(
           color: AppColors.navy900,
-          fontSize: 16.5,
+          fontSize: 17.5,
           height: 1.55,
         ),
         h1: AppTextStyles.headlineSmall.copyWith(
           color: AppColors.navy900,
           fontWeight: FontWeight.bold,
-          fontSize: 20,
+          fontSize: 21,
           height: 1.4,
         ),
         h2: AppTextStyles.titleLarge.copyWith(
           color: AppColors.navy900,
           fontWeight: FontWeight.bold,
-          fontSize: 18,
+          fontSize: 19,
           height: 1.4,
         ),
         h3: AppTextStyles.titleMedium.copyWith(
           color: AppColors.navy900,
           fontWeight: FontWeight.bold,
-          fontSize: 16.5,
+          fontSize: 17.5,
           height: 1.4,
         ),
         listBullet: AppTextStyles.bodyLarge.copyWith(
           color: AppColors.navy900,
-          fontSize: 16.5,
+          fontSize: 17.5,
           fontWeight: FontWeight.w500,
         ),
         tableBorder: TableBorder.all(
@@ -1920,18 +2003,18 @@ class _MarkdownStreamRenderer extends StatelessWidget {
         tableHead: AppTextStyles.bodyLarge.copyWith(
           color: AppColors.navy900,
           fontWeight: FontWeight.bold,
-          fontSize: 14,
+          fontSize: 15,
         ),
         tableBody: AppTextStyles.bodyLarge.copyWith(
           color: AppColors.textPrimary,
-          fontSize: 14,
+          fontSize: 14.5,
         ),
         tableCellsPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         code: AppTextStyles.bodySmall.copyWith(
           color: AppColors.burgundy500,
           backgroundColor: AppColors.burgundy50,
           fontFamily: 'monospace',
-          fontSize: 12,
+          fontSize: 12.5,
         ),
         codeblockPadding: const EdgeInsets.all(12),
         codeblockDecoration: BoxDecoration(
