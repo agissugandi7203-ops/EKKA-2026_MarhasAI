@@ -1767,6 +1767,7 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
   }
 
   void _scrollToBottom({bool force = false, bool isStreaming = false}) {
+    if (_messages.length <= 1) return;
     if (_scrollController.hasClients) {
       final position = _scrollController.position;
       final double distanceToBottom = position.maxScrollExtent - position.pixels;
@@ -2046,11 +2047,11 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
             child: ListView.builder(
               controller: _scrollController,
               physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-              padding: EdgeInsets.only(
+              padding: const EdgeInsets.only(
                 left: 20,
                 right: 20,
                 top: 20,
-                bottom: MediaQuery.of(context).size.height * 0.42,
+                bottom: 110.0,
               ),
               itemCount: _messages.length + (_isTyping ? 1 : 0),
               itemBuilder: (context, index) {

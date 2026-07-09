@@ -531,11 +531,11 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
                       : ListView.builder(
                           controller: _scrollController,
                           physics: const BouncingScrollPhysics(),
-                          padding: EdgeInsets.only(
+                          padding: const EdgeInsets.only(
                             left: AppConstants.pagePaddingH,
                             right: AppConstants.pagePaddingH,
                             top: AppConstants.pagePaddingH,
-                            bottom: MediaQuery.of(context).size.height * 0.42,
+                            bottom: 110.0,
                           ),
                           itemCount: messages.length + (_isTranscribing ? 1 : 0),
                           itemBuilder: (context, index) {
