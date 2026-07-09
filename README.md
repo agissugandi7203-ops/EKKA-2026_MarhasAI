@@ -58,6 +58,31 @@ Untuk mempermudah dewan juri melakukan peninjauan teknis, seluruh instrumen sist
 
 ---
 
+## 📢 Pembaruan & Fitur Terbaru (Latest Updates)
+
+Untuk memastikan pengalaman pengguna (UX) yang optimal dan stabilitas sistem yang tangguh, berikut adalah log pembaruan kritis terbaru yang telah diterapkan pada platform Genesis:
+
+1. **Inisialisasi Kamera Tanpa Gagal (First-time Camera Grant Fix)**
+   * *Masalah*: Panggilan `availableCameras()` langsung dijalankan instan setelah dialog izin kamera disetujui pertama kali oleh user, memicu *race condition* OS native (kamera belum siap) dan melempar error `CameraAccessDenied`.
+   * *Solusi*: Ditambahkan jeda waktu singkat (300ms) pasca izin kamera disetujui untuk memberi waktu bagi sistem operasi native memperbarui cache izin perangkat keras sebelum dipanggil oleh Flutter.
+2. **Desain Chat AI Scan Premium & Konsisten (ChatGPT Style)**
+   * *Solusi*: Unifikasi antarmuka input obrolan pada menu AI Analisis (`reports_page.dart`) agar sama persis dengan halaman chat utama (`chat_page.dart`):
+     * Desain input form bergaya 3D flat dengan container putih, garis pembatas 1.5px solid, dan tombol kirim bergradien navy.
+     * Dukungan form dinamis auto-expand tinggi kotak input (1 hingga 5 baris) saat mengetik beberapa paragraf.
+     * Penghapusan balon abu-abu (`AppColors.navy50`) pada respons AI untuk merender teks markdown langsung pada layar (ChatGPT/Geni Chat style) dengan pemisah tipis.
+3. **Typewriter & Scroll Super Smooth**
+   * *Solusi*: Sinkronisasi gerakan scroll otomatis typewriter menggunakan `WidgetsBinding.instance.addPostFrameCallback` agar transisi berjalan mulus pasca rendering teks baru selesai dilakukan, serta mendeteksi posisi scroll pengguna untuk menghindari lompatan layar yang mengganggu saat membaca pesan lama.
+4. **Deklarasi Izin Notifikasi Android 13+**
+   * *Solusi*: Ditambahkan izin `<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />` pada manifest aplikasi Android guna mencegah bypass permohonan notifikasi secara otomatis di gawai Android versi terbaru.
+5. **Fix Onboarding Stuck (Setup Profile Stuck)**
+   * *Solusi*: Memosisikan `AuthListenerWrapper` (yang menampung BLoC listener autentikasi) pada root utama widget tree halaman setup profil untuk mencegah unmounting widget secara tidak sengaja sewaktu proses pendaftaran disubmit. Pengguna kini dialihkan otomatis ke dashboard beranda setelah tombol "Selesai & Mulai" diklik.
+6. **Transisi Tour Bebas Kedip (Flicker-Free Transitions)**
+   * *Solusi*: Mengganti animasi slide standar dengan transisi cross-fade custom (`_fadeTransitionPage` di router GoRouter) untuk transisi antar halaman tour pra-onboarding.
+7. **Hardcoded Model Mapping Vertex AI (Backend)**
+   * *Solusi*: Pengerasan pemetaan nama model di backend `openrouter.service.ts` (Vertex AI `gemini-3.5-flash` untuk Flash dan `gemini-3.1-pro-preview` untuk Pro) demi menjamin kinerja streaming SSE instan dan keakuratan jawaban tanpa resiko fallback model lama.
+
+---
+
 ## 📖 1. Latar Belakang & Urgensi Masalah
 
 ### 1.1. Paradoks Aplikasi Pelaporan Lingkungan

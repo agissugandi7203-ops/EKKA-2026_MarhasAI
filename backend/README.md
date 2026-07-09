@@ -21,6 +21,20 @@ Layanan backend **Genesis** dirancang menggunakan arsitektur modular **NestJS** 
 
 ---
 
+## 📢 Pembaruan Backend Terbaru (Latest Backend Updates)
+
+Berikut adalah log pembaruan kritis di sisi layanan backend (NestJS + Fastify) untuk optimalisasi latency dan integrasi model LLM:
+
+1. **Pengerasan Pemetaan Model Vertex AI (Hardcoded Model Mapping)**
+   * *Akar Masalah*: Menghindari resiko keterlambatan respons atau *fallback* otomatis ke model Gemini versi lama yang kurang optimal atau lambat di server.
+   * *Perbaikan*: Memaksakan pemetaan nama model di `openrouter.service.ts` secara keras (*hardcoded*) untuk model Vertex AI:
+     * Model Flash memetakan langsung ke Vertex AI `'gemini-3.5-flash'` (mendukung kecepatan respons sangat tinggi dan *thinking capabilities*).
+     * Model Pro memetakan langsung ke Vertex AI `'gemini-3.1-pro-preview'` (mendukung penalaran hukum/perda yang kompleks & pgvector search RAG).
+2. **Pembersihan Database Otomatis (Database Purge Script)**
+   * *Perbaikan*: Dibuat script pemeliharaan admin di `scripts/delete_test_users.js` untuk membersihkan seluruh akun pengujian warga secara otomatis dari tabel `profiles` dan `auth.users` Supabase jika email mengandung unsur nama `arieffajar` atau `testing`.
+
+---
+
 ## 1. Fitur Utama & Modul Sistem
 
 Setiap fitur dirancang secara modular dengan pemisahan tanggung jawab (*Separation of Concerns*) yang ketat:
