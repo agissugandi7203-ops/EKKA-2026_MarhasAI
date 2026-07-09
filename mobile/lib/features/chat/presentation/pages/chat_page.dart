@@ -112,18 +112,23 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
   }
   void _scrollToBottom({bool force = false, bool isStreaming = false}) {
     if (_scrollController.hasClients) {
-      // With reverse: true, the bottom of the list is at offset 0.
-      final double offset = _scrollController.offset;
+      final position = _scrollController.position;
+      final double distanceToBottom = position.maxScrollExtent - position.pixels;
 
       // Only scroll if forced or user is already near the bottom (within 150px)
-      if (force || offset < 150) {
+      if (force || distanceToBottom < 150) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!_scrollController.hasClients) return;
+          final newMax = _scrollController.position.maxScrollExtent;
           if (isStreaming) {
-            _scrollController.jumpTo(0);
+            _scrollController.animateTo(
+              newMax,
+              duration: const Duration(milliseconds: 100),
+              curve: Curves.linear,
+            );
           } else {
             _scrollController.animateTo(
-              0,
+              newMax,
               duration: const Duration(milliseconds: 250),
               curve: Curves.easeOut,
             );
@@ -519,20 +524,16 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
                       ? _buildWelcomeDashboard()
                       : ListView.builder(
                           controller: _scrollController,
-                          reverse: true,
                           physics: const BouncingScrollPhysics(),
                           padding: const EdgeInsets.all(AppConstants.pagePaddingH),
                           itemCount: messages.length + (_isTranscribing ? 1 : 0),
                           itemBuilder: (context, index) {
-                            if (_isTranscribing && index == 0) {
+                            if (index == messages.length && _isTranscribing) {
                               return _buildTranscribingIndicator();
                             }
-                            
-                            final msgIndex = _isTranscribing ? messages.length - index : messages.length - 1 - index;
-                            final msg = messages[msgIndex];
-                            
+                            final msg = messages[index];
                             final isActiveStreaming = isStreaming &&
-                                (msgIndex == messages.length - 1) &&
+                                (index == messages.length - 1) &&
                                 msg.sender == 'bot';
                             return Padding(
                               padding: const EdgeInsets.only(bottom: AppConstants.spacing12),
@@ -1886,27 +1887,31 @@ class _MarkdownStreamRenderer extends StatelessWidget {
       styleSheet: MarkdownStyleSheet(
         p: AppTextStyles.bodyLarge.copyWith(
           color: AppColors.navy900,
+          fontSize: 16.5,
           height: 1.55,
         ),
         h1: AppTextStyles.headlineSmall.copyWith(
           color: AppColors.navy900,
           fontWeight: FontWeight.bold,
+          fontSize: 20,
           height: 1.4,
         ),
         h2: AppTextStyles.titleLarge.copyWith(
           color: AppColors.navy900,
           fontWeight: FontWeight.bold,
+          fontSize: 18,
           height: 1.4,
         ),
         h3: AppTextStyles.titleMedium.copyWith(
           color: AppColors.navy900,
           fontWeight: FontWeight.bold,
+          fontSize: 16.5,
           height: 1.4,
-          fontSize: 15,
         ),
         listBullet: AppTextStyles.bodyLarge.copyWith(
           color: AppColors.navy900,
-          fontWeight: FontWeight.bold,
+          fontSize: 16.5,
+          fontWeight: FontWeight.w500,
         ),
         tableBorder: TableBorder.all(
           color: AppColors.divider,

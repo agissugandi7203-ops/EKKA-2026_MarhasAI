@@ -1758,18 +1758,23 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
 
   void _scrollToBottom({bool force = false, bool isStreaming = false}) {
     if (_scrollController.hasClients) {
-      // With reverse: true, the bottom of the list is at offset 0.
-      final double offset = _scrollController.offset;
+      final position = _scrollController.position;
+      final double distanceToBottom = position.maxScrollExtent - position.pixels;
 
       // Only trigger auto-scroll if forced or user is already at the bottom (within 150px)
-      if (force || offset < 150) {
+      if (force || distanceToBottom < 150) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!_scrollController.hasClients) return;
+          final newMax = _scrollController.position.maxScrollExtent;
           if (isStreaming) {
-            _scrollController.jumpTo(0);
+            _scrollController.animateTo(
+              newMax,
+              duration: const Duration(milliseconds: 100),
+              curve: Curves.linear,
+            );
           } else {
             _scrollController.animateTo(
-              0,
+              newMax,
               duration: const Duration(milliseconds: 250),
               curve: Curves.easeOut,
             );
@@ -1799,23 +1804,33 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
     const double charsPerMs = 0.15; 
     const frameDuration = Duration(milliseconds: 16); // Sinkron dengan 60 FPS (~16.6ms)
 
+    final int totalCharacters = fullText.characters.length;
+    int lastScrollTime = 0;
+
     while (true) {
       if (!mounted) break;
       
       final int elapsedMs = stopwatch.elapsedMilliseconds;
       final int targetLength = (elapsedMs * charsPerMs).toInt();
       
-      if (targetLength >= fullText.length) {
+      if (targetLength >= totalCharacters) {
         _messages[index]['text'] = fullText;
         _streamingTextNotifier.value = fullText;
         break;
       }
       
-      final String displayed = fullText.substring(0, targetLength);
+      // Ambil sejumlah karakter (Grapheme Clusters) secara aman agar emoji tidak pecah
+      final String displayed = fullText.characters.take(targetLength).toString();
       
       // Update data di daftar pesan & ValueNotifier secara terisolasi tanpa global rebuild
       _messages[index]['text'] = displayed;
       _streamingTextNotifier.value = displayed;
+      
+      // Throttling scroll ke bawah setiap 100ms agar pergerakan scroll linear lembut dan tidak jank
+      if (elapsedMs - lastScrollTime > 100) {
+        _scrollToBottom(isStreaming: true);
+        lastScrollTime = elapsedMs;
+      }
       
       await Future.delayed(frameDuration);
     }
@@ -2016,17 +2031,15 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
           Expanded(
             child: ListView.builder(
               controller: _scrollController,
-              reverse: true,
               physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
               padding: const EdgeInsets.all(20),
               itemCount: _messages.length + (_isTyping ? 1 : 0),
               itemBuilder: (context, index) {
-                if (_isTyping && index == 0) {
+                if (index == _messages.length && _isTyping) {
                   return _buildTypingIndicator();
                 }
                 
-                final msgIndex = _isTyping ? _messages.length - index : _messages.length - 1 - index;
-                final msg = _messages[msgIndex];
+                final msg = _messages[index];
                 final isUser = msg['sender'] == 'user';
 
                 if (isUser) {
@@ -2054,7 +2067,7 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
                     ),
                   );
                 } else {
-                  final isLastStreaming = (msgIndex == _messages.length - 1) && _isStreamingActive;
+                  final isLastStreaming = (index == _messages.length - 1) && _isStreamingActive;
 
                   if (isLastStreaming) {
                     return ValueListenableBuilder<String>(
@@ -2080,36 +2093,36 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
                                 styleSheet: MarkdownStyleSheet(
                                   p: AppTextStyles.bodyLarge.copyWith(
                                     color: AppColors.navy900,
-                                    fontSize: 15.5,
+                                    fontSize: 16.5,
                                     height: 1.55,
                                   ),
                                   strong: AppTextStyles.bodyLarge.copyWith(
                                     color: AppColors.navy900,
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 15.5,
+                                    fontSize: 16.5,
                                     height: 1.55,
                                   ),
                                   h1: AppTextStyles.titleMedium.copyWith(
                                     color: AppColors.navy900,
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 18,
+                                    fontSize: 20,
                                     height: 1.4,
                                   ),
                                   h2: AppTextStyles.titleMedium.copyWith(
                                     color: AppColors.navy900,
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 16.5,
+                                    fontSize: 18,
                                     height: 1.4,
                                   ),
                                   h3: AppTextStyles.titleMedium.copyWith(
                                     color: AppColors.navy900,
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 15,
+                                    fontSize: 16.5,
                                     height: 1.4,
                                   ),
                                   listBullet: AppTextStyles.bodyLarge.copyWith(
                                     color: AppColors.navy900,
-                                    fontSize: 15.5,
+                                    fontSize: 16.5,
                                     height: 1.55,
                                   ),
                                 ),
@@ -2145,36 +2158,36 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
                           styleSheet: MarkdownStyleSheet(
                             p: AppTextStyles.bodyLarge.copyWith(
                               color: AppColors.navy900,
-                              fontSize: 15.5,
+                              fontSize: 16.5,
                               height: 1.55,
                             ),
                             strong: AppTextStyles.bodyLarge.copyWith(
                               color: AppColors.navy900,
                               fontWeight: FontWeight.bold,
-                              fontSize: 15.5,
+                              fontSize: 16.5,
                               height: 1.55,
                             ),
                             h1: AppTextStyles.titleMedium.copyWith(
                               color: AppColors.navy900,
                               fontWeight: FontWeight.bold,
-                              fontSize: 18,
+                              fontSize: 20,
                               height: 1.4,
                             ),
                             h2: AppTextStyles.titleMedium.copyWith(
                               color: AppColors.navy900,
                               fontWeight: FontWeight.bold,
-                              fontSize: 16.5,
+                              fontSize: 18,
                               height: 1.4,
                             ),
                             h3: AppTextStyles.titleMedium.copyWith(
                               color: AppColors.navy900,
                               fontWeight: FontWeight.bold,
-                              fontSize: 15,
+                              fontSize: 16.5,
                               height: 1.4,
                             ),
                             listBullet: AppTextStyles.bodyLarge.copyWith(
                               color: AppColors.navy900,
-                              fontSize: 15.5,
+                              fontSize: 16.5,
                               height: 1.55,
                             ),
                           ),
