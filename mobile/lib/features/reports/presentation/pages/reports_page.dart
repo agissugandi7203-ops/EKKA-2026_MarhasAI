@@ -6,6 +6,7 @@ import 'package:markdown/markdown.dart' as md;
 import 'package:lottie/lottie.dart' hide Marker;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/scheduler.dart';
 import '../../../../core/network/dio_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -1841,7 +1842,7 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
       _isStreamingActive = false;
     });
 
-    _scrollToBottom(force: true);
+    // We do NOT force scroll on stream completion to prevent yanking the user back down.
     widget.onMessagesUpdated(_messages);
   }
 
@@ -2072,128 +2073,14 @@ class _AIScanBottomSheetState extends State<_AIScanBottomSheet> {
                 } else {
                   final isLastStreaming = (index == _messages.length - 1) && _isStreamingActive;
 
-                  if (isLastStreaming) {
-                    return ValueListenableBuilder<String>(
-                      valueListenable: _streamingTextNotifier,
-                      builder: (context, text, child) {
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.only(left: 8.0, right: 8.0, bottom: 12.0),
-                              child: MarkdownBody(
-                                data: '$text █',
-                                selectable: true,
-                                builders: {
-                                  'pre': DraftMarkdownBuilder(),
-                                  'img': PremiumImageMarkdownBuilder(),
-                                },
-                                onTapLink: (text, href, title) {
-                                  if (href != null) {
-                                    _showCitationPreviewSheet(context, href, text);
-                                  }
-                                },
-                                styleSheet: MarkdownStyleSheet(
-                                  p: AppTextStyles.bodyLarge.copyWith(
-                                    color: AppColors.navy900,
-                                    fontSize: 16.5,
-                                    height: 1.55,
-                                  ),
-                                  strong: AppTextStyles.bodyLarge.copyWith(
-                                    color: AppColors.navy900,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16.5,
-                                    height: 1.55,
-                                  ),
-                                  h1: AppTextStyles.titleMedium.copyWith(
-                                    color: AppColors.navy900,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 20,
-                                    height: 1.4,
-                                  ),
-                                  h2: AppTextStyles.titleMedium.copyWith(
-                                    color: AppColors.navy900,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 18,
-                                    height: 1.4,
-                                  ),
-                                  h3: AppTextStyles.titleMedium.copyWith(
-                                    color: AppColors.navy900,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16.5,
-                                    height: 1.4,
-                                  ),
-                                  listBullet: AppTextStyles.bodyLarge.copyWith(
-                                    color: AppColors.navy900,
-                                    fontSize: 16.5,
-                                    height: 1.55,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 8.0),
-                              child: Divider(color: AppColors.divider, height: 24, thickness: 1),
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  }
-
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Padding(
                         padding: const EdgeInsets.only(left: 8.0, right: 8.0, bottom: 12.0),
-                        child: MarkdownBody(
+                        child: _MarkdownStreamRenderer(
                           data: msg['text']!,
-                          selectable: true,
-                          builders: {
-                            'pre': DraftMarkdownBuilder(),
-                            'img': PremiumImageMarkdownBuilder(),
-                          },
-                          onTapLink: (text, href, title) {
-                            if (href != null) {
-                              _showCitationPreviewSheet(context, href, text);
-                            }
-                          },
-                          styleSheet: MarkdownStyleSheet(
-                            p: AppTextStyles.bodyLarge.copyWith(
-                              color: AppColors.navy900,
-                              fontSize: 16.5,
-                              height: 1.55,
-                            ),
-                            strong: AppTextStyles.bodyLarge.copyWith(
-                              color: AppColors.navy900,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16.5,
-                              height: 1.55,
-                            ),
-                            h1: AppTextStyles.titleMedium.copyWith(
-                              color: AppColors.navy900,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 20,
-                              height: 1.4,
-                            ),
-                            h2: AppTextStyles.titleMedium.copyWith(
-                              color: AppColors.navy900,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                              height: 1.4,
-                            ),
-                            h3: AppTextStyles.titleMedium.copyWith(
-                              color: AppColors.navy900,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16.5,
-                              height: 1.4,
-                            ),
-                            listBullet: AppTextStyles.bodyLarge.copyWith(
-                              color: AppColors.navy900,
-                              fontSize: 16.5,
-                              height: 1.55,
-                            ),
-                          ),
+                          isStreaming: isLastStreaming,
                         ),
                       ),
                       const Padding(
@@ -2581,6 +2468,145 @@ class PremiumImageMarkdownBuilder extends MarkdownElementBuilder {
               );
             },
           ),
+        ),
+      ),
+    );
+  }
+}
+
+
+class _MarkdownStreamRenderer extends StatefulWidget {
+  final String data;
+  final bool isStreaming;
+
+  const _MarkdownStreamRenderer({
+    required this.data,
+    required this.isStreaming,
+  });
+
+  @override
+  State<_MarkdownStreamRenderer> createState() => _MarkdownStreamRendererState();
+}
+
+class _MarkdownStreamRendererState extends State<_MarkdownStreamRenderer> with SingleTickerProviderStateMixin {
+  String _displayedText = '';
+  late final Ticker _ticker;
+  double _charsToReveal = 0.0;
+  
+  @override
+  void initState() {
+    super.initState();
+    _displayedText = widget.data;
+    
+    // Ticker berjalan setiap frame sinkron dengan Vsync layar gawai
+    _ticker = createTicker((elapsed) {
+      if (!mounted) return;
+      _updateText();
+    });
+    
+    if (widget.isStreaming) {
+      _ticker.start();
+    }
+  }
+
+  @override
+  void didUpdateWidget(_MarkdownStreamRenderer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isStreaming) {
+      if (!_ticker.isActive) {
+        _ticker.start();
+      }
+    } else {
+      if (_ticker.isActive) {
+        _ticker.stop();
+      }
+      setState(() {
+        _displayedText = widget.data;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _ticker.dispose();
+    super.dispose();
+  }
+
+  void _updateText() {
+    final target = widget.data;
+    final currentGraphemes = _displayedText.characters;
+    final targetGraphemes = target.characters;
+
+    if (currentGraphemes.length >= targetGraphemes.length) {
+      return;
+    }
+
+    final int diff = targetGraphemes.length - currentGraphemes.length;
+    final double step = (diff > 50) ? (diff / 10.0) : 1.5;
+
+    _charsToReveal += step;
+    int revealCount = _charsToReveal.toInt();
+
+    if (revealCount > 0) {
+      _charsToReveal -= revealCount;
+      final nextCount = currentGraphemes.length + revealCount;
+      
+      setState(() {
+        _displayedText = targetGraphemes.take(nextCount).toString();
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final text = _displayedText;
+
+    return MarkdownBody(
+      data: text,
+      selectable: true,
+      builders: {
+        'pre': DraftMarkdownBuilder(),
+        'img': PremiumImageMarkdownBuilder(),
+      },
+      onTapLink: (text, href, title) {
+        if (href != null) {
+          _showCitationPreviewSheet(context, href, text);
+        }
+      },
+      styleSheet: MarkdownStyleSheet(
+        p: AppTextStyles.bodyLarge.copyWith(
+          color: AppColors.navy900,
+          fontSize: 17.5,
+          height: 1.55,
+        ),
+        strong: AppTextStyles.bodyLarge.copyWith(
+          color: AppColors.navy900,
+          fontWeight: FontWeight.bold,
+          fontSize: 17.5,
+          height: 1.55,
+        ),
+        h1: AppTextStyles.titleMedium.copyWith(
+          color: AppColors.navy900,
+          fontWeight: FontWeight.bold,
+          fontSize: 21,
+          height: 1.4,
+        ),
+        h2: AppTextStyles.titleMedium.copyWith(
+          color: AppColors.navy900,
+          fontWeight: FontWeight.bold,
+          fontSize: 19,
+          height: 1.4,
+        ),
+        h3: AppTextStyles.titleMedium.copyWith(
+          color: AppColors.navy900,
+          fontWeight: FontWeight.bold,
+          fontSize: 17.5,
+          height: 1.4,
+        ),
+        listBullet: AppTextStyles.bodyLarge.copyWith(
+          color: AppColors.navy900,
+          fontSize: 17.5,
+          height: 1.55,
         ),
       ),
     );

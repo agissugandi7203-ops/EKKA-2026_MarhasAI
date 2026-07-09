@@ -455,9 +455,14 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
         final wasStreaming = _previousIsStreaming;
         _previousIsStreaming = state.isStreaming;
 
-        // Only scroll to bottom (offset 0) when a stream just completed, or when a new user message is sent
-        if ((wasStreaming && !state.isStreaming) || (state.messages.isNotEmpty && state.messages.last.sender == 'user')) {
+        // Scroll to position prompt at top when streaming starts for a new user message
+        if (state.messages.isNotEmpty && state.messages.last.sender == 'user' && !wasStreaming && state.isStreaming) {
           _scrollToBottom(force: true);
+        }
+
+        // Active streaming auto-scroll (only pans if user is at the bottom, doesn't fight manual scroll up)
+        if (state.isStreaming) {
+          _scrollToBottom(isStreaming: true);
         }
       },
       builder: (context, state) {
@@ -1953,7 +1958,7 @@ class _MarkdownStreamRendererState extends State<_MarkdownStreamRenderer> with S
 
   @override
   Widget build(BuildContext context) {
-    final text = widget.isStreaming ? '$_displayedText █' : _displayedText;
+    final text = _displayedText;
 
     return MarkdownBody(
       data: text,
